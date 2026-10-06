@@ -81,10 +81,12 @@ describe('NoriSnapshot on a mainnet fork', () => {
             `      fork block ${receipt.blockNumber}: ${queries.length} queries, gas ${receipt.gasUsed}`
         );
 
-        // One queue entry for the whole snapshot, pointing at its commitment
+        // One queue entry for the whole snapshot, pointing at its commitment.
+        // Indices start at 1 and the warm-up took 1, so this is snapshot 2.
+        expect(await snapshot.snapshotCount()).to.equal(2n);
         expect(await queue.head()).to.equal(2n);
         const request = await queue.requests(1n);
-        expect(request.slotKey).to.equal(slotKeyOf(1n));
+        expect(request.slotKey).to.equal(slotKeyOf(2n));
         const provenWord = await ethers.provider.getStorage(
             await snapshot.getAddress(),
             request.slotKey
