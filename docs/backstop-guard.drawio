@@ -6,13 +6,13 @@
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
 
-        <mxCell id="keeper" value="&lt;b&gt;checkpoint()&lt;/b&gt; (anyone)&lt;br&gt;records Solana supply, ~every minute" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+        <mxCell id="keeper" value="&lt;b&gt;checkpoint()&lt;/b&gt; (anyone)&lt;br&gt;records Solana supply each interval" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="40" y="60" width="220" height="60" as="geometry" />
         </mxCell>
         <mxCell id="relayer" value="&lt;b&gt;submit_read()&lt;/b&gt; (anyone)&lt;br&gt;proven backing or pause flag&lt;br&gt;checked by nori-read" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
           <mxGeometry x="40" y="200" width="220" height="70" as="geometry" />
         </mxCell>
-        <mxCell id="guard" value="&lt;b&gt;Guard&lt;/b&gt; (one per asset)&lt;br&gt;supply checkpoints (last hour)&lt;br&gt;proven backing + pause flag&lt;br&gt;newest Ethereum block only" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;" vertex="1" parent="1">
+        <mxCell id="guard" value="&lt;b&gt;Guard&lt;/b&gt; (one per asset)&lt;br&gt;last 64 supply checkpoints&lt;br&gt;proven backing + pause flag&lt;br&gt;newest Ethereum block only" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;" vertex="1" parent="1">
           <mxGeometry x="340" y="110" width="220" height="110" as="geometry" />
         </mxCell>
         <mxCell id="rule" value="&lt;b&gt;Trip rule&lt;/b&gt; for backing at Ethereum time T:&lt;br&gt;lowest supply in [T-10m, T-1m]&lt;br&gt;&amp;gt; backing + tolerance" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
