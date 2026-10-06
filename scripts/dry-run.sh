@@ -47,7 +47,7 @@ W=$(mktemp -d -t nori-dry-run)
 ETH_URL=http://127.0.0.1:18545
 SOL_URL=http://127.0.0.1:18899
 SOL_WS=ws://127.0.0.1:18900
-NORI_PROGRAM=5xS32i7XNRk7JCjYR7RgfHVxdLepVSnnJ1gdHkmfD8W1
+NORI_PROGRAM=EUz5RMQxYkc9zu12wpCDu9syvr4MarghoYb6jHAvdAcg
 export CFLAGS=${CFLAGS:-"-isystem $HOME/.cache/solana/v1.54/platform-tools/llvm/sbpf/include"}
 
 # Ethereum tasks: the local fork, Hardhat's public test key 0, outputs in $W
