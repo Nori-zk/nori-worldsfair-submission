@@ -16,8 +16,8 @@
     "type": "module",
     "scripts": {
         "build": "ETH_NETWORK=hardhat npm run clean && ETH_NETWORK=hardhat hardhat compile && node stabilize-types.mjs . && tsc -p tsconfig.package.json",
-        "test": "ETH_NETWORK=hardhat NODE_OPTIONS=--experimental-wasm-modules hardhat test mocha test/NoriSnapshot.ts test/SnapshotReadVectors.ts; code=$?; node stabilize-types.mjs . && exit $code",
-        "test-ci": "ETH_NETWORK=hardhat NODE_OPTIONS=--experimental-wasm-modules hardhat test mocha test/NoriSnapshot.ts test/SnapshotReadVectors.ts; code=$?; node stabilize-types.mjs . && exit $code",
+        "test": "ETH_NETWORK=hardhat NODE_OPTIONS=--experimental-wasm-modules hardhat test mocha test/NoriSnapshot.ts test/SnapshotReadVectors.ts test/DemoLockbox.ts; code=$?; node stabilize-types.mjs . && exit $code",
+        "test-ci": "ETH_NETWORK=hardhat NODE_OPTIONS=--experimental-wasm-modules hardhat test mocha test/NoriSnapshot.ts test/SnapshotReadVectors.ts test/DemoLockbox.ts; code=$?; node stabilize-types.mjs . && exit $code",
         "test:fork": "ETH_NETWORK=hardhat NODE_OPTIONS=--experimental-wasm-modules hardhat test mocha test/fork/NoriSnapshot.mainnet.ts; code=$?; node stabilize-types.mjs . && exit $code",
         "vectors": "ETH_NETWORK=hardhat NODE_OPTIONS=--experimental-wasm-modules hardhat run scripts/generateSnapshotReadVectors.ts",
         "vectors:mainnet": "VECTORS_NETWORK=mainnetFork ETH_NETWORK=hardhat NODE_OPTIONS=--experimental-wasm-modules hardhat run scripts/generateSnapshotReadVectors.ts",
@@ -29,7 +29,9 @@
         "format:fix": "prettier --write --ignore-unknown **/*",
         "deploy": "dotenv -e .env -- sh -c 'npx hardhat --network $ETH_NETWORK deploy'",
         "snapshot": "dotenv -e .env -e .env.nori-eth-snapshot -- sh -c 'npx hardhat --network $ETH_NETWORK snapshot \"$@\"' --",
-        "preview-snapshot": "dotenv -e .env -e .env.nori-eth-snapshot -- sh -c 'npx hardhat --network $ETH_NETWORK previewSnapshot \"$@\"' --"
+        "preview-snapshot": "dotenv -e .env -e .env.nori-eth-snapshot -- sh -c 'npx hardhat --network $ETH_NETWORK previewSnapshot \"$@\"' --",
+        "deploy-demo": "dotenv -e .env -- sh -c 'npx hardhat --network $ETH_NETWORK deployDemo \"$@\"' --",
+        "demo-set": "dotenv -e .env -e .env.nori-eth-demo -- sh -c 'npx hardhat --network $ETH_NETWORK demoSet \"$@\"' --"
     },
     "author": "",
     "license": "MIT",

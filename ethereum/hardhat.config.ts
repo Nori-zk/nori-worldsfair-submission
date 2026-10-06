@@ -10,6 +10,7 @@ import { Logger } from 'esm-iso-logger';
 import { deploy } from './tasks/deploy.js';
 import { snapshot } from './tasks/snapshot.js';
 import { previewSnapshot } from './tasks/previewSnapshot.js';
+import { deployDemo, demoSet } from './tasks/demo.js';
 
 const logger = new Logger('HardhatConfig');
 
@@ -77,7 +78,7 @@ if (networkName === 'hardhat') {
 
 const config: HardhatUserConfig = {
     networks,
-    tasks: [deploy, snapshot, previewSnapshot],
+    tasks: [deploy, snapshot, previewSnapshot, deployDemo, demoSet],
     plugins: [
         hardhatMocha,
         hardhatTypechain,

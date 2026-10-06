@@ -10,21 +10,25 @@ import * as Contracts from "./index.js";
 
 declare module "@nomicfoundation/hardhat-ethers/types" {
   interface HardhatEthersHelpers extends HardhatEthersHelpersBase {
+  getContractFactory(name: 'DemoLockbox', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.DemoLockbox__factory>
   getContractFactory(name: 'INoriProofRequestQueue', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.INoriProofRequestQueue__factory>
   getContractFactory(name: 'NoriSnapshot', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.NoriSnapshot__factory>
   getContractFactory(name: 'ReplayToken', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.ReplayToken__factory>
   getContractFactory(name: 'SnapshotTargetMock', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.SnapshotTargetMock__factory>
 
+  getContractAt(name: 'DemoLockbox', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.DemoLockbox>
   getContractAt(name: 'INoriProofRequestQueue', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.INoriProofRequestQueue>
   getContractAt(name: 'NoriSnapshot', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.NoriSnapshot>
   getContractAt(name: 'ReplayToken', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.ReplayToken>
   getContractAt(name: 'SnapshotTargetMock', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.SnapshotTargetMock>
 
+  deployContract(name: 'DemoLockbox', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.DemoLockbox>
   deployContract(name: 'INoriProofRequestQueue', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.INoriProofRequestQueue>
   deployContract(name: 'NoriSnapshot', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.NoriSnapshot>
   deployContract(name: 'ReplayToken', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.ReplayToken>
   deployContract(name: 'SnapshotTargetMock', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.SnapshotTargetMock>
 
+  deployContract(name: 'DemoLockbox', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.DemoLockbox>
   deployContract(name: 'INoriProofRequestQueue', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.INoriProofRequestQueue>
   deployContract(name: 'NoriSnapshot', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.NoriSnapshot>
   deployContract(name: 'ReplayToken', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.ReplayToken>

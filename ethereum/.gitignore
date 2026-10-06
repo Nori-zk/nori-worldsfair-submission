@@ -11,3 +11,4 @@ artifacts/build-info
 # Ignore generated env output
 .env.nori-eth-snapshot
 !.env.nori-eth-snapshot.example
+.env.nori-eth-demo

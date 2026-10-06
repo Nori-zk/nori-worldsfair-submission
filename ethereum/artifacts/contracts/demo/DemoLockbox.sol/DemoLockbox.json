@@ -1,0 +1,117 @@
+{
+  "_format": "hh3-artifact-1",
+  "contractName": "DemoLockbox",
+  "sourceName": "contracts/demo/DemoLockbox.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "initialLocked",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [],
+      "name": "NotOwner",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "locked",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "paused",
+          "type": "bool"
+        }
+      ],
+      "name": "Set",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "locked",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "paused",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "newLocked",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "newPaused",
+          "type": "bool"
+        }
+      ],
+      "name": "set",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x60a034609057601f61024e38819003918201601f19168301916001600160401b0383118484101760945780849260209460405283398101031260905760407face3d0b0ff81f2031e0aff3bea20fc218e722589c58490bf4f41419b0c8f9308915133608052805f5581519081525f6020820152a16040516101a590816100a98239608051818181607d015260cf0152f35b5f80fd5b634e487b7160e01b5f52604160045260245ffdfe6080806040526004361015610012575f80fd5b5f3560e01c9081635c975abb146101505750806362f46d56146100ac5780638da5cb5b146100685763cf30901214610048575f80fd5b34610064575f3660031901126100645760205f54604051908152f35b5f80fd5b34610064575f366003190112610064576040517f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03168152602090f35b3461006457604036600319011261006457600435602435801515809103610064577f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316330361014157816040917face3d0b0ff81f2031e0aff3bea20fc218e722589c58490bf4f41419b0c8f9308935f5560ff196001541660ff82161760015582519182526020820152a1005b6330cd747160e01b5f5260045ffd5b34610064575f3660031901126100645760209060ff6001541615158152f3fea264697066735822122090a27c5437386f391b925a50b3bf4f807f5b637f3ff071cc5594872cdda5d7a564736f6c634300081c0033",
+  "deployedBytecode": "0x6080806040526004361015610012575f80fd5b5f3560e01c9081635c975abb146101505750806362f46d56146100ac5780638da5cb5b146100685763cf30901214610048575f80fd5b34610064575f3660031901126100645760205f54604051908152f35b5f80fd5b34610064575f366003190112610064576040517f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03168152602090f35b3461006457604036600319011261006457600435602435801515809103610064577f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316330361014157816040917face3d0b0ff81f2031e0aff3bea20fc218e722589c58490bf4f41419b0c8f9308935f5560ff196001541660ff82161760015582519182526020820152a1005b6330cd747160e01b5f5260045ffd5b34610064575f3660031901126100645760209060ff6001541615158152f3fea264697066735822122090a27c5437386f391b925a50b3bf4f807f5b637f3ff071cc5594872cdda5d7a564736f6c634300081c0033",
+  "linkReferences": {},
+  "deployedLinkReferences": {},
+  "immutableReferences": {
+    "4": [
+      {
+        "length": 32,
+        "start": 125
+      },
+      {
+        "length": 32,
+        "start": 207
+      }
+    ]
+  },
+  "inputSourceName": "project/contracts/demo/DemoLockbox.sol",
+  "buildInfoId": "solc-0_8_28-c8f196078cac300c9239bed790385ecd57b1f0a7"
+}
