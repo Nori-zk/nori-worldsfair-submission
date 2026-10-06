@@ -9,3 +9,13 @@ coverage
 .husky
 .vscode
 LICENSE
+
+# Submodules, generated files and keypairs
+sdk
+bridge-head
+test-vectors
+ethereum/types
+ethereum/artifacts
+*-keypair.json
+*.sol
+ethereum/cache

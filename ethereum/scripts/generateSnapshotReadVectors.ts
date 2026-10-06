@@ -21,7 +21,13 @@ if (process.env.VECTORS_NETWORK === 'mainnetFork') {
     write(MAINNET_VECTORS_FILE, await buildMainnetSnapshotReadVectors(ethers));
 } else {
     const local = await hre.network.create('vectors');
-    write(LOCAL_VECTORS_FILE, await buildLocalSnapshotReadVectors(local.ethers));
+    write(
+        LOCAL_VECTORS_FILE,
+        await buildLocalSnapshotReadVectors(local.ethers)
+    );
     const replay = await hre.network.create('vectors');
-    write(KELP_REPLAY_VECTORS_FILE, await buildKelpReplayVectors(replay.ethers));
+    write(
+        KELP_REPLAY_VECTORS_FILE,
+        await buildKelpReplayVectors(replay.ethers)
+    );
 }
