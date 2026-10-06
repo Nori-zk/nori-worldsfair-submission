@@ -13,7 +13,7 @@ npm run keeper -- run                  # or one step: snapshot | checkpoint | su
 ```
 
 The default config, `keeper.demo.json`, takes its `${VARS}` from the repo's `.env`
-and the deploy outputs in `ethereum/` (see the root README, "Deploy").
+and the deploy outputs (see the root README, "Deploy"); an empty value counts as unset.
 `ETH_PRIVATE_KEY` signs the snapshot transactions. Another config: pass its path last.
 
 ## Local dry run (no prover, no testnet)

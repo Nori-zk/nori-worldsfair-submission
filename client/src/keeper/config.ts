@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
@@ -44,20 +44,26 @@ export interface KeeperConfig {
 }
 
 /**
- * Loads the repo's .env and the deploy outputs (ethereum/.env.nori-eth-*).
- * The shell environment wins, then the first file that sets a variable.
+ * Loads the repo's .env and the deploy outputs (ethereum/.env.nori-eth-*,
+ * .env.nori-sol-demo). The shell environment wins, then the first file that
+ * sets a variable; an empty value counts as unset.
  */
 export function loadEnv() {
-    const repo = (file: string) =>
-        fileURLToPath(new URL(`../../../${file}`, import.meta.url));
-    dotenv.config({
-        path: [
-            repo('.env'),
-            repo('ethereum/.env.nori-eth-snapshot'),
-            repo('ethereum/.env.nori-eth-demo'),
-        ],
-        quiet: true,
-    });
+    for (const file of [
+        '.env',
+        'ethereum/.env.nori-eth-snapshot',
+        'ethereum/.env.nori-eth-demo',
+        '.env.nori-sol-demo',
+    ]) {
+        const path = fileURLToPath(
+            new URL(`../../../${file}`, import.meta.url)
+        );
+        if (!existsSync(path)) continue;
+        const values = dotenv.parse(readFileSync(path));
+        for (const [name, value] of Object.entries(values)) {
+            if (!process.env[name]) process.env[name] = value;
+        }
+    }
 }
 
 /**

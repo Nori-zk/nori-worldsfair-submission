@@ -33,22 +33,16 @@ Validator tests and toolchain notes: [AGENTS.md](AGENTS.md).
 Keys and addresses live in one `.env`: `cp .env.example .env`, then fill it in.
 
 ```sh
-set -a; . ./.env; set +a     # for the solana and spl-token commands below
-
 # Ethereum: NoriSnapshot on the existing queue, and a demo lockbox
 npm run deploy -w ethereum                     # -> ethereum/.env.nori-eth-snapshot
 npm run deploy-demo -w ethereum -- 116723.52   # -> ethereum/.env.nori-eth-demo
 
-# Solana: Backstop, and a demo mint (put it in .env as BACKSTOP_DEMO_MINT)
-cargo build-sbf --manifest-path programs/backstop/Cargo.toml
-solana program deploy target/deploy/backstop.so --program-id programs/backstop/backstop-keypair.json \
-  -k $SOLANA_PAYER_KEYPAIR_PATH -u $SOLANA_RPC_NETWORK_URL
-spl-token create-token --decimals 9 -u $SOLANA_RPC_NETWORK_URL --fee-payer $SOLANA_PAYER_KEYPAIR_PATH --mint-authority $SOLANA_PAYER_KEYPAIR_PATH
-spl-token create-account <mint> -u $SOLANA_RPC_NETWORK_URL --owner $SOLANA_PAYER_KEYPAIR_PATH --fee-payer $SOLANA_PAYER_KEYPAIR_PATH
-spl-token mint <mint> 116700 -u $SOLANA_RPC_NETWORK_URL --mint-authority $SOLANA_PAYER_KEYPAIR_PATH --fee-payer $SOLANA_PAYER_KEYPAIR_PATH
+# Solana: Backstop, and a demo mint of 116,700 (-> .env.nori-sol-demo); safe to rerun
+scripts/deploy-devnet.sh
 
 # Keeper: client/keeper.demo.json reads .env and the deploy outputs
 npm run keeper -w client -- create-guards
+npm run keeper -w client -- status   # Nori's progress through the queue, then each guard
 npm run keeper -w client -- run
 ```
 

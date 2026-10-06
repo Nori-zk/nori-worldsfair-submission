@@ -41,7 +41,7 @@ cargo clippy --workspace --all-targets && cargo fmt --all --check
 - `Cargo.lock` was seeded from `sdk/Cargo.lock` for its SBF pins. Don't `cargo update` alloy.
 - surfpool must be 1.5 or later (1.0 breaks `solana program deploy`).
 - A Hardhat fork's clock lags real time. Align it (`evm_setNextBlockTimestamp`) before testing guards, or no supply checkpoint falls in the window.
-- Config: one root `.env` (`.env.example`) for Hardhat, the ethereum scripts and the keeper; deploy outputs land in `ethereum/.env.nori-eth-*`. The shell environment wins over both; `dry-run.sh` blanks the queue settings so it never uses yours.
+- Config: one root `.env` (`.env.example`) for Hardhat, the ethereum scripts and the keeper; deploy outputs land in `ethereum/.env.nori-eth-*` and `.env.nori-sol-demo` (`scripts/deploy-devnet.sh`). The shell environment wins over both; `dry-run.sh` blanks the queue settings so it never uses yours.
 - Dry run of the whole loop without a prover: `scripts/dry-run.sh [--eth-rpc URL] [--solana-rpc URL] [--yes]`. It uses ports 18545/18899 and a temp dir. Deploy outputs go to `NORI_ETH_ENV_DIR` when set.
 
 ## Rules that bite

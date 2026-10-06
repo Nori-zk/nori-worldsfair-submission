@@ -9,7 +9,7 @@
         "keypair": "${SOLANA_PAYER_KEYPAIR_PATH}",
         "noriProgram": "${NORI_SOL_TOKEN_PROGRAM_ID}"
     },
-    "intervals": { "snapshotSecs": 900, "checkpointSecs": 60, "pollSecs": 30 },
+    "intervals": { "snapshotSecs": 900, "checkpointSecs": 120, "pollSecs": 30 },
     "stateFile": "keeper-state.json",
     "guards": [
         {
@@ -29,7 +29,7 @@
             "tolerance": "1000000000",
             "windowSecs": 600,
             "skewSecs": 60,
-            "checkpointIntervalSecs": 60,
+            "checkpointIntervalSecs": 120,
             "maxStalenessSecs": 7200
         }
     ]

@@ -1,11 +1,12 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { JsonRpcProvider, Wallet } from 'ethers';
+import { Contract, JsonRpcProvider, Wallet } from 'ethers';
 import { NoriSnapshot__factory } from '@nori-zk/ethereum-snapshot';
 import {
     checkpointInstruction,
     createGuardInstruction,
     decodeGuard,
     findGuardAddress,
+    findNoriStateAddress,
     guardStatus,
     ReadKind,
     submitReadInstruction,
@@ -196,9 +197,30 @@ export class Keeper {
         return true;
     }
 
-    /** Prints each guard's status. */
+    /** Prints Nori's progress through the proof queue, then each guard's status. */
     async status() {
         const now = BigInt(Math.floor(Date.now() / 1000));
+        const queue = new Contract(
+            this.config.ethereum.proofQueue,
+            ['function head() view returns (uint256)'],
+            this.provider
+        );
+        const [nori, requests] = await Promise.all([
+            this.solana.accountData(
+                await findNoriStateAddress(this.config.solana.noriProgram)
+            ),
+            queue.getFunction('head')() as Promise<bigint>,
+        ]);
+        if (nori) {
+            // NoriSolTokenBridge: latest_head at 72, queue_cursor at 184, batch count at 192
+            const view = new DataView(nori.buffer, nori.byteOffset);
+            this.log(
+                `nori: beacon slot ${view.getBigUint64(72, true)} | ${view.getBigUint64(184, true)} of ${requests} queue requests proven` +
+                    ` | ${view.getBigUint64(192, true)} batches | ${this.loadState().pending.length} snapshot(s) waiting`
+            );
+        } else {
+            this.log(`nori: no state for ${this.config.solana.noriProgram}`);
+        }
         for (const guard of this.config.guards) {
             const address = await this.guardAddress(guard);
             const [guardData, mintData] = await Promise.all([
