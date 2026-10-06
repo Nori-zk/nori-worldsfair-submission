@@ -124,7 +124,7 @@ impl Replay {
     fn checkpoint(&self) -> Instruction {
         Instruction {
             program_id: backstop::ID,
-            accounts: backstop::accounts::Checkpoint {
+            accounts: backstop::accounts::RecordCheckpoint {
                 guard: self.guard,
                 mint: self.mint,
             }

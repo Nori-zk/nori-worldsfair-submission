@@ -52,7 +52,7 @@ pub mod backstop {
     }
 
     /// Records the mint's supply, at most once per `checkpoint_interval_secs`.
-    pub fn checkpoint(ctx: Context<Checkpoint>) -> Result<()> {
+    pub fn checkpoint(ctx: Context<RecordCheckpoint>) -> Result<()> {
         let now = Clock::get()?.unix_timestamp;
         let guard = &mut ctx.accounts.guard;
         require!(guard.checkpoint_due(now), BackstopError::CheckpointTooSoon);
@@ -178,7 +178,7 @@ pub struct CreateGuard<'info> {
 }
 
 #[derive(Accounts)]
-pub struct Checkpoint<'info> {
+pub struct RecordCheckpoint<'info> {
     #[account(mut, has_one = mint)]
     pub guard: Box<Account<'info, Guard>>,
     pub mint: InterfaceAccount<'info, Mint>,
