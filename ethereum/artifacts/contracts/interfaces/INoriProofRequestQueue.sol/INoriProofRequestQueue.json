@@ -1,0 +1,51 @@
+{
+  "_format": "hh3-artifact-1",
+  "contractName": "INoriProofRequestQueue",
+  "sourceName": "contracts/interfaces/INoriProofRequestQueue.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "proofRequestQueueFee",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "slotKey",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32[]",
+          "name": "collectionKeys",
+          "type": "bytes32[]"
+        }
+      ],
+      "name": "requestProof",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "requestId",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {},
+  "immutableReferences": {},
+  "inputSourceName": "project/contracts/interfaces/INoriProofRequestQueue.sol",
+  "buildInfoId": "solc-0_8_28-2923f0415a1cabeb3b07b25ce6a11eec4ea8d763"
+}

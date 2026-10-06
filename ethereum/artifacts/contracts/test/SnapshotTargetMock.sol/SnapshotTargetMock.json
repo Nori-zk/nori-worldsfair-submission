@@ -1,0 +1,98 @@
+{
+  "_format": "hh3-artifact-1",
+  "contractName": "SnapshotTargetMock",
+  "sourceName": "contracts/test/SnapshotTargetMock.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "bump",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "isPaused",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "nothing",
+      "outputs": [],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "reverts",
+      "outputs": [],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "newValue",
+          "type": "uint256"
+        }
+      ],
+      "name": "setValue",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "twoWords",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "value",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x608080604052346015576101bb908161001a8239f35b5f80fdfe6080806040526004361015610012575f80fd5b5f3560e01c9081630d17130714610165575080633bccbbc9146101105780633fa4f245146100f4578063448f30a3146100e257806355241077146100ca57806368110b2f1461008b5763b187bd2614610069575f80fd5b34610087575f3660031901126100875760205f541515604051908152f35b5f80fd5b34610087575f366003190112610087575f545f1981146100b657600160209101805f55604051908152f35b634e487b7160e01b5f52601160045260245ffd5b34610087576020366003190112610087576004355f55005b34610087575f36600319011261008757005b34610087575f3660031901126100875760205f54604051908152f35b34610087575f3660031901126100875760405162461bcd60e51b815260206004820152601b60248201527f536e617073686f745461726765744d6f636b3a207265766572747300000000006044820152606490fd5b34610087575f366003190112610087578060016040925260026020820152f3fea26469706673582212200b5d78a6d41c2c951d5f0f787a7012cb7944d986f3f686d02bc743b524c1c09864736f6c634300081c0033",
+  "deployedBytecode": "0x6080806040526004361015610012575f80fd5b5f3560e01c9081630d17130714610165575080633bccbbc9146101105780633fa4f245146100f4578063448f30a3146100e257806355241077146100ca57806368110b2f1461008b5763b187bd2614610069575f80fd5b34610087575f3660031901126100875760205f541515604051908152f35b5f80fd5b34610087575f366003190112610087575f545f1981146100b657600160209101805f55604051908152f35b634e487b7160e01b5f52601160045260245ffd5b34610087576020366003190112610087576004355f55005b34610087575f36600319011261008757005b34610087575f3660031901126100875760205f54604051908152f35b34610087575f3660031901126100875760405162461bcd60e51b815260206004820152601b60248201527f536e617073686f745461726765744d6f636b3a207265766572747300000000006044820152606490fd5b34610087575f366003190112610087578060016040925260026020820152f3fea26469706673582212200b5d78a6d41c2c951d5f0f787a7012cb7944d986f3f686d02bc743b524c1c09864736f6c634300081c0033",
+  "linkReferences": {},
+  "deployedLinkReferences": {},
+  "immutableReferences": {},
+  "inputSourceName": "project/contracts/test/SnapshotTargetMock.sol",
+  "buildInfoId": "solc-0_8_28-2923f0415a1cabeb3b07b25ce6a11eec4ea8d763"
+}
