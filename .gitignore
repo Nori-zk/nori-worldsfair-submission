@@ -12,3 +12,5 @@ test-ledger
 !.env.*.example
 build
 *.tsbuildinfo
+keeper.json
+keeper-state.json

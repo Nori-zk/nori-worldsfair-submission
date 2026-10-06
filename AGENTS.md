@@ -14,7 +14,7 @@ Product spec: `../NORI-backstop-spec.md` (outside the repo).
 | `nori-read/` | Rust: `verify_snapshot_result` and account loaders |
 | `programs/nori-read-example/` | Smallest consumer + surfpool test. Its keypair is committed and test-only |
 | `programs/backstop/` | Guards: proven backing vs Solana supply ([diagram](docs/backstop-guard.drawio.png)) |
-| `client/` | Sample TS client (witness + `submit_read`/`checkpoint` encoders, pinned to Rust bytes). Tests run with `node --test` on the build, since the wasm hasher breaks jest |
+| `client/` | Sample TS client and keeper CLI (`npm run keeper`). Encoders are pinned to Rust bytes. `fake-prover` is for local dry runs only. Tests run with `node --test` on the build, since the wasm hasher breaks jest |
 | `test-harness/` | Surfpool helpers for program tests (deploy, plant accounts, time travel) |
 | `sdk/`, `bridge-head/` | Submodules. Their npm packages are root workspaces; their crates are path deps |
 
@@ -40,6 +40,8 @@ cargo clippy --workspace --all-targets && cargo fmt --all --check
 - Node 23 needs `--experimental-wasm-modules` for `nori-hash-utils`; the test scripts set it.
 - `Cargo.lock` was seeded from `sdk/Cargo.lock` for its SBF pins. Don't `cargo update` alloy.
 - surfpool must be 1.5 or later (1.0 breaks `solana program deploy`).
+- A Hardhat fork's clock lags real time. Align it (`evm_setNextBlockTimestamp`) before testing guards, or no supply checkpoint falls in the window.
+- Dry run of the whole loop without a prover: `client/README.md`.
 
 ## Rules that bite
 

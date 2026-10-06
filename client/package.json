@@ -16,7 +16,9 @@
         "build": "npm run clean && tsc",
         "test": "npm run build && node --experimental-wasm-modules --test 'build/**/*.test.js'",
         "test-ci": "npm run test",
-        "lint": "npx eslint src"
+        "lint": "npx eslint src",
+        "keeper": "node --experimental-wasm-modules build/bin/keeper.js",
+        "fake-prover": "node --experimental-wasm-modules build/bin/fakeProver.js"
     },
     "dependencies": {
         "@nori-zk/ethereum-snapshot": "*",

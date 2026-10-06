@@ -11,7 +11,7 @@ Read Ethereum state from any Solana program, proven instead of relayed.
 | `ethereum/` | `NoriSnapshot` contract, query list, deploy and snapshot tasks |
 | `nori-read/` | Rust crate: verify a snapshot result on Solana in one call |
 | `programs/` | Solana programs: `nori-read-example`, [`backstop`](programs/backstop) (circuit breaker) |
-| `client/` | Sample TS client: snapshot transaction to Backstop `submit_read` |
+| `client/` | Sample TS client and keeper CLI (snapshot, checkpoint, submit, status) |
 | `test-vectors/` | Test data shared by the TS and Rust tests |
 | `sdk/`, `bridge-head/` | Submodules: Nori Solana SDK and the prover |
 | `docs/` | Diagrams (`.drawio`, editable) |

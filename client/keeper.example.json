@@ -1,0 +1,37 @@
+{
+    "ethereum": {
+        "rpcUrl": "https://ethereum-sepolia-rpc.publicnode.com",
+        "noriSnapshot": "NORI_ETH_SNAPSHOT_ADDRESS from ethereum/.env.nori-eth-snapshot",
+        "proofQueue": "NORI_ETH_PROOF_QUEUE_ADDRESS from ethereum/.env.nori-eth-snapshot"
+    },
+    "solana": {
+        "rpcUrl": "https://api.devnet.solana.com",
+        "wsUrl": "wss://api.devnet.solana.com",
+        "keypair": "~/.config/solana/id.json",
+        "noriProgram": "Nori program id on devnet"
+    },
+    "intervals": { "snapshotSecs": 3600, "checkpointSecs": 60, "pollSecs": 30 },
+    "stateFile": "keeper-state.json",
+    "guards": [
+        {
+            "name": "demo-lockbox",
+            "mint": "devnet mint (spl-token create-token --decimals 9)",
+            "backing": {
+                "target": "NORI_ETH_DEMO_LOCKBOX_ADDRESS",
+                "signature": "locked()",
+                "args": []
+            },
+            "pause": {
+                "target": "NORI_ETH_DEMO_LOCKBOX_ADDRESS",
+                "signature": "paused()",
+                "args": []
+            },
+            "backingDecimals": 18,
+            "tolerance": "1000000000",
+            "windowSecs": 600,
+            "skewSecs": 60,
+            "checkpointIntervalSecs": 60,
+            "maxStalenessSecs": 7200
+        }
+    ]
+}
