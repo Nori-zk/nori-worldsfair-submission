@@ -1,96 +1,116 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mxfile host="drawio" version="26.0.0">
-  <diagram name="How a read works">
-    <mxGraphModel grid="1" gridSize="10" page="0">
+  <diagram name="One proof, many readers">
+    <mxGraphModel grid="1" gridSize="10" page="0" background="#ffffff">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
 
+        <mxCell id="title" value="&lt;b&gt;How a read works: any Solana program reads proven Ethereum state&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="40" y="0" width="900" height="30" as="geometry" />
+        </mxCell>
+
         <mxCell id="eth" value="Ethereum" style="swimlane;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=14;rounded=1;arcSize=4;" vertex="1" parent="1">
-          <mxGeometry x="40" y="40" width="460" height="460" as="geometry" />
+          <mxGeometry x="40" y="40" width="380" height="440" as="geometry" />
         </mxCell>
-        <mxCell id="keeper" value="&lt;b&gt;1. Keeper&lt;/b&gt; (anyone)&lt;br&gt;snapshot([queries])" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="eth">
-          <mxGeometry x="20" y="60" width="200" height="60" as="geometry" />
+        <mxCell id="contracts" value="&lt;b&gt;Any Ethereum contract&lt;/b&gt;&lt;br&gt;balanceOf · paused() · ownerOf&lt;br&gt;getVotes · outstandingBridged ..." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="eth">
+          <mxGeometry x="20" y="50" width="340" height="70" as="geometry" />
         </mxCell>
-        <mxCell id="snap" value="&lt;b&gt;2. NoriSnapshot&lt;/b&gt;&lt;br&gt;runs the views, stores one&lt;br&gt;results root (write-once)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="eth">
-          <mxGeometry x="20" y="190" width="200" height="80" as="geometry" />
+        <mxCell id="snap" value="&lt;b&gt;1. NoriSnapshot&lt;/b&gt; (built)&lt;br&gt;a keeper (anyone) calls snapshot():&lt;br&gt;up to 256 view calls, one results root" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;strokeWidth=2;" vertex="1" parent="eth">
+          <mxGeometry x="20" y="180" width="340" height="90" as="geometry" />
         </mxCell>
-        <mxCell id="targets" value="&lt;b&gt;Any contract&lt;/b&gt;&lt;br&gt;balanceOf, paused(), ..." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;" vertex="1" parent="eth">
-          <mxGeometry x="270" y="190" width="170" height="80" as="geometry" />
-        </mxCell>
-        <mxCell id="queue" value="&lt;b&gt;3. Proof request queue&lt;/b&gt;&lt;br&gt;one request per snapshot" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="eth">
-          <mxGeometry x="20" y="340" width="200" height="80" as="geometry" />
+        <mxCell id="getproof" value="&lt;b&gt;eth_getProof&lt;/b&gt; (roadmap)&lt;br&gt;any storage slot, from any RPC&lt;br&gt;no Ethereum transaction, no keeper" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;dashed=1;" vertex="1" parent="eth">
+          <mxGeometry x="20" y="330" width="340" height="80" as="geometry" />
         </mxCell>
 
         <mxCell id="prv" value="Nori prover (off-chain)" style="swimlane;startSize=30;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=14;rounded=1;arcSize=4;" vertex="1" parent="1">
-          <mxGeometry x="560" y="40" width="260" height="460" as="geometry" />
+          <mxGeometry x="500" y="40" width="260" height="440" as="geometry" />
         </mxCell>
-        <mxCell id="prover" value="&lt;b&gt;4. bridge-head&lt;/b&gt;&lt;br&gt;Helios light client in SP1&lt;br&gt;proves finalized state&lt;br&gt;+ the queue batch" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="prv">
+        <mxCell id="prover" value="&lt;b&gt;2. Helios light client in SP1&lt;/b&gt;&lt;br&gt;waits ~13 min for finality,&lt;br&gt;proves finalized Ethereum&lt;br&gt;state + the snapshot root" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;strokeWidth=2;" vertex="1" parent="prv">
           <mxGeometry x="20" y="170" width="220" height="110" as="geometry" />
         </mxCell>
 
         <mxCell id="sol" value="Solana" style="swimlane;startSize=30;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=14;rounded=1;arcSize=4;" vertex="1" parent="1">
-          <mxGeometry x="880" y="40" width="300" height="460" as="geometry" />
+          <mxGeometry x="840" y="40" width="620" height="440" as="geometry" />
         </mxCell>
-        <mxCell id="update" value="&lt;b&gt;5. Nori program: update&lt;/b&gt;&lt;br&gt;verifies the ZK proof" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="sol">
-          <mxGeometry x="40" y="60" width="220" height="70" as="geometry" />
+        <mxCell id="lc" value="&lt;b&gt;3. Nori light client&lt;/b&gt;&lt;br&gt;verifies each proof (~100k CU)&lt;br&gt;stores state root + batch roots" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;strokeWidth=2;" vertex="1" parent="sol">
+          <mxGeometry x="20" y="50" width="250" height="90" as="geometry" />
         </mxCell>
-        <mxCell id="batch" value="&lt;b&gt;Batch account&lt;/b&gt;&lt;br&gt;batch root" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;size=10;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="sol">
-          <mxGeometry x="40" y="190" width="220" height="80" as="geometry" />
+        <mxCell id="read" value="&lt;b&gt;5. nori-read&lt;/b&gt; (built)&lt;br&gt;in your program: checks one result&lt;br&gt;~3,400 CU, one 558-byte tx" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;strokeWidth=2;" vertex="1" parent="sol">
+          <mxGeometry x="20" y="180" width="250" height="90" as="geometry" />
         </mxCell>
-        <mxCell id="consumer" value="&lt;b&gt;7. Your program (Backstop)&lt;/b&gt;&lt;br&gt;nori-read checks 2 Merkle paths&lt;br&gt;~3,400 compute units" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;strokeWidth=2;" vertex="1" parent="sol">
-          <mxGeometry x="40" y="330" width="220" height="90" as="geometry" />
-        </mxCell>
-
-        <mxCell id="e4label" value="waits ~13 min for finality" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;fontColor=#555555;" vertex="1" parent="1">
-          <mxGeometry x="280" y="425" width="200" height="20" as="geometry" />
-        </mxCell>
-        <mxCell id="builder" value="&lt;b&gt;6. Witness builder&lt;/b&gt; (TS)&lt;br&gt;Snapshot event + queue&lt;br&gt;= witness transaction" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="580" y="560" width="220" height="70" as="geometry" />
+        <mxCell id="mpt" value="&lt;b&gt;Storage-proof check&lt;/b&gt; (roadmap)&lt;br&gt;any slot, against the state&lt;br&gt;root already on Solana" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;dashed=1;" vertex="1" parent="sol">
+          <mxGeometry x="20" y="330" width="250" height="80" as="geometry" />
         </mxCell>
 
-        <mxCell id="e1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endSize=8;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="keeper" target="snap">
+        <mxCell id="apps" value="Any Solana program" style="swimlane;startSize=30;fillColor=#ffffff;strokeColor=#82b366;fontStyle=1;fontSize=13;rounded=1;arcSize=4;" vertex="1" parent="sol">
+          <mxGeometry x="330" y="50" width="270" height="370" as="geometry" />
+        </mxCell>
+        <mxCell id="app1" value="&lt;b&gt;Backstop&lt;/b&gt;: circuit breakers (built)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;" vertex="1" parent="apps">
+          <mxGeometry x="20" y="45" width="230" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="app2" value="Lending collateral gates" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;dashed=1;" vertex="1" parent="apps">
+          <mxGeometry x="20" y="110" width="230" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="app3" value="Issuer pause and compliance mirroring" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;dashed=1;" vertex="1" parent="apps">
+          <mxGeometry x="20" y="175" width="230" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="app4" value="Claims and gating: NFTs, ENS, airdrops" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;dashed=1;" vertex="1" parent="apps">
+          <mxGeometry x="20" y="240" width="230" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="app5" value="Governance from Ethereum" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;dashed=1;" vertex="1" parent="apps">
+          <mxGeometry x="20" y="305" width="230" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e1" value="static calls" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endSize=8;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;labelBackgroundColor=#dae8fc;" edge="1" parent="1" source="snap" target="contracts">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e2" value="static calls" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endSize=8;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=10;" edge="1" parent="1" source="snap" target="targets">
+        <mxCell id="e2" value="one proof&lt;br&gt;request" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endSize=8;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="snap" target="prover">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint y="-12" as="offset" />
+            <mxPoint y="-25" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="e3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endSize=8;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="snap" target="queue">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endSize=8;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=10;" edge="1" parent="1" source="queue" target="prover">
+        <mxCell id="e3" value="Groth16 proof" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endSize=8;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="prover" target="lc">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="530" y="420" />
-              <mxPoint x="530" y="265" />
+              <mxPoint x="800" y="237" />
+              <mxPoint x="800" y="135" />
             </Array>
+            <mxPoint x="0" y="-12" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="e5" value="Groth16&lt;br&gt;proof" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endSize=8;exitX=1;exitY=0.27;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=10;" edge="1" parent="1" source="prover" target="update">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="850" y="240" />
-              <mxPoint x="850" y="135" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="e6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endSize=8;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="update" target="batch">
+        <mxCell id="e4" value="batch root" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endSize=8;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;labelBackgroundColor=#d5e8d4;" edge="1" parent="1" source="lc" target="read">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endSize=8;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="batch" target="consumer">
+        <mxCell id="e5" value="value +&lt;br&gt;Eth block" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endSize=8;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.473;entryDx=0;entryDy=0;labelBackgroundColor=none;" edge="1" parent="1" source="read" target="apps">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-30" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e6" value="storage proof" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endSize=8;dashed=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#e1d5e7;" edge="1" parent="1" source="getproof" target="mpt">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e8" value="public data" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endSize=8;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=10;" edge="1" parent="1" source="queue" target="builder">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="60" y="-10" as="offset" />
-          </mxGeometry>
+        <mxCell id="e7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endSize=8;dashed=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.865;entryDx=0;entryDy=0;" edge="1" parent="1" source="mpt" target="apps">
+          <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e9" value="witness" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endSize=8;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;fontSize=10;" edge="1" parent="1" source="builder" target="consumer">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="-60" y="-10" as="offset" />
-          </mxGeometry>
+
+        <mxCell id="client" value="&lt;b&gt;4. Client&lt;/b&gt; (anyone)&lt;br&gt;builds the witness from the&lt;br&gt;Snapshot event + queue, sends it" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="1170" y="510" width="270" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ev" value="Snapshot event + queue (public data)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endSize=8;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=11;" edge="1" parent="1" source="eth" target="client">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="tx" value="witness tx" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endSize=8;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;fontSize=11;" edge="1" parent="1" source="client" target="apps">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="trust" value="&lt;b&gt;You trust:&lt;/b&gt; Helios (a weak-subjectivity checkpoint + a sync-committee supermajority) · SP1 and its Groth16 verifier · program upgrade authorities" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;spacingLeft=12;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="620" width="700" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="notrust" value="&lt;b&gt;You don't trust:&lt;/b&gt; guardian sets, DVNs, oracle committees, relayers or RPC providers. They can delay a read, not forge it." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=left;spacingLeft=12;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="760" y="620" width="700" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" value="Solid border: built, not yet run end to end · Dashed: roadmap · Latency: ~13 min Ethereum finality, 16–27 min end to end (estimate)" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#555555;" vertex="1" parent="1">
+          <mxGeometry x="40" y="690" width="1420" height="30" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
