@@ -1,0 +1,32 @@
+{
+    "name": "@nori-zk/backstop-client",
+    "version": "0.0.1",
+    "description": "Sample client: from a NoriSnapshot transaction to a Backstop submit_read",
+    "license": "MIT",
+    "type": "module",
+    "main": "build/index.js",
+    "types": "build/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./build/index.js"
+        }
+    },
+    "scripts": {
+        "clean": "rimraf build",
+        "build": "npm run clean && tsc",
+        "test": "npm run build && node --experimental-wasm-modules --test 'build/**/*.test.js'",
+        "test-ci": "npm run test",
+        "lint": "npx eslint src"
+    },
+    "dependencies": {
+        "@nori-zk/ethereum-snapshot": "*",
+        "@nori-zk/ethereum-solana-bridge": "*",
+        "@nori-zk/nori-bridge-solana-sdk": "*",
+        "@nori-zk/nori-hash-utils": "*",
+        "@solana/kit": "^8.3.0",
+        "ethers": "^6.16.0"
+    },
+    "devDependencies": {
+        "@types/node": "^25.2.3"
+    }
+}
