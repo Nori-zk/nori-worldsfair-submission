@@ -1,0 +1,23 @@
+[package]
+name = "nori-read"
+version = "0.1.0"
+description = "Verify NoriSnapshot results against proof queue batches the Nori light client commits on Solana"
+edition.workspace = true
+rust-version.workspace = true
+
+[features]
+idl-build = ["anchor-lang/idl-build", "token/idl-build"]
+# test-vectors/nori-snapshot as nori-read types (`nori_read::test_vectors`)
+test-vectors = ["dep:serde", "dep:serde_json"]
+
+[dependencies]
+alloy-primitives = { version = "1.7.1", features = ["borsh"] }
+anchor-lang = "1.1.2"
+bytemuck = "1"
+solana-sha256-hasher = "3.1.0"
+token = { path = "../sdk/programs/token", features = ["no-entrypoint"] }
+serde = { version = "1", features = ["derive"], optional = true }
+serde_json = { version = "1", optional = true }
+
+[dev-dependencies]
+nori-read = { path = ".", features = ["test-vectors"] }

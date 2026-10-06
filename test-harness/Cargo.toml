@@ -1,0 +1,19 @@
+[package]
+name = "test-harness"
+version = "0.1.0"
+description = "Surfpool helpers shared by this repo's program tests"
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+
+[dependencies]
+alloy-primitives = "1.7.1"
+anchor-lang = "1.1.2"
+base64 = "0.22"
+serde_json = "1"
+solana-keypair = "3.0.1"
+solana-message = "3.0.1"
+solana-rpc-client = "3.1"
+solana-signer = "3.0.0"
+solana-transaction = "3.0.2"
+test-utils = { path = "../sdk/test-utils" }
