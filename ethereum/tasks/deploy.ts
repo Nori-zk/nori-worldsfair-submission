@@ -141,10 +141,10 @@ export const deploy = task(
             logger.log(`Deployed in block: ${noriSnapshotReceipt.blockNumber}`);
             logger.log(`Gas used: ${noriSnapshotReceipt.gasUsed.toString()}`);
 
-            // Write deployment details to .env.nori-eth-snapshot
-            const envFilePath = path.resolve(
-                __dirname,
-                '..',
+            // Write deployment details to .env.nori-eth-snapshot, in
+            // NORI_ETH_ENV_DIR if set (scripts/dry-run.sh uses it)
+            const envFilePath = path.join(
+                process.env.NORI_ETH_ENV_DIR ?? path.resolve(__dirname, '..'),
                 '.env.nori-eth-snapshot'
             );
             const env = {

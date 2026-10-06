@@ -23,6 +23,7 @@ git clone https://github.com/Nori-zk/nori-worldsfair-submission --recursive
 npm install && npm run build
 npm test                 # Ethereum contracts
 cargo test -p nori-read  # Solana-side verification
+scripts/dry-run.sh       # the whole loop on local chains, with a fake prover
 ```
 
 Validator tests and toolchain notes: [AGENTS.md](AGENTS.md).

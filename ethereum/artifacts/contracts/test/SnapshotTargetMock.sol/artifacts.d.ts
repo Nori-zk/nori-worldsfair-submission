@@ -15,7 +15,7 @@ export interface SnapshotTargetMock$Type {
   readonly deployedLinkReferences: {};
   readonly immutableReferences: {};
   readonly inputSourceName: "project/contracts/test/SnapshotTargetMock.sol";
-  readonly buildInfoId: "solc-0_8_28-2923f0415a1cabeb3b07b25ce6a11eec4ea8d763";
+  readonly buildInfoId: "solc-0_8_28-0a35aedfa58c3beff6833f9c52b60ba88425b0ff";
 };
 
 import "hardhat/types/artifacts";

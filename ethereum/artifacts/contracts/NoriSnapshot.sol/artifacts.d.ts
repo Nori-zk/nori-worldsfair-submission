@@ -15,7 +15,7 @@ export interface NoriSnapshot$Type {
   readonly deployedLinkReferences: {};
   readonly immutableReferences: {"26":[{"length":32,"start":261},{"length":32,"start":701},{"length":32,"start":970}]};
   readonly inputSourceName: "project/contracts/NoriSnapshot.sol";
-  readonly buildInfoId: "solc-0_8_28-028f2d068aa63dd2527a371877adc15cf568e1e9";
+  readonly buildInfoId: "solc-0_8_28-0a35aedfa58c3beff6833f9c52b60ba88425b0ff";
 };
 
 import "hardhat/types/artifacts";

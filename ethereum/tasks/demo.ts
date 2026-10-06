@@ -7,9 +7,10 @@ import { Logger } from 'esm-iso-logger';
 import { encodeQueryData, queryIdOf } from '../queries.js';
 
 const logger = new Logger('Demo');
-const ENV_FILE = path.resolve(
-    path.dirname(fileURLToPath(import.meta.url)),
-    '..',
+// NORI_ETH_ENV_DIR redirects the output (scripts/dry-run.sh uses it)
+const ENV_FILE = path.join(
+    process.env.NORI_ETH_ENV_DIR ??
+        path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'),
     '.env.nori-eth-demo'
 );
 

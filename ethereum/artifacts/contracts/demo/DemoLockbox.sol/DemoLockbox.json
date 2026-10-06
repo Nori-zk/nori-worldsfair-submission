@@ -101,7 +101,7 @@
   "linkReferences": {},
   "deployedLinkReferences": {},
   "immutableReferences": {
-    "4": [
+    "557": [
       {
         "length": 32,
         "start": 125
@@ -113,5 +113,5 @@
     ]
   },
   "inputSourceName": "project/contracts/demo/DemoLockbox.sol",
-  "buildInfoId": "solc-0_8_28-c8f196078cac300c9239bed790385ecd57b1f0a7"
+  "buildInfoId": "solc-0_8_28-0a35aedfa58c3beff6833f9c52b60ba88425b0ff"
 }

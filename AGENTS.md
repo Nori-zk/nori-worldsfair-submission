@@ -41,7 +41,7 @@ cargo clippy --workspace --all-targets && cargo fmt --all --check
 - `Cargo.lock` was seeded from `sdk/Cargo.lock` for its SBF pins. Don't `cargo update` alloy.
 - surfpool must be 1.5 or later (1.0 breaks `solana program deploy`).
 - A Hardhat fork's clock lags real time. Align it (`evm_setNextBlockTimestamp`) before testing guards, or no supply checkpoint falls in the window.
-- Dry run of the whole loop without a prover: `client/README.md`.
+- Dry run of the whole loop without a prover: `scripts/dry-run.sh [--eth-rpc URL] [--solana-rpc URL] [--yes]`. It uses ports 18545/18899 and a temp dir. Deploy outputs go to `NORI_ETH_ENV_DIR` when set.
 
 ## Rules that bite
 
