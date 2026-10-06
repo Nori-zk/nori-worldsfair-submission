@@ -26,13 +26,16 @@ export interface Solana {
     accountData(account: Address): Promise<Uint8Array | null>;
 }
 
+/** wsUrl defaults to rpcUrl with ws(s):// (and port 8899 -> 8900). */
 export async function connectSolana(
     rpcUrl: string,
-    wsUrl: string,
+    wsUrl: string | undefined,
     keypairPath: string
 ): Promise<Solana> {
     const rpc = createSolanaRpc(rpcUrl);
-    const rpcSubscriptions = createSolanaRpcSubscriptions(wsUrl);
+    const rpcSubscriptions = createSolanaRpcSubscriptions(
+        wsUrl ?? rpcUrl.replace(/^http/, 'ws').replace(/:8899\b/, ':8900')
+    );
     const signer = await createKeyPairSignerFromBytes(
         new Uint8Array(JSON.parse(readFileSync(keypairPath, 'utf8')))
     );

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { loadConfig } from '../keeper/config.js';
+import { loadConfig, loadEnv } from '../keeper/config.js';
 import { Keeper } from '../keeper/keeper.js';
 
 const USAGE = `Usage: keeper <command> [config.json]
@@ -11,9 +11,10 @@ const USAGE = `Usage: keeper <command> [config.json]
   status          print each guard's status
   run             all of the above on the configured intervals
 
-ETH_PRIVATE_KEY signs Ethereum transactions. Config: keeper.example.json`;
+Config: keeper.demo.json by default. Its \${VAR}s come from the repo's .env
+and the deploy outputs in ethereum/. ETH_PRIVATE_KEY signs Ethereum transactions.`;
 
-const [command, configPath = 'keeper.json'] = process.argv.slice(2);
+const [command, configPath = 'keeper.demo.json'] = process.argv.slice(2);
 const commands = [
     'create-guards',
     'snapshot',
@@ -27,6 +28,7 @@ if (!command || !commands.includes(command)) {
     process.exit(command ? 1 : 0);
 }
 
+loadEnv();
 const keeper = await Keeper.connect(loadConfig(configPath));
 switch (command) {
     case 'create-guards':

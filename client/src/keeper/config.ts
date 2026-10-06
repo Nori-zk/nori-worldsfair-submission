@@ -1,5 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
+import { fileURLToPath } from 'node:url';
+import dotenv from 'dotenv';
 import { address, type Address } from '@solana/kit';
 import { encodeQueryData, queryIdOf } from '@nori-zk/ethereum-snapshot';
 import type { GuardConfig } from '../backstop.js';
@@ -27,7 +29,8 @@ export interface KeeperConfig {
     ethereum: { rpcUrl: string; noriSnapshot: string; proofQueue: string };
     solana: {
         rpcUrl: string;
-        wsUrl: string;
+        /** Defaults to rpcUrl with ws(s):// (and port 8899 -> 8900). */
+        wsUrl?: string;
         keypair: string;
         noriProgram: Address;
     };
@@ -40,9 +43,37 @@ export interface KeeperConfig {
     guards: GuardEntry[];
 }
 
-/** Reads the keeper config; the Ethereum key comes from ETH_PRIVATE_KEY. */
+/**
+ * Loads the repo's .env and the deploy outputs (ethereum/.env.nori-eth-*).
+ * The shell environment wins, then the first file that sets a variable.
+ */
+export function loadEnv() {
+    const repo = (file: string) =>
+        fileURLToPath(new URL(`../../../${file}`, import.meta.url));
+    dotenv.config({
+        path: [
+            repo('.env'),
+            repo('ethereum/.env.nori-eth-snapshot'),
+            repo('ethereum/.env.nori-eth-demo'),
+        ],
+        quiet: true,
+    });
+}
+
+/**
+ * Reads the keeper config, replacing each ${VAR} with its environment value.
+ * The Ethereum key comes from ETH_PRIVATE_KEY.
+ */
 export function loadConfig(path: string): KeeperConfig {
-    const config = JSON.parse(readFileSync(path, 'utf8')) as KeeperConfig;
+    const text = readFileSync(path, 'utf8').replace(
+        /\$\{(\w+)\}/g,
+        (_, name: string) => {
+            const value = process.env[name];
+            if (!value) throw new Error(`Missing env: ${name} (in ${path})`);
+            return value;
+        }
+    );
+    const config = JSON.parse(text) as KeeperConfig;
     config.solana.keypair = config.solana.keypair.replace(/^~/, homedir());
     config.solana.noriProgram = address(config.solana.noriProgram);
     for (const guard of config.guards) guard.mint = address(guard.mint);

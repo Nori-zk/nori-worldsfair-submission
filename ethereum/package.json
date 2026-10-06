@@ -27,11 +27,11 @@
         "clean": "hardhat clean",
         "format": "prettier --check --ignore-unknown **/*",
         "format:fix": "prettier --write --ignore-unknown **/*",
-        "deploy": "dotenv -e .env -- sh -c 'npx hardhat --network $ETH_NETWORK deploy'",
-        "snapshot": "dotenv -e .env -e .env.nori-eth-snapshot -- sh -c 'npx hardhat --network $ETH_NETWORK snapshot \"$@\"' --",
-        "preview-snapshot": "dotenv -e .env -e .env.nori-eth-snapshot -- sh -c 'npx hardhat --network $ETH_NETWORK previewSnapshot \"$@\"' --",
-        "deploy-demo": "dotenv -e .env -- sh -c 'npx hardhat --network $ETH_NETWORK deployDemo \"$@\"' --",
-        "demo-set": "dotenv -e .env -e .env.nori-eth-demo -- sh -c 'npx hardhat --network $ETH_NETWORK demoSet \"$@\"' --"
+        "deploy": "dotenv -e ../.env -- sh -c 'npx hardhat --network $ETH_NETWORK deploy'",
+        "snapshot": "dotenv -e ../.env -e .env.nori-eth-snapshot -- sh -c 'npx hardhat --network $ETH_NETWORK snapshot \"$@\"' --",
+        "preview-snapshot": "dotenv -e ../.env -e .env.nori-eth-snapshot -- sh -c 'npx hardhat --network $ETH_NETWORK previewSnapshot \"$@\"' --",
+        "deploy-demo": "dotenv -e ../.env -- sh -c 'npx hardhat --network $ETH_NETWORK deployDemo \"$@\"' --",
+        "demo-set": "dotenv -e ../.env -e .env.nori-eth-demo -- sh -c 'npx hardhat --network $ETH_NETWORK demoSet \"$@\"' --"
     },
     "author": "",
     "license": "MIT",

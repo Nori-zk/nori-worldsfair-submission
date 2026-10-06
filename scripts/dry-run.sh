@@ -21,8 +21,8 @@
 # ETH_FORK_RPC and SOLANA_FORK_RPC work as defaults for the two URLs.
 #
 # Needs: npm install && npm run build (once), solana, spl-token, surfpool >= 1.5, cast.
-# Uses ports 18545 (Ethereum) and 18899/18900 (Solana), and a temp dir; it does
-# not touch your Solana CLI config, wallet or ethereum/.env* files.
+# Uses ports 18545 (Ethereum) and 18899/18900 (Solana), and a temp dir; it
+# ignores your .env and does not touch your Solana CLI config or wallet.
 
 set -euo pipefail
 
@@ -53,6 +53,9 @@ export CFLAGS=${CFLAGS:-"-isystem $HOME/.cache/solana/v1.54/platform-tools/llvm/
 # Ethereum tasks: the local fork, Hardhat's public test key 0, outputs in $W
 export ETH_NETWORK=localfork ETH_RPC_URL=$ETH_URL NORI_ETH_ENV_DIR=$W
 export ETH_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+# Set (even empty) wins over .env: the dry run deploys its own queue
+export NORI_ETH_PROOF_QUEUE_ADDRESS= NORI_ETH_SNAPSHOT_QUEUE_OPERATOR_ADDRESS= \
+    NORI_ETH_SNAPSHOT_QUEUE_FEE_RECIPIENT_ADDRESS= NORI_ETH_SNAPSHOT_PROOF_REQUEST_QUEUE_FEE_WEI=0
 
 bold=$(tput bold 2>/dev/null || true)
 reset=$(tput sgr0 2>/dev/null || true)

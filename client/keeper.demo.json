@@ -1,0 +1,36 @@
+{
+    "ethereum": {
+        "rpcUrl": "${ETH_RPC_URL}",
+        "noriSnapshot": "${NORI_ETH_SNAPSHOT_ADDRESS}",
+        "proofQueue": "${NORI_ETH_PROOF_QUEUE_ADDRESS}"
+    },
+    "solana": {
+        "rpcUrl": "${SOLANA_RPC_NETWORK_URL}",
+        "keypair": "${SOLANA_PAYER_KEYPAIR_PATH}",
+        "noriProgram": "${NORI_SOL_TOKEN_PROGRAM_ID}"
+    },
+    "intervals": { "snapshotSecs": 900, "checkpointSecs": 60, "pollSecs": 30 },
+    "stateFile": "keeper-state.json",
+    "guards": [
+        {
+            "name": "demo-lockbox",
+            "mint": "${BACKSTOP_DEMO_MINT}",
+            "backing": {
+                "target": "${NORI_ETH_DEMO_LOCKBOX_ADDRESS}",
+                "signature": "locked()",
+                "args": []
+            },
+            "pause": {
+                "target": "${NORI_ETH_DEMO_LOCKBOX_ADDRESS}",
+                "signature": "paused()",
+                "args": []
+            },
+            "backingDecimals": 18,
+            "tolerance": "1000000000",
+            "windowSecs": 600,
+            "skewSecs": 60,
+            "checkpointIntervalSecs": 60,
+            "maxStalenessSecs": 7200
+        }
+    ]
+}

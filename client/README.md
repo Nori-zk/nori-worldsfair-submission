@@ -8,11 +8,13 @@ Sample client and keeper CLI. The full client (WSS/rxjs on Nori's infra) comes l
 ## Keeper
 
 ```sh
-cp keeper.example.json keeper.json     # fill in the addresses
-export ETH_PRIVATE_KEY=...             # signs snapshot transactions
-npm run keeper -- create-guards keeper.json
-npm run keeper -- run keeper.json      # or one step: snapshot | checkpoint | submit | status
+npm run keeper -- create-guards        # the keeper key is each guard's admin
+npm run keeper -- run                  # or one step: snapshot | checkpoint | submit | status
 ```
+
+The default config, `keeper.demo.json`, takes its `${VARS}` from the repo's `.env`
+and the deploy outputs in `ethereum/` (see the root README, "Deploy").
+`ETH_PRIVATE_KEY` signs the snapshot transactions. Another config: pass its path last.
 
 ## Local dry run (no prover, no testnet)
 

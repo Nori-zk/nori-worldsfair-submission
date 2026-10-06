@@ -38,7 +38,8 @@ npm run deploy-demo -- 116723.52     # testnet demo: a lockbox you drain by hand
 npm run demo-set -- 223.52 [--paused]
 ```
 
-Config: copy `.env.example` to `.env`. The deploy task writes `.env.nori-eth-snapshot`.
+Config: the repo's `.env` (`../.env.example`). `deploy` writes `.env.nori-eth-snapshot`,
+`deploy-demo` writes `.env.nori-eth-demo`; the later commands and the keeper read them.
 
 ## Cost (mainnet fork, queue fee 0)
 

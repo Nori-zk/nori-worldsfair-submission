@@ -1,4 +1,5 @@
-import 'dotenv/config';
+import { fileURLToPath } from 'node:url';
+import dotenv from 'dotenv';
 import { type HardhatUserConfig } from 'hardhat/config';
 import hardhatTypechain from '@nomicfoundation/hardhat-typechain';
 import hardhatEthers from '@nomicfoundation/hardhat-ethers';
@@ -13,6 +14,12 @@ import { previewSnapshot } from './tasks/previewSnapshot.js';
 import { deployDemo, demoSet } from './tasks/demo.js';
 
 const logger = new Logger('HardhatConfig');
+
+// The repo's one .env; the shell environment wins over it
+dotenv.config({
+    path: fileURLToPath(new URL('../.env', import.meta.url)),
+    quiet: true,
+});
 
 const possibleNetworkName = process.env.ETH_NETWORK;
 const possibleRpcUrl = process.env.ETH_RPC_URL;

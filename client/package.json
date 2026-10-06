@@ -26,6 +26,7 @@
         "@nori-zk/nori-bridge-solana-sdk": "*",
         "@nori-zk/nori-hash-utils": "*",
         "@solana/kit": "^8.3.0",
+        "dotenv": "^17.2.4",
         "ethers": "^6.16.0"
     },
     "devDependencies": {
