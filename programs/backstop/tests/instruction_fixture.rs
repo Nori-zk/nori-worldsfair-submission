@@ -1,9 +1,13 @@
 //! Pins Backstop instruction bytes for the TS client (`client/src/backstop.ts`).
 //! `UPDATE_FIXTURES=1` rewrites them.
 
-use anchor_lang::InstructionData;
+use anchor_lang::{prelude::Pubkey, pubkey, InstructionData};
 use backstop::{GuardConfig, ReadKind};
-use nori_read::{test_vectors, NORI_PROGRAM_ID};
+use nori_read::test_vectors;
+
+/// Any program id works; a fixed one keeps the fixtures stable when the sdk's
+/// program id changes. `client/src/backstop.test.ts` uses the same.
+const NORI_PROGRAM: Pubkey = pubkey!("5xS32i7XNRk7JCjYR7RgfHVxdLepVSnnJ1gdHkmfD8W1");
 
 fn check(name: &str, data: Vec<u8>) {
     let path = format!(
@@ -40,7 +44,7 @@ fn submit_read_bytes_match_the_fixture() {
 #[test]
 fn create_guard_bytes_match_the_fixture() {
     let config = GuardConfig {
-        nori_program: NORI_PROGRAM_ID,
+        nori_program: NORI_PROGRAM,
         nori_snapshot: [0x11; 20],
         backing_query: [0x22; 32],
         pause_query: [0x33; 32],
@@ -77,7 +81,7 @@ fn guard_account_bytes_match_the_fixture() {
         admin: anchor_lang::prelude::Pubkey::new_from_array([1; 32]),
         mint: anchor_lang::prelude::Pubkey::new_from_array([2; 32]),
         config: GuardConfig {
-            nori_program: NORI_PROGRAM_ID,
+            nori_program: NORI_PROGRAM,
             nori_snapshot: [0x11; 20],
             backing_query: [0x22; 32],
             pause_query: [0x33; 32],
