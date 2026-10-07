@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { Contract, JsonRpcProvider, Wallet } from 'ethers';
+import { Contract, FetchRequest, JsonRpcProvider, Wallet } from 'ethers';
 import { NoriSnapshot__factory } from '@nori-zk/ethereum-snapshot';
 import {
     checkpointInstruction,
@@ -24,8 +24,12 @@ import {
     connectSolana,
     customErrorCode,
     mintSupply,
+    RPC_TIMEOUT_MS,
     type Solana,
 } from './solana.js';
+
+/** How long `snapshot` waits for its transaction to be mined. */
+const SNAPSHOT_WAIT_MS = 3 * 60_000;
 
 // Backstop error codes the keeper treats as "nothing to do" (pinned by
 // programs/backstop/tests/instruction_fixture.rs)
@@ -47,14 +51,12 @@ export class Keeper {
     static async connect(config: KeeperConfig): Promise<Keeper> {
         const solana = await connectSolana(
             config.solana.rpcUrl,
-            config.solana.wsUrl,
             config.solana.keypair
         );
-        return new Keeper(
-            config,
-            solana,
-            new JsonRpcProvider(config.ethereum.rpcUrl)
-        );
+        // ethers' default is 5 min per request; a hung one would stall the loop
+        const request = new FetchRequest(config.ethereum.rpcUrl);
+        request.timeout = RPC_TIMEOUT_MS;
+        return new Keeper(config, solana, new JsonRpcProvider(request));
     }
 
     private log(message: string) {
@@ -124,13 +126,20 @@ export class Keeper {
         const tx = await snapshot.snapshot([...queries.values()], {
             value: fee,
         });
-        const receipt = await tx.wait();
+        // Pending as soon as it is sent: a slow block can't lose it or stall the loop
         const state = this.loadState();
         state.pending.push(tx.hash);
         this.saveState(state);
-        this.log(
-            `snapshot ${tx.hash}: ${queries.size} queries, block ${receipt?.blockNumber}`
-        );
+        try {
+            const receipt = await tx.wait(1, SNAPSHOT_WAIT_MS);
+            this.log(
+                `snapshot ${tx.hash}: ${queries.size} queries, block ${receipt?.blockNumber}`
+            );
+        } catch {
+            this.log(
+                `snapshot ${tx.hash}: not mined after ${SNAPSHOT_WAIT_MS / 60_000} min; its reads go in once it is`
+            );
+        }
     }
 
     /** Records each guard's mint supply (skips guards checkpointed too recently). */

@@ -46,7 +46,6 @@ REPO=$(cd "$(dirname "$0")/.." && pwd)
 W=$(mktemp -d "${TMPDIR:-/tmp}/nori-dry-run.XXXXXX")  # GNU and BSD mktemp
 ETH_URL=http://127.0.0.1:18545
 SOL_URL=http://127.0.0.1:18899
-SOL_WS=ws://127.0.0.1:18900
 NORI_PROGRAM=EUz5RMQxYkc9zu12wpCDu9syvr4MarghoYb6jHAvdAcg
 export CFLAGS=${CFLAGS:-"-isystem $HOME/.cache/solana/v1.54/platform-tools/llvm/sbpf/include"}
 
@@ -145,7 +144,7 @@ set +a
 cat >"$W/keeper.json" <<EOF
 {
   "ethereum": { "rpcUrl": "$ETH_URL", "noriSnapshot": "$NORI_ETH_SNAPSHOT_ADDRESS", "proofQueue": "$NORI_ETH_PROOF_QUEUE_ADDRESS" },
-  "solana": { "rpcUrl": "$SOL_URL", "wsUrl": "$SOL_WS", "keypair": "$PAYER", "noriProgram": "$NORI_PROGRAM" },
+  "solana": { "rpcUrl": "$SOL_URL", "keypair": "$PAYER", "noriProgram": "$NORI_PROGRAM" },
   "intervals": { "snapshotSecs": 120, "checkpointSecs": 10, "pollSecs": 15 },
   "stateFile": "$W/keeper-state.json",
   "guards": [{

@@ -29,8 +29,6 @@ export interface KeeperConfig {
     ethereum: { rpcUrl: string; noriSnapshot: string; proofQueue: string };
     solana: {
         rpcUrl: string;
-        /** Defaults to rpcUrl with ws(s):// (and port 8899 -> 8900). */
-        wsUrl?: string;
         keypair: string;
         noriProgram: Address;
     };
