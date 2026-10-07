@@ -157,7 +157,7 @@ export class Keeper {
      * read is logged and retried next round; it never blocks other guards or
      * snapshots.
      */
-    async submit() {
+    async submit(quiet = false) {
         const state = this.loadState();
         const stillPending: string[] = [];
         for (const snapshotTxHash of state.pending) {
@@ -168,7 +168,7 @@ export class Keeper {
             }
         }
         this.saveState({ pending: stillPending });
-        if (stillPending.length)
+        if (stillPending.length && !quiet)
             this.log(
                 `${stillPending.length} snapshot(s) pending: waiting for a proof or retrying`
             );
@@ -234,6 +234,11 @@ export class Keeper {
 
     /** Prints Nori's progress through the proof queue, then each guard's status. */
     async status() {
+        for (const line of await this.statusLines()) this.log(line);
+    }
+
+    private async statusLines(): Promise<string[]> {
+        const lines: string[] = [];
         const now = BigInt(Math.floor(Date.now() / 1000));
         const queue = new Contract(
             this.config.ethereum.proofQueue,
@@ -249,12 +254,12 @@ export class Keeper {
         if (nori) {
             // NoriSolTokenBridge: latest_head at 72, queue_cursor at 184, batch count at 192
             const view = new DataView(nori.buffer, nori.byteOffset);
-            this.log(
+            lines.push(
                 `nori: beacon slot ${view.getBigUint64(72, true)} | ${view.getBigUint64(184, true)} of ${requests} queue requests proven` +
                     ` | ${view.getBigUint64(192, true)} batches | ${this.loadState().pending.length} snapshot(s) waiting`
             );
         } else {
-            this.log(`nori: no state for ${this.config.solana.noriProgram}`);
+            lines.push(`nori: no state for ${this.config.solana.noriProgram}`);
         }
         for (const guard of this.config.guards) {
             const address = await this.guardAddress(guard);
@@ -263,12 +268,12 @@ export class Keeper {
                 this.solana.accountData(guard.mint),
             ]);
             if (!guardData || !mintData) {
-                this.log(`${guard.name}: no guard at ${address}`);
+                lines.push(`${guard.name}: no guard at ${address}`);
                 continue;
             }
             const state = decodeGuard(guardData);
             const supply = mintSupply(mintData);
-            this.log(
+            lines.push(
                 `${guard.name}: ${guardStatus(state, supply, now)} | backing ${state.backing} | supply ${supply}` +
                     ` | Ethereum block ${state.backingEthBlock} | paused ${state.paused}` +
                     (state.tripped
@@ -276,16 +281,19 @@ export class Keeper {
                         : '')
             );
         }
+        return lines;
     }
 
     /**
-     * Checkpoints, snapshots and submits on the configured intervals, forever.
-     * One job at a time, so jobs never race on the state file.
+     * Checkpoints, snapshots and submits on the configured intervals, forever,
+     * and prints each status line when it changes. One job at a time, so jobs
+     * never race on the state file.
      */
     async run() {
         const { snapshotSecs, checkpointSecs, pollSecs } =
             this.config.intervals;
         const last = { checkpoint: 0, snapshot: 0 };
+        const shown = new Set<string>();
         for (;;) {
             const now = Date.now() / 1000;
             const jobs: Array<[string, () => Promise<void>]> = [];
@@ -297,13 +305,21 @@ export class Keeper {
                 last.snapshot = now;
                 jobs.push(['snapshot', () => this.snapshot()]);
             }
-            jobs.push(['submit', () => this.submit()]);
+            jobs.push(['submit', () => this.submit(true)]);
             for (const [name, job] of jobs) {
                 try {
                     await job();
                 } catch (error) {
                     this.log(`${name} failed: ${(error as Error).message}`);
                 }
+            }
+            try {
+                const lines = await this.statusLines();
+                for (const line of lines) if (!shown.has(line)) this.log(line);
+                shown.clear();
+                for (const line of lines) shown.add(line);
+            } catch (error) {
+                this.log(`status failed: ${errorMessage(error)}`);
             }
             await new Promise((resolve) =>
                 setTimeout(resolve, pollSecs * 1000)
