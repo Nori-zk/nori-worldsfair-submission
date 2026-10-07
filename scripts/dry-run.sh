@@ -88,7 +88,7 @@ wait_for() {
 for tool in solana spl-token surfpool cast npx; do
     command -v "$tool" >/dev/null || { echo "Missing: $tool"; exit 1; }
 done
-[ -d "$REPO/sdk/ethereum/build" ] || { echo "Run 'npm install && npm run build' first"; exit 1; }
+[ -d "$REPO/client/build" ] || { echo "Run 'npm install && npm run build' first"; exit 1; }
 for port in 18545 18899 18900; do
     if lsof -i ":$port" >/dev/null 2>&1; then echo "Port $port is busy"; exit 1; fi
 done
@@ -109,10 +109,10 @@ echo "Ethereum: fork of chain $(cast chain-id --rpc-url "$ETH_FORK_RPC") ($ETH_F
 echo "surfpool on $SOL_URL, accounts from ${SOLANA_FORK_RPC:-nowhere (offline)}"
 
 say "Building Backstop and the client"
-# A stale submodule makes cargo re-resolve the lock (build-sbf ignores --locked)
-# into crates the SBF rustc can't build; catch it here with a clear message
+# build-sbf ignores --locked and would silently re-resolve a stale lock into
+# crates the SBF rustc can't build; catch that here with a clear message
 cargo metadata --locked --format-version 1 --manifest-path "$REPO/Cargo.toml" >/dev/null 2>&1 ||
-    { echo "Cargo.lock doesn't match the submodules. After a pull: git submodule update --init --recursive"; exit 1; }
+    { echo "Cargo.lock is out of date with Cargo.toml (cargo metadata --locked failed)"; exit 1; }
 if ! BUILD=$(cargo build-sbf --manifest-path "$REPO/programs/backstop/Cargo.toml" 2>&1); then
     echo "$BUILD" | tail -15
     exit 1

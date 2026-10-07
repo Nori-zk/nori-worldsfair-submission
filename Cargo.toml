@@ -4,12 +4,8 @@ members = [
     "programs/*",
     "test-harness",
 ]
-# The submodules are Cargo workspaces of their own; their crates are path
-# dependencies here, never members.
-exclude = [
-    "bridge-head",
-    "sdk",
-]
+# The sdk's crates (token, test-utils) are git dependencies pinned to one commit,
+# the one its npm 0.0.5 was published from. Bump the rev and the npm versions together.
 resolver = "2"
 
 [workspace.package]

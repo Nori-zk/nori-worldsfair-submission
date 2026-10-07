@@ -7,7 +7,7 @@ import {
     request_batch_root,
     request_witness,
     type RequestLeaf,
-} from '@nori-zk/nori-hash-utils';
+} from '@nori-zk/ethereum-solana-proof-queue-utils-glam';
 import {
     NoriSnapshot__factory,
     ReplayToken__factory,

@@ -18,7 +18,10 @@ import {
     type Address,
 } from '@solana/kit';
 import { NoriProofRequestQueue__factory } from '@nori-zk/ethereum-solana-bridge';
-import { request_batch_root, type RequestLeaf } from '@nori-zk/nori-hash-utils';
+import {
+    request_batch_root,
+    type RequestLeaf,
+} from '@nori-zk/ethereum-solana-proof-queue-utils-glam';
 import { findNoriStateAddress } from '../backstop.js';
 import { loadConfig, loadEnv } from '../keeper/config.js';
 

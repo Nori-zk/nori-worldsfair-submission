@@ -36,7 +36,7 @@
     "author": "",
     "license": "MIT",
     "dependencies": {
-        "@nori-zk/ethereum-solana-bridge": "*",
+        "@nori-zk/ethereum-solana-bridge": "0.0.1",
         "esm-iso-logger": "1.0.2",
         "ethers": "^6.16.0"
     },
@@ -46,6 +46,7 @@
         "@nomicfoundation/hardhat-mocha": "^3.0.17",
         "@nomicfoundation/hardhat-network-helpers": "^3.0.6",
         "@nomicfoundation/hardhat-typechain": "^3.0.0",
+        "@nori-zk/ethereum-solana-proof-queue-utils-glam": "0.0.1",
         "@types/mocha": "^10.0.0",
         "@types/node": "^25.2.3",
         "chai": "^5.1.2",

@@ -9,7 +9,7 @@ import {
     request_leaf_hash,
     type RequestLeaf,
     type RequestWitness,
-} from '@nori-zk/nori-hash-utils';
+} from '@nori-zk/ethereum-solana-proof-queue-utils-glam';
 
 const snapshotInterface = new Interface(noriSnapshotJson.abi);
 

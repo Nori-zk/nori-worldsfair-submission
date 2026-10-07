@@ -4952,6 +4952,7 @@ dependencies = [
 [[package]]
 name = "test-utils"
 version = "0.1.0"
+source = "git+https://github.com/Nori-zk/nori-solana-sdk?rev=a712825fc660352f75e346da43998256e739f860#a712825fc660352f75e346da43998256e739f860"
 dependencies = [
  "serde_json",
  "solana-keypair",
@@ -5019,6 +5020,7 @@ checksum = "fd3ca314f692efd6c868f8408f53fe444634a845f96c028b97d35f6a1f79f0ee"
 [[package]]
 name = "token"
 version = "0.1.0"
+source = "git+https://github.com/Nori-zk/nori-solana-sdk?rev=a712825fc660352f75e346da43998256e739f860#a712825fc660352f75e346da43998256e739f860"
 dependencies = [
  "alloy-primitives",
  "anchor-lang",

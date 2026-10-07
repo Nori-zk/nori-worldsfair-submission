@@ -6,7 +6,7 @@ import { NoriProofRequestQueue__factory } from '@nori-zk/ethereum-solana-bridge'
 import {
     merkle_root_from_path,
     request_witness,
-} from '@nori-zk/nori-hash-utils';
+} from '@nori-zk/ethereum-solana-proof-queue-utils-glam';
 import {
     NoriSnapshot__factory,
     SnapshotTargetMock__factory,
