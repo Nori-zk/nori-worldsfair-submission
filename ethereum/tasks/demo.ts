@@ -14,6 +14,16 @@ const ENV_FILE = path.join(
     '.env.nori-eth-demo'
 );
 
+/** DemoLockbox fakes a drain on demand, so it never runs on Ethereum mainnet. */
+async function refuseMainnet(provider: {
+    getNetwork(): Promise<{ chainId: bigint }>;
+}) {
+    if ((await provider.getNetwork()).chainId === 1n)
+        throw new Error(
+            'DemoLockbox is a testnet demo; refusing Ethereum mainnet'
+        );
+}
+
 export const deployDemo = task(
     'deployDemo',
     'Deploy a DemoLockbox for a live drain demo (testnet only)'
@@ -26,6 +36,7 @@ export const deployDemo = task(
     .setAction(async () => ({
         default: async ({ locked }, hre) => {
             const { ethers } = await hre.network.getOrCreate();
+            await refuseMainnet(ethers.provider);
             const factory = await ethers.getContractFactory('DemoLockbox');
             const lockbox = await factory.deploy(ethers.parseEther(locked));
             await lockbox.waitForDeployment();
@@ -60,6 +71,7 @@ export const demoSet = task(
     .setAction(async () => ({
         default: async ({ locked, paused }, hre) => {
             const { ethers } = await hre.network.getOrCreate();
+            await refuseMainnet(ethers.provider);
             const address = process.env.NORI_ETH_DEMO_LOCKBOX_ADDRESS;
             if (!address)
                 throw new Error(

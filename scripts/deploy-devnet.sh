@@ -6,7 +6,8 @@
 # Usage: scripts/deploy-devnet.sh
 # Reads SOLANA_RPC_NETWORK_URL and SOLANA_PAYER_KEYPAIR_PATH from the shell or
 # .env. The payer becomes Backstop's upgrade authority and the mint authority.
-# NORI_SOL_ENV_DIR redirects the output file.
+# Refuses any cluster but devnet or a local validator. NORI_SOL_ENV_DIR
+# redirects the output file.
 
 set -euo pipefail
 
@@ -24,6 +25,13 @@ PAYER=${SOLANA_PAYER_KEYPAIR_PATH:-$(from_env_file SOLANA_PAYER_KEYPAIR_PATH)}
 PAYER=${PAYER/#\~/$HOME}
 [ -n "$URL" ] || { echo "Set SOLANA_RPC_NETWORK_URL (.env)"; exit 1; }
 [ -f "$PAYER" ] || { echo "Set SOLANA_PAYER_KEYPAIR_PATH (.env) to a keypair file"; exit 1; }
+
+DEVNET_GENESIS=EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG
+case "$URL" in
+    http://127.0.0.1:* | http://localhost:*) ;;
+    *) [ "$(solana genesis-hash -u "$URL")" = "$DEVNET_GENESIS" ] ||
+        { echo "SOLANA_RPC_NETWORK_URL is not devnet; refusing"; exit 1; } ;;
+esac
 
 OUT=${NORI_SOL_ENV_DIR:-$REPO}/.env.nori-sol-demo
 PROGRAM_KEYPAIR=$REPO/programs/backstop/backstop-keypair.json

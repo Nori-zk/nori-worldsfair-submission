@@ -67,19 +67,27 @@ export function loadEnv() {
 }
 
 /**
- * Reads the keeper config, replacing each ${VAR} with its environment value.
- * The Ethereum key comes from ETH_PRIVATE_KEY.
+ * Reads the keeper config, replacing each ${VAR} in its strings with that
+ * environment variable. The Ethereum key comes from ETH_PRIVATE_KEY.
  */
 export function loadConfig(path: string): KeeperConfig {
-    const text = readFileSync(path, 'utf8').replace(
-        /\$\{(\w+)\}/g,
-        (_, name: string) => {
-            const value = process.env[name];
-            if (!value) throw new Error(`Missing env: ${name} (in ${path})`);
-            return value;
-        }
-    );
-    const config = JSON.parse(text) as KeeperConfig;
+    const expand = (value: unknown): unknown => {
+        if (typeof value === 'string')
+            return value.replace(/\$\{(\w+)\}/g, (_, name: string) => {
+                const env = process.env[name];
+                if (!env) throw new Error(`Missing env: ${name} (in ${path})`);
+                return env;
+            });
+        if (Array.isArray(value)) return value.map(expand);
+        if (value && typeof value === 'object')
+            return Object.fromEntries(
+                Object.entries(value).map(([key, item]) => [key, expand(item)])
+            );
+        return value;
+    };
+    const config = expand(
+        JSON.parse(readFileSync(path, 'utf8'))
+    ) as KeeperConfig;
     config.solana.keypair = config.solana.keypair.replace(/^~/, homedir());
     config.solana.noriProgram = address(config.solana.noriProgram);
     for (const guard of config.guards) guard.mint = address(guard.mint);

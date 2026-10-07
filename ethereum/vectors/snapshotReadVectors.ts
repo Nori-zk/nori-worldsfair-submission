@@ -3,7 +3,11 @@ import { fileURLToPath } from 'url';
 import type { HardhatEthers } from '@nomicfoundation/hardhat-ethers/types';
 import type { ContractTransactionResponse } from 'ethers';
 import { NoriProofRequestQueue__factory } from '@nori-zk/ethereum-solana-bridge';
-import { request_witness, type RequestLeaf } from '@nori-zk/nori-hash-utils';
+import {
+    request_batch_root,
+    request_witness,
+    type RequestLeaf,
+} from '@nori-zk/nori-hash-utils';
 import {
     NoriSnapshot__factory,
     ReplayToken__factory,
@@ -162,8 +166,14 @@ async function collectVectors(
         ),
         value: record.value,
     }));
+    if (!leaves.length) throw new Error('The batch has no proof requests');
+    const batchRoot = request_batch_root({ leaves });
     const requests = records.map((record, index) => {
         const witness = request_witness({ leaves, index });
+        if (witness.root !== batchRoot)
+            throw new Error(
+                `Request ${index}: witness root ${witness.root} is not the batch root ${batchRoot}`
+            );
         return {
             ...record,
             index,
@@ -204,7 +214,7 @@ async function collectVectors(
         noriSnapshot: await snapshot.getAddress(),
         proofQueue: queueAddress,
         batch: {
-            root: requests[0].root,
+            root: batchRoot,
             inputQueueCursor: Number(inputQueueCursor),
             outputQueueCursor: Number(outputQueueCursor),
             outputBlockNumber,

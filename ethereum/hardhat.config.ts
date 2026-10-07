@@ -63,6 +63,10 @@ const networks: NonNullable<HardhatUserConfig['networks']> = {
             url:
                 process.env.ETH_MAINNET_FORK_RPC_URL ||
                 DEFAULT_MAINNET_FORK_RPC_URL,
+            // Pin it for reproducible gas figures; needs an archive RPC
+            ...(process.env.ETH_MAINNET_FORK_BLOCK && {
+                blockNumber: BigInt(process.env.ETH_MAINNET_FORK_BLOCK),
+            }),
         },
     },
 };

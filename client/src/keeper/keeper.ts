@@ -26,7 +26,8 @@ import {
     type Solana,
 } from './solana.js';
 
-// Backstop error codes the keeper treats as "nothing to do"
+// Backstop error codes the keeper treats as "nothing to do" (pinned by
+// programs/backstop/tests/instruction_fixture.rs)
 const ERR_READ_NOT_NEWER = 6005;
 const ERR_CHECKPOINT_TOO_SOON = 6006;
 
@@ -80,6 +81,12 @@ export class Keeper {
 
     /** Creates each configured guard that does not exist yet; the keeper key is its admin. */
     async createGuards() {
+        const { noriProgram } = this.config.solana;
+        const noriState = await findNoriStateAddress(noriProgram);
+        if (!(await this.solana.accountData(noriState)))
+            throw new Error(
+                `Nori program ${noriProgram} has no state at ${noriState}; initialize it before creating guards`
+            );
         for (const guard of this.config.guards) {
             const address = await this.guardAddress(guard);
             if (await this.solana.accountData(address)) {
@@ -138,12 +145,18 @@ export class Keeper {
                 this.log(`${guard.name}: checkpoint`);
             } catch (error) {
                 if (customErrorCode(error) !== ERR_CHECKPOINT_TOO_SOON)
-                    throw error;
+                    this.log(
+                        `${guard.name}: checkpoint failed: ${errorMessage(error)}`
+                    );
             }
         }
     }
 
-    /** Submits every pending snapshot's reads whose batch is proven. */
+    /**
+     * Submits every pending snapshot's reads whose batch is proven. A failed
+     * read is logged and retried next round; it never blocks other guards or
+     * snapshots.
+     */
     async submit() {
         const state = this.loadState();
         const stillPending: string[] = [];
@@ -156,42 +169,64 @@ export class Keeper {
         }
         this.saveState({ pending: stillPending });
         if (stillPending.length)
-            this.log(`${stillPending.length} snapshot(s) waiting for a proof`);
+            this.log(
+                `${stillPending.length} snapshot(s) pending: waiting for a proof or retrying`
+            );
+    }
+
+    /** True once every guard's reads of the snapshot are applied. */
+    private async submitSnapshot(snapshotTxHash: string): Promise<boolean> {
+        let done = true;
+        for (const guard of this.config.guards) {
+            try {
+                const proven = await this.submitGuardReads(
+                    snapshotTxHash,
+                    guard
+                );
+                if (!proven) return false; // the batch is the same for every guard
+            } catch (error) {
+                this.log(
+                    `${guard.name}: snapshot ${snapshotTxHash} failed: ${errorMessage(error)}`
+                );
+                done = false;
+            }
+        }
+        return done;
     }
 
     /** Returns false while the snapshot's batch is not proven yet. */
-    private async submitSnapshot(snapshotTxHash: string): Promise<boolean> {
-        for (const guard of this.config.guards) {
-            const reads: Array<{ kind: ReadKind; query: QueryConfig }> = [
-                { kind: ReadKind.Backing, query: guard.backing },
-            ];
-            if (guard.pause)
-                reads.push({ kind: ReadKind.Pause, query: guard.pause });
-            for (const { kind, query } of reads) {
-                const read = await fetchSnapshotRead({
-                    rpc: this.solana.rpc,
-                    provider: this.provider,
-                    noriSnapshot: this.config.ethereum.noriSnapshot,
-                    proofQueue: this.config.ethereum.proofQueue,
-                    snapshotTxHash,
-                    queryId: queryOf(query).queryId,
-                    noriProgram: this.config.solana.noriProgram,
-                });
-                if (!read.proven) return false;
-                try {
-                    await this.solana.send(
-                        submitReadInstruction({
-                            guard: await this.guardAddress(guard),
-                            mint: guard.mint,
-                            proofQueueBatch: read.proofQueueBatch,
-                            kind,
-                            witness: read.witness,
-                        })
-                    );
-                } catch (error) {
-                    if (customErrorCode(error) !== ERR_READ_NOT_NEWER)
-                        throw error;
-                }
+    private async submitGuardReads(
+        snapshotTxHash: string,
+        guard: GuardEntry
+    ): Promise<boolean> {
+        const reads: Array<{ kind: ReadKind; query: QueryConfig }> = [
+            { kind: ReadKind.Backing, query: guard.backing },
+        ];
+        if (guard.pause)
+            reads.push({ kind: ReadKind.Pause, query: guard.pause });
+        for (const { kind, query } of reads) {
+            const read = await fetchSnapshotRead({
+                rpc: this.solana.rpc,
+                provider: this.provider,
+                noriSnapshot: this.config.ethereum.noriSnapshot,
+                proofQueue: this.config.ethereum.proofQueue,
+                snapshotTxHash,
+                queryId: queryOf(query).queryId,
+                noriProgram: this.config.solana.noriProgram,
+            });
+            if (!read.proven) return false;
+            try {
+                await this.solana.send(
+                    submitReadInstruction({
+                        guard: await this.guardAddress(guard),
+                        mint: guard.mint,
+                        proofQueueBatch: read.proofQueueBatch,
+                        kind,
+                        witness: read.witness,
+                    })
+                );
+            } catch (error) {
+                if (customErrorCode(error) !== ERR_READ_NOT_NEWER) throw error;
             }
         }
         return true;
@@ -275,4 +310,8 @@ export class Keeper {
             );
         }
     }
+}
+
+function errorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
 }

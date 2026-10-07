@@ -43,7 +43,7 @@ while [ $# -gt 0 ]; do
 done
 
 REPO=$(cd "$(dirname "$0")/.." && pwd)
-W=$(mktemp -d -t nori-dry-run)
+W=$(mktemp -d "${TMPDIR:-/tmp}/nori-dry-run.XXXXXX")  # GNU and BSD mktemp
 ETH_URL=http://127.0.0.1:18545
 SOL_URL=http://127.0.0.1:18899
 SOL_WS=ws://127.0.0.1:18900

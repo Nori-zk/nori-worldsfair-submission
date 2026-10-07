@@ -20,9 +20,17 @@ import {
 import { NoriProofRequestQueue__factory } from '@nori-zk/ethereum-solana-bridge';
 import { request_batch_root, type RequestLeaf } from '@nori-zk/nori-hash-utils';
 import { findNoriStateAddress } from '../backstop.js';
-import { loadConfig } from '../keeper/config.js';
+import { loadConfig, loadEnv } from '../keeper/config.js';
 
-const config = loadConfig(process.argv[2] ?? 'keeper.json');
+loadEnv();
+const config = loadConfig(process.argv[2] ?? 'keeper.demo.json');
+const { hostname } = new URL(config.solana.rpcUrl);
+if (!['127.0.0.1', 'localhost'].includes(hostname)) {
+    console.error(
+        `fake-prover only runs against a local surfpool, not ${hostname}`
+    );
+    process.exit(1);
+}
 const provider = new JsonRpcProvider(config.ethereum.rpcUrl);
 const rpc = createSolanaRpc(config.solana.rpcUrl);
 const noriProgram = config.solana.noriProgram;
