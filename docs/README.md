@@ -37,4 +37,8 @@ Edit the `.drawio` files in [draw.io](https://app.diagrams.net); the `.drawio.pn
 | Demo mint (devnet)         | [`Fhw5m3W34LuGNNuTWxHu8wVbre7wUE445hxir3Xwcbhi`](https://explorer.solana.com/address/Fhw5m3W34LuGNNuTWxHu8wVbre7wUE445hxir3Xwcbhi?cluster=devnet) |
 | Demo guard (devnet)        | [`E8M7dU4Dp3j6AE3FnFv6fNJXp5tBg3xEUw1xg4eF7PYD`](https://explorer.solana.com/address/E8M7dU4Dp3j6AE3FnFv6fNJXp5tBg3xEUw1xg4eF7PYD?cluster=devnet) |
 
+Measured on 7 Oct (real proofs): a snapshot is provable on Solana 14–19 min after its
+Ethereum block; Nori's `update` with a request costs ~110k CU and `submit_read` ~17k CU.
+The Sepolia drain (223.52) tripped the guard; a refill to 40,300 plus a pause kept it tripped.
+
 `npm run keeper -w client -- status` shows how far Nori has proven the queue, and the guard's status.
