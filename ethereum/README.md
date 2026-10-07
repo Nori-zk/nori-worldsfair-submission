@@ -20,7 +20,8 @@ Result leaf: `sha256(0x00 ++ queryId ++ result)`, where
 
 - pin the Nori program, the `NoriSnapshot` address and its query ids;
 - reject stale snapshots, and track the newest block per query (old snapshots stay valid);
-- avoid views a flash loan can move within one transaction.
+- avoid views a flash loan can move within one transaction;
+- pin only targets whose views it trusts: Nori proves what a contract returned, so a precompile or an upgradeable contract proves whatever its code (or admin) makes it return.
 
 `nori-read` does the rest. `snapshotProof.ts` is the TS mirror.
 

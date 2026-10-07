@@ -19,7 +19,8 @@ The witness is built off-chain from the `Snapshot` event and the queue
 Your program must:
 
 - pin the Nori program, the `NoriSnapshot` address and the query ids it acts on (never take them from the caller);
-- reject stale results, and keep the newest `eth_block_number` per query: old snapshots stay valid.
+- reject stale results, and keep the newest `eth_block_number` per query: old snapshots stay valid;
+- query only contracts whose views it trusts: a result is proven to be what the contract returned, not that it is true. A precompile or an upgradeable contract returns whatever its code or admin decides.
 
 `verify_snapshot_result` checks the batch account's owner, the leaf against the
 batch root (target, keys, top-bit sentinel, nonzero index and time), then the
