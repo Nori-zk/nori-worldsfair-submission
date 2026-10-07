@@ -16,10 +16,10 @@
 | [client/README.md](../client/README.md)                                         | Sample client, keeper CLI and the local dry run                                   |
 | [test-vectors/nori-snapshot/README.md](../test-vectors/nori-snapshot/README.md) | Test data shared by the TS and Rust tests                                         |
 
-Upstream: the Nori SDK at the pinned release (npm 0.0.5, git `a712825`)
-[README](https://github.com/Nori-zk/nori-solana-sdk/blob/a712825fc660352f75e346da43998256e739f860/README.md),
-[TypeScript SDK](https://github.com/Nori-zk/nori-solana-sdk/blob/a712825fc660352f75e346da43998256e739f860/sdk/README.md) and
-[deployment runbook](https://github.com/Nori-zk/nori-solana-sdk/blob/a712825fc660352f75e346da43998256e739f860/DEPLOYMENT.md),
+Upstream: the Nori SDK at the pinned release (npm 0.0.5, git `8e0b0fb`)
+[README](https://github.com/Nori-zk/nori-solana-sdk/blob/8e0b0fbe4ff5018a9a7e72a6acd4fdc398b7b7de/README.md),
+[TypeScript SDK](https://github.com/Nori-zk/nori-solana-sdk/blob/8e0b0fbe4ff5018a9a7e72a6acd4fdc398b7b7de/sdk/README.md) and
+[deployment runbook](https://github.com/Nori-zk/nori-solana-sdk/blob/8e0b0fbe4ff5018a9a7e72a6acd4fdc398b7b7de/DEPLOYMENT.md),
 and the [bridge-head (prover) README](https://github.com/Nori-zk/nori-bridge-head/blob/FEAT/solana-bridge-sepolia-glamsterdam/README.md).
 
 ## Diagrams

@@ -16,7 +16,7 @@ Product spec: `../NORI-backstop-spec.md` (outside the repo).
 | `programs/backstop/`          | Guards: proven backing vs Solana supply ([diagram](docs/backstop-guard.drawio.png))                                                                                                                                           |
 | `scripts/`                    | `dry-run.sh` (local loop, fake prover), `deploy-devnet.sh` (Backstop + demo mint), `soak.sh` (keeper for hours, then `report.md`)                                                                                             |
 | `client/`                     | Sample TS client and keeper CLI (`npm run keeper`). Encoders are pinned to Rust bytes. `fake-prover` is for local dry runs only. Tests run with `node --test` on the build, since the wasm hasher breaks jest                 |
-| `test-harness/`               | Surfpool helpers for program tests (deploy, plant accounts, time travel)                                                                                                                                                      |
+| `test-harness/`               | Test context for the program tests (validator, client, payer, Anchor events) over the sdk's `test-utils` (deploy, plant accounts, time travel, send)                                                                          |
 | (no submodules)               | The Nori SDK is the npm packages `@nori-zk/nori-bridge-solana-sdk`, `@nori-zk/ethereum-solana-bridge`, `@nori-zk/ethereum-solana-proof-queue-utils-glam` and, for Rust, `token` and `test-utils` from the sdk repo by git rev |
 
 ## Commands
@@ -38,7 +38,7 @@ cargo fmt --all --check
 
 ## Quirks
 
-- One sdk release everywhere: the npm versions in `client/` and `ethereum/` `package.json` (exact, no ranges) and the cargo `rev` in `nori-read/` and `test-harness/` `Cargo.toml` (the commit the npm release was published from). Bump them together; `Cargo.lock` then changes only those sources.
+- One sdk release everywhere: the npm versions in `client/` and `ethereum/` `package.json` (exact, no ranges) and the cargo `rev` in `nori-read/` and `test-harness/` `Cargo.toml` (an sdk commit whose TypeScript is that npm release: now `8e0b0fb`, npm 0.0.5 plus the `test-utils` helpers). Bump them together; `Cargo.lock` then changes only those sources.
 - Node 23 needs `--experimental-wasm-modules` for the hashing wasm (`@nori-zk/ethereum-solana-proof-queue-utils-glam`); the test scripts set it.
 - Toolchain: solana-cli (Agave) 3.1.x with platform-tools v1.54 (SBF rustc 1.89). That's what the tests ran on.
 - `cargo build-sbf` ignores `--locked`: if `Cargo.lock` drifts from `Cargo.toml`, it re-resolves (e.g. to alloy 1.8, which needs rustc 1.91) and fails with "requires rustc 1.91". `cargo metadata --locked` checks the lock; the scripts run it first.

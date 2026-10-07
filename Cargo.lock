@@ -4937,27 +4937,27 @@ checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
 name = "test-harness"
 version = "0.1.0"
 dependencies = [
- "alloy-primitives",
  "anchor-lang",
- "base64 0.22.1",
- "serde_json",
  "solana-keypair",
- "solana-message",
  "solana-rpc-client",
  "solana-signer",
- "solana-transaction",
  "test-utils",
 ]
 
 [[package]]
 name = "test-utils"
 version = "0.1.0"
-source = "git+https://github.com/Nori-zk/nori-solana-sdk?rev=a712825fc660352f75e346da43998256e739f860#a712825fc660352f75e346da43998256e739f860"
+source = "git+https://github.com/Nori-zk/nori-solana-sdk?rev=8e0b0fbe4ff5018a9a7e72a6acd4fdc398b7b7de#8e0b0fbe4ff5018a9a7e72a6acd4fdc398b7b7de"
 dependencies = [
+ "base64 0.22.1",
  "serde_json",
+ "solana-instruction 3.5.1",
  "solana-keypair",
+ "solana-message",
+ "solana-pubkey 3.0.0",
  "solana-rpc-client",
  "solana-signer",
+ "solana-transaction",
  "tokio",
 ]
 
@@ -5020,7 +5020,7 @@ checksum = "fd3ca314f692efd6c868f8408f53fe444634a845f96c028b97d35f6a1f79f0ee"
 [[package]]
 name = "token"
 version = "0.1.0"
-source = "git+https://github.com/Nori-zk/nori-solana-sdk?rev=a712825fc660352f75e346da43998256e739f860#a712825fc660352f75e346da43998256e739f860"
+source = "git+https://github.com/Nori-zk/nori-solana-sdk?rev=8e0b0fbe4ff5018a9a7e72a6acd4fdc398b7b7de#8e0b0fbe4ff5018a9a7e72a6acd4fdc398b7b7de"
 dependencies = [
  "alloy-primitives",
  "anchor-lang",
