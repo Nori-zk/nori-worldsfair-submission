@@ -1,12 +1,14 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { Contract, FetchRequest, JsonRpcProvider, Wallet } from 'ethers';
+import { FetchRequest, JsonRpcProvider, Wallet } from 'ethers';
 import { NoriSnapshot__factory } from '@nori-zk/ethereum-snapshot';
+import { NoriProofRequestQueue__factory } from '@nori-zk/ethereum-solana-bridge';
+import { fetchBridgeState } from '@nori-zk/nori-bridge-solana-sdk';
+import { findStatePda } from '@nori-zk/nori-bridge-solana-sdk/program';
 import {
     checkpointInstruction,
     createGuardInstruction,
     decodeGuard,
     findGuardAddress,
-    findNoriStateAddress,
     guardStatus,
     ReadKind,
     submitReadInstruction,
@@ -85,7 +87,7 @@ export class Keeper {
     /** Creates each configured guard that does not exist yet; the keeper key is its admin. */
     async createGuards() {
         const { noriProgram } = this.config.solana;
-        const noriState = await findNoriStateAddress(noriProgram);
+        const [noriState] = await findStatePda({ programAddress: noriProgram });
         if (!(await this.solana.accountData(noriState)))
             throw new Error(
                 `Nori program ${noriProgram} has no state at ${noriState}; initialize it before creating guards`
@@ -280,26 +282,24 @@ export class Keeper {
     private async statusLines(): Promise<string[]> {
         const lines: string[] = [];
         const now = BigInt(Math.floor(Date.now() / 1000));
-        const queue = new Contract(
+        const { noriProgram } = this.config.solana;
+        const queue = NoriProofRequestQueue__factory.connect(
             this.config.ethereum.proofQueue,
-            ['function head() view returns (uint256)'],
             this.provider
         );
         const [nori, requests] = await Promise.all([
-            this.solana.accountData(
-                await findNoriStateAddress(this.config.solana.noriProgram)
+            fetchBridgeState(this.solana.rpc, noriProgram).catch(
+                (): null => null
             ),
-            queue.getFunction('head')() as Promise<bigint>,
+            queue.head(),
         ]);
         if (nori) {
-            // NoriSolTokenBridge: latest_head at 72, queue_cursor at 184, batch count at 192
-            const view = new DataView(nori.buffer, nori.byteOffset);
             lines.push(
-                `nori: beacon slot ${view.getBigUint64(72, true)} | ${view.getBigUint64(184, true)} of ${requests} queue requests proven` +
-                    ` | ${view.getBigUint64(192, true)} batches | ${this.loadState().pending.length} snapshot(s) waiting`
+                `nori: beacon slot ${nori.latestHead} | ${nori.queueCursor} of ${requests} queue requests proven` +
+                    ` | ${nori.proofQueueBatchCount} batches | ${this.loadState().pending.length} snapshot(s) waiting`
             );
         } else {
-            lines.push(`nori: no state for ${this.config.solana.noriProgram}`);
+            lines.push(`nori: no state for ${noriProgram}`);
         }
         for (const guard of this.config.guards) {
             const address = await this.guardAddress(guard);

@@ -8,6 +8,7 @@ import {
     type Instruction,
 } from '@solana/kit';
 import { concat, getBytes, sha256, toUtf8Bytes } from 'ethers';
+import { findStatePda } from '@nori-zk/nori-bridge-solana-sdk/program';
 import type { SnapshotResultWitnessArgs } from './snapshotWitness.js';
 
 export const BACKSTOP_PROGRAM = address(
@@ -157,17 +158,6 @@ export async function findGuardAddress(
     return pda;
 }
 
-/** The Nori program's bridge state PDA: `[b"STATE"]`. */
-export async function findNoriStateAddress(
-    noriProgram: Address
-): Promise<Address> {
-    const [pda] = await getProgramDerivedAddress({
-        programAddress: noriProgram,
-        seeds: [toUtf8Bytes('STATE')],
-    });
-    return pda;
-}
-
 const SYSTEM_PROGRAM = address('11111111111111111111111111111111');
 
 /** `create_guard`: `admin` pays and becomes the guard's admin. */
@@ -182,9 +172,11 @@ export async function createGuardInstruction(accounts: {
             { address: accounts.admin, role: AccountRole.WRITABLE_SIGNER },
             { address: accounts.mint, role: AccountRole.READONLY },
             {
-                address: await findNoriStateAddress(
-                    accounts.config.noriProgram
-                ),
+                address: (
+                    await findStatePda({
+                        programAddress: accounts.config.noriProgram,
+                    })
+                )[0],
                 role: AccountRole.READONLY,
             },
             {
