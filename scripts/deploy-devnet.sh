@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-# Solana side of the demo: deploys Backstop (or upgrades it) and, once, creates
-# the demo mint holding 116,700 tokens (9 decimals). Writes BACKSTOP_DEMO_MINT
-# to .env.nori-sol-demo, which the keeper reads.
+# Solana side of the demo: deploys Backstop (or upgrades it, when the build
+# differs) and, once, creates a demo mint holding 116,700 tokens (9 decimals).
+# Writes the mint to .env.nori-sol-demo, which the keeper reads.
 #
 # Usage: scripts/deploy-devnet.sh
+#        MINT_VAR=BACKSTOP_SHADOW_MINT scripts/deploy-devnet.sh   # a second mint
+#        (MINT_VAR names the variable; default BACKSTOP_DEMO_MINT)
 # Reads SOLANA_RPC_NETWORK_URL and SOLANA_PAYER_KEYPAIR_PATH from the shell or
 # .env. The payer becomes Backstop's upgrade authority and the mint authority.
 # Refuses any cluster but devnet or a local validator. NORI_SOL_ENV_DIR
@@ -13,6 +15,8 @@ set -euo pipefail
 
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 SUPPLY=116700
+MINT_VAR=${MINT_VAR:-BACKSTOP_DEMO_MINT}
+[[ "$MINT_VAR" =~ ^[A-Z_][A-Z0-9_]*$ ]] || { echo "Invalid MINT_VAR: $MINT_VAR"; exit 1; }
 export CFLAGS=${CFLAGS:-"-isystem $HOME/.cache/solana/v1.54/platform-tools/llvm/sbpf/include"}
 
 # The shell wins; otherwise the last line in .env that sets it
@@ -50,32 +54,43 @@ if ! BUILD=$(cargo build-sbf --manifest-path "$REPO/programs/backstop/Cargo.toml
 fi
 echo "$BUILD" | grep -E "Finished" || true
 
-# An upgrade to a bigger binary must grow the program account first, by at
-# least 10,240 bytes (the loader's minimum; the CLI only asks for the difference)
+# Skip the upgrade when the deployed program is this build (an upgrade
+# briefly locks ~1.8 SOL in a buffer)
 SO_LEN=$(wc -c <"$REPO/target/deploy/backstop.so" | tr -d ' ')
-DEPLOYED_LEN=$(solana program show "$BACKSTOP" -u "$URL" 2>/dev/null | awk '/Data Length/ {print $3}' || true)
-if [ -n "$DEPLOYED_LEN" ] && [ "$SO_LEN" -gt "$DEPLOYED_LEN" ]; then
-    EXTRA=$((SO_LEN - DEPLOYED_LEN))
-    [ "$EXTRA" -ge 10240 ] || EXTRA=10240
-    echo "Extending Backstop by $EXTRA bytes ($DEPLOYED_LEN -> $SO_LEN needed)"
-    solana program extend "$BACKSTOP" "$EXTRA" -k "$PAYER" -u "$URL"
+DEPLOYED_SO=$(mktemp "${TMPDIR:-/tmp}/backstop-deployed.XXXXXX")
+if solana program dump "$BACKSTOP" "$DEPLOYED_SO" -u "$URL" >/dev/null 2>&1 &&
+    head -c "$SO_LEN" "$DEPLOYED_SO" | cmp -s - "$REPO/target/deploy/backstop.so"; then
+    echo "Backstop $BACKSTOP is up to date"
+else
+    # An upgrade to a bigger binary must grow the program account first, by at
+    # least 10,240 bytes (the loader's minimum; the CLI only asks for the difference)
+    DEPLOYED_LEN=$(solana program show "$BACKSTOP" -u "$URL" 2>/dev/null | awk '/Data Length/ {print $3}' || true)
+    if [ -n "$DEPLOYED_LEN" ] && [ "$SO_LEN" -gt "$DEPLOYED_LEN" ]; then
+        EXTRA=$((SO_LEN - DEPLOYED_LEN))
+        [ "$EXTRA" -ge 10240 ] || EXTRA=10240
+        echo "Extending Backstop by $EXTRA bytes ($DEPLOYED_LEN -> $SO_LEN needed)"
+        solana program extend "$BACKSTOP" "$EXTRA" -k "$PAYER" -u "$URL"
+    fi
+    echo "Deploying Backstop $BACKSTOP"
+    solana program deploy "$REPO/target/deploy/backstop.so" --program-id "$PROGRAM_KEYPAIR" \
+        -k "$PAYER" --upgrade-authority "$PAYER" -u "$URL"
 fi
+rm -f "$DEPLOYED_SO"
 
-echo "Deploying Backstop $BACKSTOP"
-solana program deploy "$REPO/target/deploy/backstop.so" --program-id "$PROGRAM_KEYPAIR" \
-    -k "$PAYER" --upgrade-authority "$PAYER" -u "$URL"
-
-MINT=$( [ -f "$OUT" ] && grep -E "^BACKSTOP_DEMO_MINT=" "$OUT" | cut -d= -f2- || true)
+MINT=$( [ -f "$OUT" ] && grep -E "^$MINT_VAR=" "$OUT" | cut -d= -f2- || true)
 if [ -n "$MINT" ]; then
-    echo "Demo mint $MINT exists ($OUT); supply $(spl-token supply "$MINT" -u "$URL")"
+    echo "$MINT_VAR $MINT exists ($OUT); supply $(spl-token supply "$MINT" -u "$URL")"
     exit 0
 fi
 
-echo "Creating the demo mint"
+echo "Creating a demo mint for $MINT_VAR"
 MINT=$(spl-token create-token --decimals 9 --mint-authority "$PAYER" --fee-payer "$PAYER" \
     -u "$URL" --output json | python3 -c 'import json, sys; print(json.load(sys.stdin)["commandOutput"]["address"])')
 ACCOUNT=$(spl-token create-account "$MINT" --owner "$PAYER" --fee-payer "$PAYER" -u "$URL" \
     | awk '/Creating account/ {print $3}')
 spl-token mint "$MINT" "$SUPPLY" "$ACCOUNT" --mint-authority "$PAYER" --fee-payer "$PAYER" -u "$URL" >/dev/null
-printf '# Written by scripts/deploy-devnet.sh\nBACKSTOP_DEMO_MINT=%s\n' "$MINT" >"$OUT"
-echo "Demo mint $MINT, supply $(spl-token supply "$MINT" -u "$URL") -> $OUT"
+# Set MINT_VAR in the output file, keeping its other lines
+{ [ -f "$OUT" ] && grep -v "^$MINT_VAR=" "$OUT" || echo "# Written by scripts/deploy-devnet.sh"; } >"$OUT.tmp"
+echo "$MINT_VAR=$MINT" >>"$OUT.tmp"
+mv "$OUT.tmp" "$OUT"
+echo "$MINT_VAR $MINT, supply $(spl-token supply "$MINT" -u "$URL") -> $OUT"

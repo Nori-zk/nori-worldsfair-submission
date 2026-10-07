@@ -17,6 +17,18 @@ The default config, `keeper.demo.json`, takes its `${VARS}` from the repo's `.en
 and the deploy outputs (see the root README, "Deploy"); an empty value counts as unset.
 `ETH_PRIVATE_KEY` signs the snapshot transactions. Another config: pass its path last.
 
+## Overnight soak (a second, untouched guard)
+
+`keeper.soak.json` runs the demo guard plus a shadow guard over a lockbox nobody
+touches; the shadow guard should stay HEALTHY all night.
+
+```sh
+npm run deploy-demo -w ethereum -- 116723.52 --env-var NORI_ETH_SHADOW_LOCKBOX_ADDRESS
+MINT_VAR=BACKSTOP_SHADOW_MINT scripts/deploy-devnet.sh
+npm run keeper -w client -- create-guards keeper.soak.json
+caffeinate -i npm run keeper -w client -- run keeper.soak.json 2>&1 | tee soak.log   # macOS: stay awake
+```
+
 ## Local dry run (no prover, no testnet)
 
 ```sh

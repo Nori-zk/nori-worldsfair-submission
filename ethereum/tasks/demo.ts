@@ -1,4 +1,4 @@
-import { writeFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { task } from 'hardhat/config';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -13,6 +13,16 @@ const ENV_FILE = path.join(
         path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'),
     '.env.nori-eth-demo'
 );
+
+/** Sets `name=value` in an env file, keeping its other lines. */
+function setEnvVar(file: string, name: string, value: string) {
+    const kept = existsSync(file)
+        ? readFileSync(file, 'utf8')
+              .split('\n')
+              .filter((line) => line && !line.startsWith(`${name}=`))
+        : [];
+    writeFileSync(file, [...kept, `${name}=${value}`].join('\n') + '\n');
+}
 
 /** DemoLockbox fakes a drain on demand, so it never runs on Ethereum mainnet. */
 async function refuseMainnet(provider: {
@@ -33,18 +43,23 @@ export const deployDemo = task(
         description: 'Initial locked amount, in tokens (18 decimals)',
         defaultValue: '116723.52',
     })
+    .addOption({
+        name: 'envVar',
+        description:
+            'Variable that gets the address in .env.nori-eth-demo (e.g. a second, untouched lockbox)',
+        defaultValue: 'NORI_ETH_DEMO_LOCKBOX_ADDRESS',
+    })
     .setAction(async () => ({
-        default: async ({ locked }, hre) => {
+        default: async ({ locked, envVar }, hre) => {
+            if (!/^[A-Z_][A-Z0-9_]*$/.test(envVar))
+                throw new Error(`Invalid --env-var: ${envVar}`);
             const { ethers } = await hre.network.getOrCreate();
             await refuseMainnet(ethers.provider);
             const factory = await ethers.getContractFactory('DemoLockbox');
             const lockbox = await factory.deploy(ethers.parseEther(locked));
             await lockbox.waitForDeployment();
             const address = await lockbox.getAddress();
-            writeFileSync(
-                ENV_FILE,
-                `NORI_ETH_DEMO_LOCKBOX_ADDRESS=${address}\n`
-            );
+            setEnvVar(ENV_FILE, envVar, address);
 
             logger.log(`DemoLockbox deployed to ${address}, locked ${locked}`);
             for (const signature of ['locked()', 'paused()']) {
@@ -53,7 +68,7 @@ export const deployDemo = task(
                     `query ${signature}: target ${address}, queryId ${queryIdOf(address, data)}`
                 );
             }
-            logger.log(`Wrote ${ENV_FILE}`);
+            logger.log(`Wrote ${envVar} to ${ENV_FILE}`);
         },
     }))
     .build();
