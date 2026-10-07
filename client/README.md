@@ -19,15 +19,11 @@ and the deploy outputs (see the root README, "Deploy"); an empty value counts as
 
 ## Overnight soak (a second, untouched guard)
 
-`keeper.soak.json` runs the demo guard plus a shadow guard over a lockbox nobody
-touches; the shadow guard should stay HEALTHY all night.
-
-```sh
-npm run deploy-demo -w ethereum -- 116723.52 --env-var NORI_ETH_SHADOW_LOCKBOX_ADDRESS
-MINT_VAR=BACKSTOP_SHADOW_MINT scripts/deploy-devnet.sh
-npm run keeper -w client -- create-guards keeper.soak.json
-caffeinate -i npm run keeper -w client -- run keeper.soak.json 2>&1 | tee soak.log   # macOS: stay awake
-```
+`scripts/soak.sh [MINUTES=600] [OUT]` runs the keeper on `keeper.soak.json`: the demo guard
+plus a shadow guard over a lockbox nobody touches, which should stay HEALTHY. The first
+run deploys the shadow lockbox and mint and creates the guards. It logs to
+`OUT/keeper.log` and writes `OUT/report.md` at the end (also when stopped early):
+snapshots, Ethereum block → reads applied, failures, checkpoint gaps, status changes.
 
 ## Local dry run (no prover, no testnet)
 

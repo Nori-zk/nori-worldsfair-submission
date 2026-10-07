@@ -15,4 +15,5 @@ build
 keeper.json
 keeper-state.json
 keeper-soak-state.json
+soak-*/
 *.log
