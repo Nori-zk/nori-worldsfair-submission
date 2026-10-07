@@ -10,6 +10,7 @@ Sample client and keeper CLI. The full client (WSS/rxjs on Nori's infra) comes l
 ```sh
 npm run keeper -- create-guards        # the keeper key is each guard's admin
 npm run keeper -- run                  # or one step: snapshot | checkpoint | submit | status
+npm run keeper -- unlatch              # admin: clear a trip, after a read shows the backing restored
 ```
 
 The default config, `keeper.demo.json`, takes its `${VARS}` from the repo's `.env`

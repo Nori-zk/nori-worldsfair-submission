@@ -4,9 +4,11 @@ import { readFileSync } from 'node:fs';
 import { address } from '@solana/kit';
 import { getBytes } from 'ethers';
 import {
+    checkpointInstruction,
     decodeGuard,
     encodeCreateGuard,
     guardStatus,
+    unlatchInstruction,
     type GuardConfig,
 } from './backstop.js';
 
@@ -35,6 +37,19 @@ test('encodes create_guard exactly as the Rust program does', () => {
     assert.equal(
         hex(encodeCreateGuard(sampleConfig)),
         fixture('create-guard-sample')
+    );
+});
+
+test('encodes checkpoint and unlatch exactly as the Rust program does', () => {
+    const anyAddress = address('5xS32i7XNRk7JCjYR7RgfHVxdLepVSnnJ1gdHkmfD8W1');
+    const accounts = { guard: anyAddress, mint: anyAddress, admin: anyAddress };
+    assert.equal(
+        hex(new Uint8Array(checkpointInstruction(accounts).data ?? [])),
+        fixture('checkpoint')
+    );
+    assert.equal(
+        hex(new Uint8Array(unlatchInstruction(accounts).data ?? [])),
+        fixture('unlatch')
     );
 });
 

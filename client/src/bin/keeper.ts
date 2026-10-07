@@ -9,6 +9,7 @@ const USAGE = `Usage: keeper <command> [config.json]
   checkpoint      record each guard's mint supply
   submit          submit reads of pending snapshots whose batch is proven
   status          print each guard's status
+  unlatch         clear a tripped guard's latch (the keeper key is admin)
   run             all of the above on the configured intervals
 
 Config: keeper.demo.json by default. Its \${VAR}s come from the repo's .env
@@ -21,6 +22,7 @@ const commands = [
     'checkpoint',
     'submit',
     'status',
+    'unlatch',
     'run',
 ];
 if (!command || !commands.includes(command)) {
@@ -45,6 +47,9 @@ switch (command) {
         break;
     case 'status':
         await keeper.status();
+        break;
+    case 'unlatch':
+        await keeper.unlatch();
         break;
     case 'run':
         await keeper.run();

@@ -92,6 +92,21 @@ export function checkpointInstruction(accounts: {
     };
 }
 
+/** `unlatch()`: clears a trip. Only the guard's admin may sign it. */
+export function unlatchInstruction(accounts: {
+    admin: Address;
+    guard: Address;
+}): Instruction {
+    return {
+        programAddress: BACKSTOP_PROGRAM,
+        accounts: [
+            { address: accounts.admin, role: AccountRole.READONLY_SIGNER },
+            { address: accounts.guard, role: AccountRole.WRITABLE },
+        ],
+        data: discriminator('unlatch'),
+    };
+}
+
 /** A guard's settings (Rust `GuardConfig`). */
 export interface GuardConfig {
     noriProgram: Address;

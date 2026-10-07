@@ -66,6 +66,11 @@ fn checkpoint_bytes_match_the_fixture() {
     check("checkpoint", backstop::instruction::Checkpoint {}.data());
 }
 
+#[test]
+fn unlatch_bytes_match_the_fixture() {
+    check("unlatch", backstop::instruction::Unlatch {}.data());
+}
+
 /// A Guard account the TS decoder (`decodeGuard`) reads back.
 #[test]
 fn guard_account_bytes_match_the_fixture() {

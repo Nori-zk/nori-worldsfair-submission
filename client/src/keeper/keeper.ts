@@ -10,6 +10,7 @@ import {
     guardStatus,
     ReadKind,
     submitReadInstruction,
+    unlatchInstruction,
 } from '../backstop.js';
 import { fetchSnapshotRead } from '../fetchSnapshotRead.js';
 import {
@@ -230,6 +231,36 @@ export class Keeper {
             }
         }
         return true;
+    }
+
+    /**
+     * Clears each tripped guard's latch (the keeper key must be its admin).
+     * Unlatch after a proven read shows the backing restored, or the next
+     * read trips it again.
+     */
+    async unlatch() {
+        for (const guard of this.config.guards) {
+            const address = await this.guardAddress(guard);
+            const data = await this.solana.accountData(address);
+            if (!data) {
+                this.log(`${guard.name}: no guard at ${address}`);
+                continue;
+            }
+            const state = decodeGuard(data);
+            if (!state.tripped) {
+                this.log(`${guard.name}: not tripped`);
+                continue;
+            }
+            await this.solana.send(
+                unlatchInstruction({
+                    admin: this.solana.signer.address,
+                    guard: address,
+                })
+            );
+            this.log(
+                `${guard.name}: unlatched (backing ${state.backing} at Ethereum block ${state.backingEthBlock})`
+            );
+        }
     }
 
     /** Prints Nori's progress through the proof queue, then each guard's status. */
