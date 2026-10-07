@@ -60,6 +60,7 @@ Create guards only after that program is initialized: a guard pins it.
 | Keeper, local dry run                                                                    | Built                                          |
 | Live loop on Sepolia + Solana devnet                                                     | Deployed, waiting for the prover's first proof |
 | `enforce`: pause a Token-2022 mint when its guard trips                                  | Roadmap                                        |
+| Separate warn tolerance (in-flight transfers) from the trip tolerance                    | Roadmap (one `tolerance` today)                |
 | Auto-unlatch for Solana-only custody; timelocked admin `unlatch`                         | Roadmap (admin `unlatch` today)                |
 | Check the Solana mint's authority is the expected bridge                                 | Roadmap                                        |
 | Direct storage proofs: any slot, no Ethereum transaction                                 | Roadmap                                        |
