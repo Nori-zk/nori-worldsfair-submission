@@ -40,7 +40,15 @@ BACKSTOP=$(solana-keygen pubkey "$PROGRAM_KEYPAIR")
 echo "Payer $(solana address -k "$PAYER"), balance $(solana balance -k "$PAYER" -u "$URL")"
 
 echo "Building Backstop"
-cargo build-sbf --manifest-path "$REPO/programs/backstop/Cargo.toml" 2>&1 | grep -E "^error|Finished" || true
+# A stale submodule makes cargo re-resolve the lock (build-sbf ignores --locked)
+# into crates the SBF rustc can't build; catch it here with a clear message
+cargo metadata --locked --format-version 1 --manifest-path "$REPO/Cargo.toml" >/dev/null 2>&1 ||
+    { echo "Cargo.lock doesn't match the submodules. After a pull: git submodule update --init --recursive"; exit 1; }
+if ! BUILD=$(cargo build-sbf --manifest-path "$REPO/programs/backstop/Cargo.toml" 2>&1); then
+    echo "$BUILD" | tail -15
+    exit 1
+fi
+echo "$BUILD" | grep -E "Finished" || true
 
 # An upgrade to a bigger binary must grow the program account first, by at
 # least 10,240 bytes (the loader's minimum; the CLI only asks for the difference)

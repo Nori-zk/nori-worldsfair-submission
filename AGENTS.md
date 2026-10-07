@@ -28,10 +28,10 @@ npm run test:fork -w ethereum     # mainnet fork (network)
 npm run vectors -w ethereum       # regenerate test vectors
 npm run lint && npm run format    # eslint; prettier check (format:fix writes)
 
-cargo test -p nori-read
+cargo test --locked -p nori-read
 export CFLAGS="-isystem $HOME/.cache/solana/v1.54/platform-tools/llvm/sbpf/include"
 cargo build-sbf --manifest-path programs/<name>/Cargo.toml
-cargo test -p <program>           # surfpool tests
+cargo test --locked -p <program>  # surfpool tests
 cargo clippy --workspace --all-targets
 cargo fmt -p nori-read -p backstop -p nori-read-example -p test-harness --check  # --all reaches into sdk/
 ```
@@ -41,7 +41,8 @@ cargo fmt -p nori-read -p backstop -p nori-read-example -p test-harness --check 
 - `sdk/node_modules` is a symlink to the root's (made by `postinstall`). Don't `npm install` inside `sdk/`.
 - Build the sdk packages before `ethereum` tests; they deploy the queue from the sdk's artifact.
 - Node 23 needs `--experimental-wasm-modules` for `nori-hash-utils`; the test scripts set it.
-- `Cargo.lock` was seeded from `sdk/Cargo.lock` for its SBF pins. Don't `cargo update` alloy.
+- Toolchain: solana-cli (Agave) 3.1.x with platform-tools v1.54 (SBF rustc 1.89). That's what the tests ran on.
+- `Cargo.lock` mirrors `sdk/Cargo.lock` for the pinned sdk; re-seed it when you bump the submodule. After a pull, `git submodule update --init --recursive`: a stale `sdk` (e.g. pre-Glamsterdam `b3eff92`) makes cargo re-resolve the lock into helios and alloy 1.8 (rustc 1.91), and `cargo build-sbf` fails with "requires rustc 1.91" (it ignores `--locked`). `cargo metadata --locked` checks the lock; the scripts run it first.
 - surfpool must be 1.5 or later (1.0 breaks `solana program deploy`).
 - A Hardhat fork's clock lags real time. Align it (`evm_setNextBlockTimestamp`) before testing guards, or no supply checkpoint falls in the window.
 - Config: one root `.env` (`.env.example`) for Hardhat, the ethereum scripts and the keeper; deploy outputs land in `ethereum/.env.nori-eth-*` and `.env.nori-sol-demo` (`scripts/deploy-devnet.sh`). The shell environment wins over both; `dry-run.sh` blanks the queue settings so it never uses yours.

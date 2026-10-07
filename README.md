@@ -22,9 +22,10 @@ Read Ethereum state from any Solana program, proven instead of relayed.
 
 ```sh
 git clone https://github.com/Nori-zk/nori-worldsfair-submission --recursive
+git submodule update --init --recursive   # after every pull too
 npm install && npm run build
 npm test                 # Ethereum contracts
-cargo test -p nori-read  # Solana-side verification
+cargo test --locked -p nori-read  # Solana-side verification
 scripts/dry-run.sh       # the whole loop on local chains, with a fake prover
 ```
 
