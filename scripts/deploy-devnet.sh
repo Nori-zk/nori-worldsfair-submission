@@ -42,6 +42,17 @@ echo "Payer $(solana address -k "$PAYER"), balance $(solana balance -k "$PAYER" 
 echo "Building Backstop"
 cargo build-sbf --manifest-path "$REPO/programs/backstop/Cargo.toml" 2>&1 | grep -E "^error|Finished" || true
 
+# An upgrade to a bigger binary must grow the program account first, by at
+# least 10,240 bytes (the loader's minimum; the CLI only asks for the difference)
+SO_LEN=$(wc -c <"$REPO/target/deploy/backstop.so" | tr -d ' ')
+DEPLOYED_LEN=$(solana program show "$BACKSTOP" -u "$URL" 2>/dev/null | awk '/Data Length/ {print $3}' || true)
+if [ -n "$DEPLOYED_LEN" ] && [ "$SO_LEN" -gt "$DEPLOYED_LEN" ]; then
+    EXTRA=$((SO_LEN - DEPLOYED_LEN))
+    [ "$EXTRA" -ge 10240 ] || EXTRA=10240
+    echo "Extending Backstop by $EXTRA bytes ($DEPLOYED_LEN -> $SO_LEN needed)"
+    solana program extend "$BACKSTOP" "$EXTRA" -k "$PAYER" -u "$URL"
+fi
+
 echo "Deploying Backstop $BACKSTOP"
 solana program deploy "$REPO/target/deploy/backstop.so" --program-id "$PROGRAM_KEYPAIR" \
     -k "$PAYER" --upgrade-authority "$PAYER" -u "$URL"
