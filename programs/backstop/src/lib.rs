@@ -106,7 +106,11 @@ pub mod backstop {
                     proven.eth_block_number > guard.pause_eth_block,
                     BackstopError::ReadNotNewer
                 );
-                guard.paused = !proven.result_u256().is_zero();
+                // An ABI bool is 0 or 1; anything else means the pause query
+                // is misconfigured, and must not latch PAUSED_AT_SOURCE
+                guard.paused = proven
+                    .result_bool()
+                    .ok_or(BackstopError::PauseResultNotBool)?;
                 guard.pause_eth_block = proven.eth_block_number;
                 emit!(PauseRead {
                     guard: guard.key(),
@@ -261,4 +265,6 @@ pub enum BackstopError {
     PausedAtSource,
     #[msg("Tripped: supply exceeded proven backing")]
     Tripped,
+    #[msg("The pause query's result is not a bool")]
+    PauseResultNotBool,
 }

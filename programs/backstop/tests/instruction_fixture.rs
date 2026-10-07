@@ -2,7 +2,7 @@
 //! `UPDATE_FIXTURES=1` rewrites them.
 
 use anchor_lang::{prelude::Pubkey, pubkey, InstructionData};
-use backstop::{GuardConfig, ReadKind};
+use backstop::{BackstopError, GuardConfig, ReadKind};
 use nori_read::test_vectors;
 
 /// Any program id works; a fixed one keeps the fixtures stable when the sdk's
@@ -108,4 +108,12 @@ fn guard_account_bytes_match_the_fixture() {
     let mut data = Vec::new();
     guard.try_serialize(&mut data).unwrap();
     check("guard-account-sample", data);
+}
+
+/// `client/src/keeper/keeper.ts` treats these as "nothing to do". New errors
+/// go at the end of `BackstopError` so the codes never shift.
+#[test]
+fn error_codes_the_keeper_relies_on() {
+    assert_eq!(u32::from(BackstopError::ReadNotNewer), 6005);
+    assert_eq!(u32::from(BackstopError::CheckpointTooSoon), 6006);
 }

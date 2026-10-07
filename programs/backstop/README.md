@@ -12,7 +12,12 @@ A circuit breaker for one bridged asset: a guard compares its Ethereum backing, 
 | `status` / `assert_healthy`  | lenders, via CPI          | Return the status, or fail unless it is HEALTHY                          |
 | `unlatch`                    | admin                     | Clears a trip                                                            |
 
-`submit_read` costs ~17.6k compute units (541-byte transaction).
+`submit_read` costs ~17.6k compute units (541-byte transaction); `assert_healthy` ~3.9k (the Kelp replay test keeps it under 30k).
+
+A guard lives at `[b"guard", mint, admin]` and its config is fixed at creation, so one admin
+has one guard per mint; a new config needs another admin key. Lenders should check the
+guard's config (the account), not just its address. A pause query must return a bool:
+any other word is rejected, so a misconfigured query can't latch PAUSED_AT_SOURCE.
 
 ```sh
 cargo test -p backstop --lib   # the rules: drain, refill, in-flight, burn-unlock, forged mint, stale
