@@ -31,21 +31,25 @@ impl Guard {
         Some(&self.checkpoints[(last % CHECKPOINTS as u64) as usize])
     }
 
-    /// The lowest supply checkpointed in `[eth_time - window, eth_time - skew]`.
+    /// The lowest supply checkpointed in `[eth_time - window, eth_time + window]`,
+    /// if one falls in `[eth_time - window, eth_time - skew]`.
     ///
     /// A Solana mint needs an Ethereum lock before it, so supply up to the
     /// backing's own time can only count tokens that backing covers. The
-    /// minimum absorbs burns whose unlock lands inside the window.
+    /// minimum absorbs burns whose unlock lands before `eth_time`, including a
+    /// burn just before it, which only a later checkpoint sees. Later
+    /// checkpoints can only lower the minimum; the one before `eth_time - skew`
+    /// keeps a verdict from resting on supply minted after the backing.
     pub fn window_min_supply(&self, eth_time: u64) -> Option<u64> {
         let eth_time = eth_time as i64;
-        let from = eth_time - self.config.window_secs as i64;
-        let to = eth_time - self.config.skew_secs as i64;
+        let window = self.config.window_secs as i64;
         let written = self.checkpoint_count.min(CHECKPOINTS as u64) as usize;
-        self.checkpoints[..written]
+        let in_window = self.checkpoints[..written]
             .iter()
-            .filter(|c| c.time >= from && c.time <= to)
-            .map(|c| c.supply)
-            .min()
+            .filter(|c| c.time >= eth_time - window && c.time <= eth_time + window);
+        let before = eth_time - self.config.skew_secs as i64;
+        in_window.clone().any(|c| c.time <= before).then_some(())?;
+        in_window.map(|c| c.supply).min()
     }
 
     /// Records a newer proven backing and trips (latched) when windowed
@@ -199,6 +203,23 @@ mod tests {
     }
 
     #[test]
+    fn a_fast_burn_then_unlock_does_not_trip() {
+        // Burn on Solana at T0 + 10, unlock on Ethereum at T0 + 30, snapshot at
+        // T0 + 40; the first checkpoint after the burn is at T0 + 60
+        let mut g = guard();
+        checkpoints(&mut g, T0 - 600, T0 + 1_200, |t| {
+            if t > T0 {
+                rs_eth(900.0)
+            } else {
+                rs_eth(1_000.0)
+            }
+        });
+
+        assert_eq!(g.apply_backing(rs_eth(900.0), 1, (T0 + 40) as u64), None);
+        assert_eq!(g.status(rs_eth(900.0), T0 + 1_200), Status::Healthy);
+    }
+
+    #[test]
     fn a_forged_solana_mint_warns_then_trips() {
         // 120k forged at T0, backing unchanged at 1,000
         let mut g = guard();
@@ -223,6 +244,8 @@ mod tests {
     fn no_checkpoint_in_the_window_gives_no_verdict() {
         let mut g = guard();
         g.push_checkpoint(T0 - 5_000, rs_eth(1_000_000.0));
+        // Only after the backing's time, e.g. a guard created after the snapshot
+        g.push_checkpoint(T0 + 100, rs_eth(1_000_000.0));
 
         assert_eq!(g.apply_backing(0, 1, T0 as u64), None);
         assert!(!g.tripped);

@@ -223,7 +223,7 @@ async fn kelp_drain_trips_the_guard_and_a_refill_does_not_reset_it() {
         r.h.time_travel(at).await;
         r.h.send(r.checkpoint(), &[]).await.unwrap();
     }
-    // About 20 minutes after the last snapshot, the proofs have landed
+    // 10 minutes after the last snapshot, the proofs have landed
     r.h.time_travel(T0 + 3_600).await;
 
     // Snapshot 1: 116,723.52 rsETH backs 116,700

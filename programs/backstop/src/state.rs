@@ -20,7 +20,7 @@ pub struct GuardConfig {
     /// Supply allowed above backing, in mint units.
     pub tolerance: u64,
     /// A backing read at Ethereum time T is compared with the lowest supply
-    /// checkpoint in [T - window, T - skew].
+    /// checkpoint in [T - window, T + window], given one in [T - window, T - skew].
     pub window_secs: u32,
     pub skew_secs: u32,
     pub checkpoint_interval_secs: u32,

@@ -15,7 +15,7 @@
         <mxCell id="guard" value="&lt;b&gt;Guard&lt;/b&gt; (one per asset)&lt;br&gt;last 64 supply checkpoints&lt;br&gt;proven backing + pause flag&lt;br&gt;newest Ethereum block only" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;" vertex="1" parent="1">
           <mxGeometry x="340" y="110" width="220" height="110" as="geometry" />
         </mxCell>
-        <mxCell id="rule" value="&lt;b&gt;Trip rule&lt;/b&gt; for backing at Ethereum time T:&lt;br&gt;lowest supply in [T-10m, T-1m]&lt;br&gt;&amp;gt; backing + tolerance" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+        <mxCell id="rule" value="&lt;b&gt;Trip rule&lt;/b&gt; for backing at Ethereum time T:&lt;br&gt;lowest supply in [T-10m, T+10m]&lt;br&gt;(with one before T-1m)&lt;br&gt;&amp;gt; backing + tolerance" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
           <mxGeometry x="640" y="60" width="240" height="80" as="geometry" />
         </mxCell>
         <mxCell id="tripped" value="&lt;b&gt;TRIPPED&lt;/b&gt; (latched)&lt;br&gt;a refill does not clear it" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
