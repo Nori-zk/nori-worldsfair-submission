@@ -9,6 +9,9 @@
     "exports": {
         ".": {
             "import": "./build/index.js"
+        },
+        "./read": {
+            "import": "./build/read.js"
         }
     },
     "scripts": {

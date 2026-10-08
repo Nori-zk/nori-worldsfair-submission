@@ -158,3 +158,35 @@ test('encodes submit_read exactly as the Rust program does', async () => {
         fixture
     );
 });
+
+test('encodes read_snapshot_result exactly as the Rust program does', async () => {
+    const { encodeReadSnapshotResult } = await import('./noriRead.js');
+    const drained = vectors.snapshots[1];
+    assert.ok(drained);
+    const balance = drained.results.find((r) => r.name === 'lockbox-balance');
+    assert.ok(balance);
+    const witness = snapshotResultWitness(
+        vectors.noriSnapshot,
+        eventOf(drained),
+        balance.queryId,
+        requestWitnessOf(drained.requestId)
+    );
+    const fixture = readFileSync(
+        new URL(
+            '../../test-vectors/nori-read-example/read-snapshot-result-kelp-drained.hex',
+            import.meta.url
+        ),
+        'utf8'
+    ).trim();
+
+    assert.equal(
+        Buffer.from(
+            encodeReadSnapshotResult(
+                vectors.noriSnapshot,
+                balance.queryId,
+                witness
+            )
+        ).toString('hex'),
+        fixture
+    );
+});

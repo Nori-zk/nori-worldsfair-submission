@@ -3,6 +3,7 @@
 Sample client and keeper CLI, in Node. The browser apps are in [web/](../web/README.md).
 
 - `fetchProvenSnapshot`: snapshot transaction -> the witness for any of its results, once Nori has proven its batch. Reads through the sdk's `createConnections`.
+- `verifySnapshotResult`: verifies one result on Solana by simulating `nori-read-example`'s `read_snapshot_result` (no signature, no fee; the fee payer must be an existing funded account). `@nori-zk/backstop-client/read` exports it without the Backstop encoders, for browsers.
 - `createGuardInstruction`, `submitReadInstruction`, `checkpointInstruction`, `assertHealthyInstruction`, `decodeGuard`: bytes pinned to the Rust program (`test-vectors/backstop`). `BackstopError`: its error codes.
 
 ## Keeper
