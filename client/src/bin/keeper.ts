@@ -13,7 +13,8 @@ const USAGE = `Usage: keeper <command> [--send] [config.json]
                   makes: allowed, or blocked with the error; --send lands it
                   even when it fails and prints the transaction
   unlatch         clear a tripped guard's latch (the keeper key is admin)
-  run             all of the above on the configured intervals
+  run             all of the above on the configured intervals; snapshots
+                  on the heartbeat and as soon as a watched result changes
 
 Config: keeper.demo.json by default. Its \${VAR}s come from the repo's .env
 and the deploy outputs in ethereum/. ETH_PRIVATE_KEY signs Ethereum transactions.`;

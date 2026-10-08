@@ -5,7 +5,9 @@
 #   -> keeper submit_read -> Backstop guard on surfpool
 #
 # Replays the Kelp drain on a demo lockbox: HEALTHY, then TRIPPED, then still
-# TRIPPED after a refill. fake-prover proves nothing; it writes the batch
+# TRIPPED after a refill. `keeper run` snapshots the drain and the refill as
+# soon as the lockbox's results change, and a lender's `assert_healthy` goes
+# from allowed to blocked. fake-prover proves nothing; it writes the batch
 # accounts the real prover's `update` would.
 #
 # Usage: scripts/dry-run.sh [--eth-rpc URL] [--solana-rpc URL] [--yes] [--keep]
@@ -145,7 +147,7 @@ cat >"$W/keeper.json" <<EOF
 {
   "ethereum": { "rpcUrl": "$ETH_URL", "noriSnapshot": "$NORI_ETH_SNAPSHOT_ADDRESS", "proofQueue": "$NORI_ETH_PROOF_QUEUE_ADDRESS" },
   "solana": { "rpcUrl": "$SOL_URL", "keypair": "$PAYER", "noriProgram": "$NORI_PROGRAM" },
-  "intervals": { "snapshotSecs": 120, "checkpointSecs": 10, "pollSecs": 15 },
+  "intervals": { "snapshotSecs": 3600, "checkpointSecs": 10, "pollSecs": 15 },
   "stateFile": "$W/keeper-state.json",
   "guards": [{
     "name": "demo-lockbox", "mint": "$MINT",
@@ -158,7 +160,7 @@ cat >"$W/keeper.json" <<EOF
 EOF
 echo "Keeper config: $W/keeper.json"
 
-keeper() { (cd "$REPO/client" && quiet npm run -s keeper -- "$1" "$W/keeper.json"); }
+keeper() { (cd "$REPO/client" && quiet npm run -s keeper -- "$@" "$W/keeper.json"); }
 prove() { (cd "$REPO/client" && quiet npm run -s fake-prover -- "$W/keeper.json"); }
 demo_set() { (cd "$REPO/ethereum" && quiet npx hardhat --network localfork demoSet "$@" | grep -oE "DemoLockbox: .*\)"); }
 expect_status() {
@@ -166,6 +168,29 @@ expect_status() {
     out=$(keeper status)
     echo "$out"
     if ! grep -q "demo-lockbox: $1 " <<<"$out"; then echo "Expected $1"; exit 1; fi
+}
+# A lender's assert_healthy: expect_assert allowed|"blocked: <Error> (<code>)" [--send]
+expect_assert() {
+    local expected=$1 out
+    shift
+    out=$(keeper assert "$@")
+    echo "$out"
+    if ! grep -q "demo-lockbox: $expected" <<<"$out"; then echo "Expected assert_healthy $expected"; exit 1; fi
+}
+# One round of `keeper run`, stopped once it prints the guard's status. It
+# snapshots only if a watched result changed: expect_round none|"results changed"
+expect_round() {
+    local log=$W/keeper-run.log pid
+    (cd "$REPO/client" && exec node --experimental-wasm-modules build/bin/keeper.js run "$W/keeper.json") >"$log" 2>&1 &
+    pid=$!
+    PIDS+=("$pid")
+    wait_for "keeper run" "grep -q 'demo-lockbox: [A-Z_]* |' '$log'"
+    kill "$pid" 2>/dev/null || true
+    wait "$pid" 2>/dev/null || true
+    quiet cat "$log"
+    if [ "$1" = none ]; then
+        if grep -q " snapshot 0x" "$log"; then echo "Expected no snapshot"; exit 1; fi
+    elif ! grep -q " snapshot 0x.*($1)" "$log"; then echo "Expected a snapshot ($1)"; exit 1; fi
 }
 
 # --------------------------------------------------------------------------
@@ -182,22 +207,28 @@ step "3. The batch is proven (fake-prover stands in for bridge-head + update); t
 prove
 keeper submit
 expect_status HEALTHY
+expect_assert allowed
+echo "keeper run: nothing changed, so no snapshot"
+expect_round none
 
-step "4. Kelp drain: the lockbox drops to 223.52, then snapshot, prove, submit"
+step "4. Kelp drain: the lockbox drops to 223.52; keeper run snapshots on the change, then prove, submit"
 demo_set 223.52
 keeper checkpoint
 sleep 6
-keeper snapshot
+expect_round "results changed"
 prove
 keeper submit
 expect_status TRIPPED
+echo "A lender's assert_healthy, sent: it lands and fails"
+expect_assert "blocked: Tripped (6010)" --send
 
-step "5. The attacker refills to 40,300 and the lockbox pauses: it stays tripped"
+step "5. The attacker refills to 40,300 and the lockbox pauses: snapshotted on the change, it stays tripped"
 demo_set 40300 --paused
 sleep 6
-keeper snapshot
+expect_round "results changed"
 prove
 keeper submit
 expect_status "TRIPPED .*paused true"
+expect_assert "blocked: Tripped (6010)"
 
-say "Done: HEALTHY -> TRIPPED on the drain -> still TRIPPED after the refill"
+say "Done: HEALTHY (assert allowed) -> TRIPPED on the drain, snapshotted on the change (assert blocked) -> still TRIPPED after the refill"

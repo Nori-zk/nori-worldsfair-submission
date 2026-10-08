@@ -71,7 +71,7 @@ scripts/deploy-devnet.sh
 # Keeper: client/keeper.demo.json reads .env and the deploy outputs
 npm run keeper -w client -- create-guards
 npm run keeper -w client -- status   # Nori's progress through the queue, then each guard
-npm run keeper -w client -- run
+npm run keeper -w client -- run      # snapshots on the heartbeat and as soon as a watched result changes
 npm run keeper -w client -- assert   # each guard's assert_healthy, as a lender calls it (--send lands it)
 ```
 

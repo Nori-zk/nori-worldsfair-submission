@@ -52,6 +52,8 @@ const PROVEN_SNAPSHOT_TIMEOUT_MS = 2 * 60_000;
 interface KeeperState {
     /** Snapshot transactions whose reads are not all submitted yet. */
     pending: string[];
+    /** The last snapshot: when it was sent (unix seconds) and its results root. */
+    lastSnapshot?: { sentAt: number; resultsRoot: string };
 }
 
 export class Keeper {
@@ -110,10 +112,10 @@ export class Keeper {
             : { pending: [] };
     }
 
-    private saveState(state: KeeperState) {
+    private saveState(patch: Partial<KeeperState>) {
         writeFileSync(
             this.config.stateFile,
-            JSON.stringify(state, null, 2) + '\n'
+            JSON.stringify({ ...this.loadState(), ...patch }, null, 2) + '\n'
         );
     }
 
@@ -141,11 +143,11 @@ export class Keeper {
         }
     }
 
-    /** One NoriSnapshot transaction covering every configured query. */
-    async snapshot() {
+    /** NoriSnapshot, signed by ETH_PRIVATE_KEY, and every configured query once. */
+    private noriSnapshot() {
         const key = process.env.ETH_PRIVATE_KEY;
         if (!key) throw new Error('Missing env: ETH_PRIVATE_KEY');
-        const snapshot = NoriSnapshot__factory.connect(
+        const contract = NoriSnapshot__factory.connect(
             this.config.ethereum.noriSnapshot,
             new Wallet(key, this.provider)
         );
@@ -157,26 +159,43 @@ export class Keeper {
                 queries.set(queryId, { target, data });
             }
         }
-        const fee = await snapshot.snapshotFee();
-        const tx = await snapshot.snapshot([...queries.values()], {
-            value: fee,
-        });
+        return { contract, queries: [...queries.values()] };
+    }
+
+    /** The results root a snapshot would commit now: it hashes only the query ids and results. */
+    private async resultsRoot(): Promise<string> {
+        const { contract, queries } = this.noriSnapshot();
+        const fee = await contract.snapshotFee();
+        return (await contract.snapshot.staticCall(queries, { value: fee }))
+            .resultsRoot;
+    }
+
+    /** One NoriSnapshot transaction covering every configured query; `reason` goes in the log. */
+    async snapshot(reason?: string) {
+        const { contract, queries } = this.noriSnapshot();
+        const resultsRoot = await this.resultsRoot();
+        const fee = await contract.snapshotFee();
+        const tx = await contract.snapshot(queries, { value: fee });
         // Pending as soon as it is sent: a slow block can't lose it or stall the loop
-        const state = this.loadState();
-        state.pending.push(tx.hash);
-        this.saveState(state);
+        const { pending } = this.loadState();
+        this.saveState({
+            pending: [...pending, tx.hash],
+            lastSnapshot: { sentAt: Date.now() / 1000, resultsRoot },
+        });
         try {
             const receipt = await tx.wait(1, SNAPSHOT_WAIT_MS);
             this.log(
-                `snapshot ${tx.hash}: ${queries.size} queries, block ${receipt?.blockNumber}`
+                `snapshot ${tx.hash}: ${queries.length} queries, block ${receipt?.blockNumber}` +
+                    (reason ? ` (${reason})` : '')
             );
         } catch (error) {
             if (isError(error, 'CALL_EXCEPTION')) {
-                // Reverted (e.g. the queue fee changed): it has no reads
+                // Reverted (e.g. the queue fee changed): it has no reads, and `run` sends another
                 this.saveState({
                     pending: this.loadState().pending.filter(
                         (hash) => hash !== tx.hash
                     ),
+                    lastSnapshot: undefined,
                 });
                 throw new Error(`snapshot ${tx.hash} reverted`);
             }
@@ -408,7 +427,7 @@ export class Keeper {
     async run() {
         const { snapshotSecs, checkpointSecs, pollSecs } =
             this.config.intervals;
-        const last = { checkpoint: 0, snapshot: 0 };
+        const last = { checkpoint: 0 };
         const shown = new Set<string>();
         for (;;) {
             const now = Date.now() / 1000;
@@ -417,16 +436,19 @@ export class Keeper {
                 last.checkpoint = now;
                 jobs.push(['checkpoint', () => this.checkpoint()]);
             }
-            if (now - last.snapshot >= snapshotSecs) {
-                // Only once sent: a failed snapshot retries next round
-                jobs.push([
-                    'snapshot',
-                    async () => {
-                        await this.snapshot();
-                        last.snapshot = now;
-                    },
-                ]);
-            }
+            // The heartbeat, or as soon as a watched result changed. shortcut: a
+            // vault that changes every poll is snapshotted every poll; add a
+            // minimum gap before watching busy vaults
+            jobs.push([
+                'snapshot',
+                async () => {
+                    const last = this.loadState().lastSnapshot;
+                    if (!last || now - last.sentAt >= snapshotSecs)
+                        await this.snapshot('heartbeat');
+                    else if ((await this.resultsRoot()) !== last.resultsRoot)
+                        await this.snapshot('results changed');
+                },
+            ]);
             jobs.push(['submit', () => this.submit(true)]);
             for (const [name, job] of jobs) {
                 try {
