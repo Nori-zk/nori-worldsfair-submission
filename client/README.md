@@ -3,7 +3,7 @@
 Sample client and keeper CLI, in Node. The browser apps are in [web/](../web/README.md).
 
 - `fetchProvenSnapshot`: snapshot transaction -> the witness for any of its results, once Nori has proven its batch. Reads through the sdk's `createConnections`.
-- `createGuardInstruction`, `submitReadInstruction`, `checkpointInstruction`, `decodeGuard`: bytes pinned to the Rust program (`test-vectors/backstop`).
+- `createGuardInstruction`, `submitReadInstruction`, `checkpointInstruction`, `assertHealthyInstruction`, `decodeGuard`: bytes pinned to the Rust program (`test-vectors/backstop`). `BackstopError`: its error codes.
 
 ## Keeper
 
@@ -11,6 +11,7 @@ Sample client and keeper CLI, in Node. The browser apps are in [web/](../web/REA
 npm run keeper -- create-guards        # the keeper key is each guard's admin
 npm run keeper -- run                  # or one step: snapshot | checkpoint | submit | status
 npm run keeper -- unlatch              # admin: clear a trip, after a read shows the backing restored
+npm run keeper -- assert               # each guard's assert_healthy, as a lender calls it: allowed, or blocked: <error> (--send lands it)
 ```
 
 The default config, `keeper.demo.json`, takes its `${VARS}` from the repo's `.env`

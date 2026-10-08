@@ -15,6 +15,8 @@ import {
     type Instruction,
     type KeyPairSigner,
     type RpcTransport,
+    type Signature,
+    type TransactionError,
 } from '@solana/kit';
 
 /** Any RPC call gives up after this, so a hung connection can't stall the keeper. */
@@ -37,6 +39,14 @@ export interface Solana {
     rpc: SolanaRpc;
     signer: KeyPairSigner;
     send(instruction: Instruction): Promise<string>;
+    /** Runs the instruction without landing it. */
+    simulate(
+        instruction: Instruction
+    ): Promise<{ err: TransactionError | null; unitsConsumed?: bigint }>;
+    /** Sends without preflight, so the transaction lands even if it fails. */
+    land(
+        instruction: Instruction
+    ): Promise<{ err: TransactionError | null; signature: string }>;
     accountData(account: Address): Promise<Uint8Array | null>;
 }
 
@@ -49,61 +59,105 @@ export async function connectSolana(
         new Uint8Array(JSON.parse(readFileSync(keypairPath, 'utf8')))
     );
 
+    const signed = async (instruction: Instruction) => {
+        const { value: blockhash } = await rpc
+            .getLatestBlockhash({ commitment: 'confirmed' })
+            .send();
+        const message = pipe(
+            createTransactionMessage({ version: 0 }),
+            (m) => setTransactionMessageFeePayerSigner(signer, m),
+            (m) => setTransactionMessageLifetimeUsingBlockhash(blockhash, m),
+            (m) => appendTransactionMessageInstructions([instruction], m)
+        );
+        const transaction = await signTransactionMessageWithSigners(message);
+        return {
+            signature: getSignatureFromTransaction(transaction),
+            wire: getBase64EncodedWireTransaction(transaction),
+            lastValidBlockHeight: blockhash.lastValidBlockHeight,
+        };
+    };
+
+    /**
+     * Polls the signature until it is confirmed (returns its error, or null)
+     * or its blockhash expires (throws).
+     */
+    const confirmed = async (
+        signature: Signature,
+        lastValidBlockHeight: bigint
+    ): Promise<TransactionError | null> => {
+        for (let expired = false; ;) {
+            const {
+                value: [status],
+            } = await rpc.getSignatureStatuses([signature]).send();
+            if (status?.err) return status.err;
+            if (
+                status?.confirmationStatus === 'confirmed' ||
+                status?.confirmationStatus === 'finalized'
+            )
+                return null;
+            if (expired)
+                throw new Error(
+                    `Transaction ${signature} expired before it was confirmed`
+                );
+            const height = await rpc
+                .getBlockHeight({ commitment: 'confirmed' })
+                .send();
+            // One last status check after the blockhash expires
+            expired = height > lastValidBlockHeight;
+            if (!expired)
+                await new Promise((resolve) =>
+                    setTimeout(resolve, CONFIRM_POLL_MS)
+                );
+        }
+    };
+
     return {
         rpc,
         signer,
         /**
-         * Sends and confirms over plain HTTP: polls the signature until it is
-         * confirmed or its blockhash expires. A preflight failure (e.g. a
+         * Sends and confirms over plain HTTP. A preflight failure (e.g. a
          * custom program error) throws from sendTransaction.
          */
         async send(instruction) {
-            const { value: blockhash } = await rpc
-                .getLatestBlockhash({ commitment: 'confirmed' })
-                .send();
-            const message = pipe(
-                createTransactionMessage({ version: 0 }),
-                (m) => setTransactionMessageFeePayerSigner(signer, m),
-                (m) =>
-                    setTransactionMessageLifetimeUsingBlockhash(blockhash, m),
-                (m) => appendTransactionMessageInstructions([instruction], m)
-            );
-            const transaction =
-                await signTransactionMessageWithSigners(message);
-            const signature = getSignatureFromTransaction(transaction);
+            const { signature, wire, lastValidBlockHeight } =
+                await signed(instruction);
             await rpc
-                .sendTransaction(getBase64EncodedWireTransaction(transaction), {
+                .sendTransaction(wire, {
                     encoding: 'base64',
                     preflightCommitment: 'confirmed',
                 })
                 .send();
-            for (let expired = false; ;) {
-                const {
-                    value: [status],
-                } = await rpc.getSignatureStatuses([signature]).send();
-                if (status?.err)
-                    throw new Error(
-                        `Transaction ${signature} failed: ${JSON.stringify(status.err, (_, v: unknown) => (typeof v === 'bigint' ? Number(v) : v))}`
-                    );
-                if (
-                    status?.confirmationStatus === 'confirmed' ||
-                    status?.confirmationStatus === 'finalized'
-                )
-                    return signature;
-                if (expired)
-                    throw new Error(
-                        `Transaction ${signature} expired before it was confirmed`
-                    );
-                const height = await rpc
-                    .getBlockHeight({ commitment: 'confirmed' })
-                    .send();
-                // One last status check after the blockhash expires
-                expired = height > blockhash.lastValidBlockHeight;
-                if (!expired)
-                    await new Promise((resolve) =>
-                        setTimeout(resolve, CONFIRM_POLL_MS)
-                    );
-            }
+            const err = await confirmed(signature, lastValidBlockHeight);
+            if (err)
+                throw new Error(
+                    `Transaction ${signature} failed: ${transactionErrorText(err)}`
+                );
+            return signature;
+        },
+        async simulate(instruction) {
+            const { wire } = await signed(instruction);
+            const { value } = await rpc
+                .simulateTransaction(wire, {
+                    encoding: 'base64',
+                    commitment: 'confirmed',
+                    replaceRecentBlockhash: true,
+                })
+                .send();
+            return { err: value.err, unitsConsumed: value.unitsConsumed };
+        },
+        async land(instruction) {
+            const { signature, wire, lastValidBlockHeight } =
+                await signed(instruction);
+            await rpc
+                .sendTransaction(wire, {
+                    encoding: 'base64',
+                    skipPreflight: true,
+                })
+                .send();
+            return {
+                signature,
+                err: await confirmed(signature, lastValidBlockHeight),
+            };
         },
         async accountData(account) {
             const { value } = await rpc
@@ -139,4 +193,21 @@ export function customErrorCode(error: unknown): number | undefined {
     if (hex?.[1]) return parseInt(hex[1], 16);
     const custom = /"Custom":\s*(\d+)/.exec(text);
     return custom?.[1] ? Number(custom[1]) : undefined;
+}
+
+/** A transaction error as JSON (its numbers may be bigints). */
+export function transactionErrorText(err: TransactionError): string {
+    return JSON.stringify(err, (_, v: unknown) =>
+        typeof v === 'bigint' ? Number(v) : v
+    );
+}
+
+/** The custom program error code in a transaction error, if it has one. */
+export function customErrorOf(err: TransactionError): number | undefined {
+    if (typeof err !== 'object' || !('InstructionError' in err))
+        return undefined;
+    const [, error] = err.InstructionError;
+    return typeof error === 'object' && 'Custom' in error
+        ? Number(error.Custom)
+        : undefined;
 }

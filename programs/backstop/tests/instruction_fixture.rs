@@ -71,6 +71,14 @@ fn unlatch_bytes_match_the_fixture() {
     check("unlatch", backstop::instruction::Unlatch {}.data());
 }
 
+#[test]
+fn assert_healthy_bytes_match_the_fixture() {
+    check(
+        "assert-healthy",
+        backstop::instruction::AssertHealthy {}.data(),
+    );
+}
+
 /// A Guard account the TS decoder (`decodeGuard`) reads back.
 #[test]
 fn guard_account_bytes_match_the_fixture() {
@@ -115,10 +123,27 @@ fn guard_account_bytes_match_the_fixture() {
     check("guard-account-sample", data);
 }
 
-/// `client/src/keeper/keeper.ts` treats these as "nothing to do". New errors
-/// go at the end of `BackstopError` so the codes never shift.
+/// `client/src/backstop.ts` names these (`BackstopError`): the keeper skips
+/// ReadNotNewer and CheckpointTooSoon, and `keeper assert` prints the
+/// rest. New errors go at the end of `BackstopError` so the codes never shift.
 #[test]
-fn error_codes_the_keeper_relies_on() {
-    assert_eq!(u32::from(BackstopError::ReadNotNewer), 6005);
-    assert_eq!(u32::from(BackstopError::CheckpointTooSoon), 6006);
+fn error_codes_the_client_names() {
+    use BackstopError::*;
+    let codes = [
+        (InvalidConfig, 6000),
+        (InvalidNoriState, 6001),
+        (InvalidProofQueueBatch, 6002),
+        (InvalidSnapshotResult, 6003),
+        (NoPauseQuery, 6004),
+        (ReadNotNewer, 6005),
+        (CheckpointTooSoon, 6006),
+        (SupplyAboveBacking, 6007),
+        (Stale, 6008),
+        (PausedAtSource, 6009),
+        (Tripped, 6010),
+        (PauseResultNotBool, 6011),
+    ];
+    for (error, code) in codes {
+        assert_eq!(u32::from(error), code, "{}", error.name());
+    }
 }

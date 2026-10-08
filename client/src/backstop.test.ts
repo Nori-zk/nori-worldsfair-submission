@@ -4,6 +4,9 @@ import { readFileSync } from 'node:fs';
 import { address } from '@solana/kit';
 import { getBytes } from 'ethers';
 import {
+    assertHealthyInstruction,
+    BackstopError,
+    backstopErrorName,
     checkpointInstruction,
     decodeGuard,
     encodeCreateGuard,
@@ -40,7 +43,7 @@ test('encodes create_guard exactly as the Rust program does', () => {
     );
 });
 
-test('encodes checkpoint and unlatch exactly as the Rust program does', () => {
+test('encodes checkpoint, unlatch and assert_healthy exactly as the Rust program does', () => {
     const anyAddress = address('5xS32i7XNRk7JCjYR7RgfHVxdLepVSnnJ1gdHkmfD8W1');
     const accounts = { guard: anyAddress, mint: anyAddress, admin: anyAddress };
     assert.equal(
@@ -51,6 +54,16 @@ test('encodes checkpoint and unlatch exactly as the Rust program does', () => {
         hex(new Uint8Array(unlatchInstruction(accounts).data ?? [])),
         fixture('unlatch')
     );
+    assert.equal(
+        hex(new Uint8Array(assertHealthyInstruction(accounts).data ?? [])),
+        fixture('assert-healthy')
+    );
+});
+
+test('names Backstop error codes', () => {
+    assert.equal(backstopErrorName(6010), 'Tripped');
+    assert.equal(backstopErrorName(BackstopError.Stale), 'Stale');
+    assert.equal(backstopErrorName(3012), undefined);
 });
 
 test('decodes a Guard account written by the Rust program', () => {

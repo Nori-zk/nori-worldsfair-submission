@@ -11,6 +11,9 @@ import {
 } from '@nori-zk/nori-bridge-solana-sdk';
 import { findStatePda } from '@nori-zk/nori-bridge-solana-sdk/program';
 import {
+    assertHealthyInstruction,
+    BackstopError,
+    backstopErrorName,
     checkpointInstruction,
     createGuardInstruction,
     decodeGuard,
@@ -33,20 +36,18 @@ import {
 import {
     connectSolana,
     customErrorCode,
+    customErrorOf,
     mintSupply,
     RPC_TIMEOUT_MS,
     type Solana,
+    transactionErrorText,
 } from './solana.js';
+import type { TransactionError } from '@solana/kit';
 
 /** How long `snapshot` waits for its transaction to be mined. */
 const SNAPSHOT_WAIT_MS = 3 * 60_000;
 /** The sdk's requests have no timeout of their own; a hung one would stall the loop. */
 const PROVEN_SNAPSHOT_TIMEOUT_MS = 2 * 60_000;
-
-// Backstop error codes the keeper treats as "nothing to do" (pinned by
-// programs/backstop/tests/instruction_fixture.rs)
-const ERR_READ_NOT_NEWER = 6005;
-const ERR_CHECKPOINT_TOO_SOON = 6006;
 
 interface KeeperState {
     /** Snapshot transactions whose reads are not all submitted yet. */
@@ -197,7 +198,7 @@ export class Keeper {
                 );
                 this.log(`${guard.name}: checkpoint`);
             } catch (error) {
-                if (customErrorCode(error) !== ERR_CHECKPOINT_TOO_SOON)
+                if (customErrorCode(error) !== BackstopError.CheckpointTooSoon)
                     this.log(
                         `${guard.name}: checkpoint failed: ${errorMessage(error)}`
                     );
@@ -289,9 +290,9 @@ export class Keeper {
                 const code = customErrorCode(error);
                 // A program error is final for this read; only transport errors retry
                 if (code === undefined) throw error;
-                if (code !== ERR_READ_NOT_NEWER)
+                if (code !== BackstopError.ReadNotNewer)
                     this.log(
-                        `${guard.name}: read rejected (program error ${code}), dropped`
+                        `${guard.name}: read rejected: ${backstopErrorName(code) ?? 'program error'} (${code}), dropped`
                     );
             }
         }
@@ -324,6 +325,29 @@ export class Keeper {
             this.log(
                 `${guard.name}: unlatched (backing ${state.backing} at Ethereum block ${state.backingEthBlock})`
             );
+        }
+    }
+
+    /**
+     * Each guard's `assert_healthy`, the call a lender makes: simulated, or
+     * with `send` landed even when it fails (no preflight).
+     */
+    async assertHealthy(send = false) {
+        for (const guard of this.config.guards) {
+            const instruction = assertHealthyInstruction({
+                guard: await this.guardAddress(guard),
+                mint: guard.mint,
+            });
+            if (send) {
+                const { err, signature } = await this.solana.land(instruction);
+                this.log(`${guard.name}: ${verdictOf(err)} | tx ${signature}`);
+            } else {
+                const { err, unitsConsumed } =
+                    await this.solana.simulate(instruction);
+                this.log(
+                    `${guard.name}: ${verdictOf(err)} | ${unitsConsumed} CU`
+                );
+            }
         }
     }
 
@@ -424,6 +448,15 @@ export class Keeper {
             );
         }
     }
+}
+
+/** `allowed`, or `blocked: <BackstopError> (<code>)`. */
+function verdictOf(err: TransactionError | null): string {
+    if (!err) return 'allowed';
+    const code = customErrorOf(err);
+    return code === undefined
+        ? `blocked: ${transactionErrorText(err)}`
+        : `blocked: ${backstopErrorName(code) ?? 'program error'} (${code})`;
 }
 
 function errorMessage(error: unknown): string {

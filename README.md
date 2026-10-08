@@ -24,7 +24,7 @@ Addresses and numbers: [docs/README.md](docs/README.md).
 | `ethereum/`     | `NoriSnapshot` contract, query list, deploy and snapshot tasks                                                                |
 | `nori-read/`    | Rust crate: verify a snapshot result on Solana in one call ([README](nori-read/README.md))                                    |
 | `programs/`     | Solana programs: `nori-read-example`, [`backstop`](programs/backstop) (circuit breaker)                                       |
-| `client/`       | Sample TS client and keeper CLI: create-guards, snapshot, checkpoint, submit, status, unlatch, run                            |
+| `client/`       | Sample TS client and keeper CLI: create-guards, snapshot, checkpoint, submit, status, assert, unlatch, run                    |
 | `web/`          | Browser apps: prove an Ethereum balance on Solana, and a live dashboard of the proof queue ([README](web/README.md))          |
 | `test-vectors/` | Test data shared by the TS and Rust tests                                                                                     |
 | `test-harness/` | Surfpool helpers for the program tests                                                                                        |
@@ -72,6 +72,7 @@ scripts/deploy-devnet.sh
 npm run keeper -w client -- create-guards
 npm run keeper -w client -- status   # Nori's progress through the queue, then each guard
 npm run keeper -w client -- run
+npm run keeper -w client -- assert   # each guard's assert_healthy, as a lender calls it (--send lands it)
 ```
 
 bridge-head proves `NORI_ETH_PROOF_QUEUE_ADDRESS` and updates `NORI_SOL_TOKEN_PROGRAM_ID`.
