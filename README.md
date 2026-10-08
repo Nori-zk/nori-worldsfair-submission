@@ -28,7 +28,7 @@ Addresses and numbers: [docs/README.md](docs/README.md).
 | `web/`          | Browser apps: prove an Ethereum balance on Solana, and a live dashboard of the proof queue ([README](web/README.md))          |
 | `test-vectors/` | Test data shared by the TS and Rust tests                                                                                     |
 | `test-harness/` | Surfpool helpers for the program tests                                                                                        |
-| `scripts/`      | `dry-run.sh` (the whole loop locally), `deploy-devnet.sh` (Backstop + demo mint), `soak.sh` (keeper for hours, then a report) |
+| `scripts/`      | `dry-run.sh` (the whole loop locally), `deploy-devnet.sh` (programs + demo mint), `soak.sh` (keeper for hours, then a report) |
 | `docs/`         | [Index of all docs](docs/README.md), diagrams, test deployments                                                               |
 
 ## Run
@@ -65,7 +65,7 @@ Keys and addresses live in one `.env`: `cp .env.example .env`, then fill it in.
 npm run deploy -w ethereum                     # -> ethereum/.env.nori-eth-snapshot
 npm run deploy-demo -w ethereum -- 116723.52   # -> ethereum/.env.nori-eth-demo
 
-# Solana: Backstop, and a demo mint of 116,700 (-> .env.nori-sol-demo); safe to rerun
+# Solana: Backstop, nori-read-example, and a demo mint of 116,700 (-> .env.nori-sol-demo); safe to rerun
 scripts/deploy-devnet.sh
 
 # Keeper: client/keeper.demo.json reads .env and the deploy outputs

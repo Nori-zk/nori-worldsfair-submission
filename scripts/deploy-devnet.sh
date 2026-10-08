@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
-# Solana side of the demo: deploys Backstop (or upgrades it, when the build
-# differs) and, once, creates a demo mint holding 116,700 tokens (9 decimals).
-# Writes the mint to .env.nori-sol-demo, which the keeper reads.
+# Solana side of the demo: deploys Backstop and nori-read-example (or upgrades
+# each, when its build differs) and, once, creates a demo mint holding 116,700
+# tokens (9 decimals). Writes the mint to .env.nori-sol-demo, which the keeper
+# reads.
 #
 # Usage: scripts/deploy-devnet.sh
 #        MINT_VAR=BACKSTOP_SHADOW_MINT scripts/deploy-devnet.sh   # a second mint
 #        (MINT_VAR names the variable; default BACKSTOP_DEMO_MINT)
 # Reads SOLANA_RPC_NETWORK_URL and SOLANA_PAYER_KEYPAIR_PATH from the shell or
-# .env. The payer becomes Backstop's upgrade authority and the mint authority.
+# .env. The payer becomes the programs' upgrade authority and the mint authority.
 # Refuses any cluster but devnet or a local validator. NORI_SOL_ENV_DIR
 # redirects the output file.
 
@@ -38,44 +39,57 @@ case "$URL" in
 esac
 
 OUT=${NORI_SOL_ENV_DIR:-$REPO}/.env.nori-sol-demo
-PROGRAM_KEYPAIR=$REPO/programs/backstop/backstop-keypair.json
-BACKSTOP=$(solana-keygen pubkey "$PROGRAM_KEYPAIR")
 
 echo "Payer $(solana address -k "$PAYER"), balance $(solana balance -k "$PAYER" -u "$URL")"
 
-echo "Building Backstop"
+# deploy_program NAME DIR LIB: builds programs/DIR and deploys it at its
+# committed keypair (programs/DIR/LIB-keypair.json), unless the deployed
+# program is this build
+deploy_program() {
+    local name=$1 dir=$2 lib=$3
+    local keypair=$REPO/programs/$dir/$lib-keypair.json so=$REPO/target/deploy/$lib.so
+    local program build so_len deployed_so deployed_len extra
+    program=$(solana-keygen pubkey "$keypair")
+
+    echo "Building $name"
+    if ! build=$(cargo build-sbf --manifest-path "$REPO/programs/$dir/Cargo.toml" 2>&1); then
+        echo "$build" | tail -15
+        exit 1
+    fi
+    echo "$build" | grep -E "Finished" || true
+
+    # Skip the upgrade when the deployed program is this build (an upgrade
+    # briefly locks ~1.8 SOL in a buffer)
+    so_len=$(wc -c <"$so" | tr -d ' ')
+    deployed_so=$(mktemp "${TMPDIR:-/tmp}/$lib-deployed.XXXXXX")
+    if solana program dump "$program" "$deployed_so" -u "$URL" >/dev/null 2>&1 &&
+        head -c "$so_len" "$deployed_so" | cmp -s - "$so"; then
+        echo "$name $program is up to date"
+    else
+        # An upgrade to a bigger binary must grow the program account first, by at
+        # least 10,240 bytes (the loader's minimum; the CLI only asks for the difference)
+        deployed_len=$(solana program show "$program" -u "$URL" 2>/dev/null | awk '/Data Length/ {print $3}' || true)
+        if [ -n "$deployed_len" ] && [ "$so_len" -gt "$deployed_len" ]; then
+            extra=$((so_len - deployed_len))
+            [ "$extra" -ge 10240 ] || extra=10240
+            echo "Extending $name by $extra bytes ($deployed_len -> $so_len needed)"
+            solana program extend "$program" "$extra" -k "$PAYER" -u "$URL"
+        fi
+        echo "Deploying $name $program"
+        solana program deploy "$so" --program-id "$keypair" \
+            -k "$PAYER" --upgrade-authority "$PAYER" -u "$URL"
+    fi
+    rm -f "$deployed_so"
+}
+
 # build-sbf ignores --locked and would silently re-resolve a stale lock into
 # crates the SBF rustc can't build; catch that here with a clear message
 cargo metadata --locked --format-version 1 --manifest-path "$REPO/Cargo.toml" >/dev/null 2>&1 ||
     { echo "Cargo.lock is out of date with Cargo.toml (cargo metadata --locked failed)"; exit 1; }
-if ! BUILD=$(cargo build-sbf --manifest-path "$REPO/programs/backstop/Cargo.toml" 2>&1); then
-    echo "$BUILD" | tail -15
-    exit 1
-fi
-echo "$BUILD" | grep -E "Finished" || true
 
-# Skip the upgrade when the deployed program is this build (an upgrade
-# briefly locks ~1.8 SOL in a buffer)
-SO_LEN=$(wc -c <"$REPO/target/deploy/backstop.so" | tr -d ' ')
-DEPLOYED_SO=$(mktemp "${TMPDIR:-/tmp}/backstop-deployed.XXXXXX")
-if solana program dump "$BACKSTOP" "$DEPLOYED_SO" -u "$URL" >/dev/null 2>&1 &&
-    head -c "$SO_LEN" "$DEPLOYED_SO" | cmp -s - "$REPO/target/deploy/backstop.so"; then
-    echo "Backstop $BACKSTOP is up to date"
-else
-    # An upgrade to a bigger binary must grow the program account first, by at
-    # least 10,240 bytes (the loader's minimum; the CLI only asks for the difference)
-    DEPLOYED_LEN=$(solana program show "$BACKSTOP" -u "$URL" 2>/dev/null | awk '/Data Length/ {print $3}' || true)
-    if [ -n "$DEPLOYED_LEN" ] && [ "$SO_LEN" -gt "$DEPLOYED_LEN" ]; then
-        EXTRA=$((SO_LEN - DEPLOYED_LEN))
-        [ "$EXTRA" -ge 10240 ] || EXTRA=10240
-        echo "Extending Backstop by $EXTRA bytes ($DEPLOYED_LEN -> $SO_LEN needed)"
-        solana program extend "$BACKSTOP" "$EXTRA" -k "$PAYER" -u "$URL"
-    fi
-    echo "Deploying Backstop $BACKSTOP"
-    solana program deploy "$REPO/target/deploy/backstop.so" --program-id "$PROGRAM_KEYPAIR" \
-        -k "$PAYER" --upgrade-authority "$PAYER" -u "$URL"
-fi
-rm -f "$DEPLOYED_SO"
+deploy_program Backstop backstop backstop
+# The smallest nori-read consumer; Prove balance verifies results with it
+deploy_program nori-read-example nori-read-example nori_read_example
 
 MINT=$( [ -f "$OUT" ] && grep -E "^$MINT_VAR=" "$OUT" | cut -d= -f2- || true)
 if [ -n "$MINT" ]; then
