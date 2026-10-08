@@ -4,11 +4,11 @@
     "version": "0.0.1",
     "type": "module",
     "workspaces": [
-        "sdk/ethereum",
-        "sdk/nori-hash-utils",
-        "sdk/sdk",
         "ethereum",
-        "client"
+        "client",
+        "web/libs/ui",
+        "web/apps/prove-balance",
+        "web/dashboards/bridge"
     ],
     "devDependencies": {
         "@babel/preset-env": "^7.29.0",
@@ -24,17 +24,18 @@
         "ts-jest": "^29.4.6",
         "ts-node": "^10.9.2",
         "typescript": "^5.1.0",
-        "typescript-eslint": "^8.55.0"
+        "typescript-eslint": "^8.55.0",
+        "@yaw-rx/vscode": "^0.1.2"
     },
     "scripts": {
-        "postinstall": "[ -e sdk/node_modules ] || ln -s ../node_modules sdk/node_modules",
         "build": "npm run build --workspaces --if-present",
-        "lint": "npm run lint -w ethereum && npm run lint -w client",
+        "vscode:install": "ln -sfn \"$(pwd)/node_modules/@yaw-rx/vscode\" \"$HOME/.vscode/extensions/yaw-rx.yaw-vscode\"",
+        "typecheck": "npm run typecheck --workspaces --if-present",
+        "lint": "npm run lint --workspaces --if-present",
         "format": "prettier --check .",
         "format:fix": "prettier --write .",
         "test": "npm run test -w ethereum && npm run test -w client",
         "test-ci": "npm run test-ci -w ethereum && npm run test-ci -w client",
-        "test:sdk": "npm run test -w sdk/ethereum && npm run test-ci -w sdk/sdk",
         "clean:modules": "rm -rf node_modules */node_modules */*/node_modules */*/*/node_modules",
         "reinstall": "npm run clean:modules && rm -f package-lock.json && npm install",
         "reinstall:ci": "npm run clean:modules && npm ci"

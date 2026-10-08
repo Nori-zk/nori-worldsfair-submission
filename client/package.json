@@ -22,9 +22,9 @@
     },
     "dependencies": {
         "@nori-zk/ethereum-snapshot": "*",
-        "@nori-zk/ethereum-solana-bridge": "*",
-        "@nori-zk/nori-bridge-solana-sdk": "*",
-        "@nori-zk/nori-hash-utils": "*",
+        "@nori-zk/ethereum-solana-bridge": "0.0.1",
+        "@nori-zk/ethereum-solana-proof-queue-utils-glam": "0.0.1",
+        "@nori-zk/nori-bridge-solana-sdk": "0.0.5",
         "@solana/kit": "^8.3.0",
         "dotenv": "^17.2.4",
         "ethers": "^6.16.0"

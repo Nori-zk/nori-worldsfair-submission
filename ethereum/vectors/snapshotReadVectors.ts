@@ -3,7 +3,10 @@ import { fileURLToPath } from 'url';
 import type { HardhatEthers } from '@nomicfoundation/hardhat-ethers/types';
 import type { ContractTransactionResponse } from 'ethers';
 import { NoriProofRequestQueue__factory } from '@nori-zk/ethereum-solana-bridge';
-import { request_witness, type RequestLeaf } from '@nori-zk/nori-hash-utils';
+import {
+    request_witness,
+    type RequestLeaf,
+} from '@nori-zk/ethereum-solana-proof-queue-utils-glam';
 import {
     NoriSnapshot__factory,
     ReplayToken__factory,

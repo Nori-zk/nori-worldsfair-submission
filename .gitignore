@@ -10,7 +10,11 @@ test-ledger
 .env.*
 !.env.example
 !.env.*.example
+# Public build constants for web/ (no secrets)
+!web/.env
 build
+dist
+web/*/*/public
 *.tsbuildinfo
 keeper.json
 keeper-state.json

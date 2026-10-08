@@ -1,0 +1,21 @@
+:host {
+    display: block;
+}
+.pair {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+.swap {
+    flex: none;
+    width: 28px;
+    height: 28px;
+}
+.wallets {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
