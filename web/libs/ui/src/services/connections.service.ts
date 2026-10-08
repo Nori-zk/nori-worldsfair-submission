@@ -1,123 +1,67 @@
 import { Injectable } from '@yaw-rx/core';
 import {
+    catchError,
     combineLatest,
     distinctUntilChanged,
     EMPTY,
+    filter,
     from,
     map,
     merge,
     Observable,
     shareReplay,
     startWith,
+    Subject,
     switchMap,
-    take,
 } from 'rxjs';
 import {
-    type Eip1193EventProvider,
-    createProofRequestConnections,
-    getBridgeSocketWithConnectivity$,
-    getBridgeStateTopic$,
-    getBridgeTimingsTopic$,
-    getEthStateTopic$,
-    type EthereumWalletMachine,
-    type ProofRequestConnectionsOptions,
+    createConnections,
+    DEFAULT_NORI_WEBSOCKET_URL,
+    type Connections,
+    type ConnectionsOptions as TransportOptions,
+    type EthereumWalletState,
     type ProofRequestHistoryAddresses,
-    type UnprocessedProofRequestTopics,
 } from '@nori-zk/nori-bridge-solana-sdk';
 
-/** The running connections `createProofRequestConnections` starts. */
-type StartedConnections = ReturnType<typeof createProofRequestConnections>;
-
 /** The options `ConnectionsService` starts the connections with. */
-export type ConnectionsOptions = ProofRequestConnectionsOptions & {
-    /** The bridge's websocket, for the live processing stages. */
-    bridge: { wssUrl: string };
+export type ConnectionsOptions = TransportOptions & {
     /** The proof request queue and the Solana program the reading machines read. */
     proofRequests: ProofRequestHistoryAddresses;
 };
-
-/**
- * Opens the bridge websocket and keeps it open until `close()`.
- *
- * @param wssUrl The bridge's websocket.
- * @returns
- *   - `connectivity`: the socket's running connectivity machine.
- *   - `topics`: the topics `createUnprocessedProofRequestStateMachine` reads.
- *   - `close()`: closes the socket and stops the machine.
- */
-function startBridgeConnection(wssUrl: string) {
-    const { bridgeSocket$, bridgeSocketConnectivity } = getBridgeSocketWithConnectivity$(wssUrl);
-    const connectivity = bridgeSocketConnectivity.close().start('connecting');
-    const topics: UnprocessedProofRequestTopics = {
-        ethStateTopic$: getEthStateTopic$(bridgeSocket$),
-        bridgeStateTopic$: getBridgeStateTopic$(bridgeSocket$),
-        bridgeTimingsTopic$: getBridgeTimingsTopic$(bridgeSocket$),
-    };
-    const socketSubscription = bridgeSocket$.subscribe();
-    return {
-        connectivity,
-        topics,
-        close: () => {
-            socketSubscription.unsubscribe();
-            connectivity.stop();
-        },
-    };
-}
-
-/**
- * A wallet's `accountsChanged` events, for as long as it is subscribed.
- *
- * @param walletProvider The wallet's EIP-1193 provider.
- * @returns Each event's accounts.
- */
-const accountsChanged$ = (walletProvider: Eip1193EventProvider): Observable<unknown> =>
-    new Observable<unknown>((subscriber) => {
-        const listener = (accounts: unknown) => subscriber.next(accounts);
-        walletProvider.on?.('accountsChanged', listener);
-        return () => {
-            walletProvider.removeListener?.('accountsChanged', listener);
-        };
-    });
-
-/** The bridge websocket: its running connectivity machine, its topics and `close()`. */
-export type BridgeConnection = ReturnType<typeof startBridgeConnection>;
 
 /** DI token for the options `ConnectionsService` starts the connections with. */
 export const PROOF_REQUEST_CONNECTIONS_OPTIONS = Symbol('PROOF_REQUEST_CONNECTIONS_OPTIONS');
 
 /**
- * The network, the Ethereum wallet and provider, the Solana RPC that every
- * proof request read goes through, and the bridge websocket. One instance
- * per providing component; the connections close with it.
+ * The network, the Ethereum wallet, the Solana RPC that every proof request
+ * read goes through, and Nori's websocket, all from `createConnections`. One
+ * instance per providing component; the connections close with it.
  */
 @Injectable([PROOF_REQUEST_CONNECTIONS_OPTIONS])
 export class ConnectionsService {
-    /** The running network machine. */
-    readonly network: StartedConnections['network'];
-    /** The Ethereum and Solana connections, for the reading machines. */
-    readonly connections: StartedConnections['connections'];
-    /** The bridge websocket. */
-    readonly bridge: BridgeConnection;
-    /** The wallet's first account, or an empty string while it has shared none. */
+    /** Everything `createConnections` opened: network, Ethereum, Solana and Nori. */
+    readonly connections: Connections;
+    /**
+     * The wallet's first account, or an empty string while it has shared
+     * none. Read on each entry into the wallet's `ready` and each background
+     * check there, and as soon as the user shares one.
+     */
     readonly account$: Observable<string>;
-    private readonly closeConnections: () => void;
+    /** The accounts the wallet returned when the user was asked to share one. */
+    private readonly accountsShared$ = new Subject<unknown>();
 
     /**
-     * @param options The Ethereum chain, the Solana cluster, the bridge websocket, and optional endpoints and timings.
+     * @param options The Ethereum chain, the Solana cluster, Nori's websocket, the queue and program, and optional timings.
      */
     constructor(readonly options: ConnectionsOptions) {
-        const { network, connections, close } = createProofRequestConnections(options);
-        this.network = network;
-        this.connections = connections;
-        this.closeConnections = close;
-        this.bridge = startBridgeConnection(options.bridge.wssUrl);
-        this.account$ = (connections.ethereum.wallet?.walletProvider$ ?? EMPTY).pipe(
-            switchMap((walletProvider) =>
-                merge(
-                    from(walletProvider.request({ method: 'eth_accounts' })),
-                    accountsChanged$(walletProvider),
-                ),
+        this.connections = createConnections(options);
+        this.account$ = merge(
+            this.walletState$.pipe(
+                filter((state) => state.node === 'ready'),
+                switchMap(() => this.walletRequest$('eth_accounts')),
             ),
+            this.accountsShared$,
+        ).pipe(
             map((accounts) => (Array.isArray(accounts) ? String(accounts[0] ?? '') : '')),
             startWith(''),
             distinctUntilChanged(),
@@ -131,23 +75,42 @@ export class ConnectionsService {
      * @returns {void}
      */
     connectAccount(): void {
-        this.wallet?.walletProvider$.pipe(take(1)).subscribe((walletProvider) => {
-            walletProvider.request({ method: 'eth_requestAccounts' }).catch(() => undefined);
-        });
+        this.walletRequest$('eth_requestAccounts').subscribe((accounts) =>
+            this.accountsShared$.next(accounts),
+        );
     }
 
-    /** The running wallet machine, when reads go through the user's wallet. */
-    get wallet(): EthereumWalletMachine | undefined {
+    /** The user's wallet, which Ethereum reads and the snapshot transaction go through. */
+    get wallet(): Connections['ethereum']['wallet'] {
         return this.connections.ethereum.wallet;
     }
 
-    /** Whether reads can run on both chains: Ethereum's and Solana's connections are `ready`. */
+    /** The wallet machine's states. */
+    get walletState$(): Observable<EthereumWalletState> {
+        return this.wallet.connection?.state$ ?? EMPTY;
+    }
+
+    /** Whether Ethereum's public RPC is `ready`; always `false` when the app gives none. */
+    get ethereumHttpReady$(): Observable<boolean> {
+        const http = this.connections.ethereum.http.connection;
+        return (http?.state$ ?? EMPTY).pipe(
+            map((state) => state.node === 'ready'),
+            startWith(false),
+            distinctUntilChanged(),
+        );
+    }
+
+    /** Whether reads can run on both chains: Ethereum's RPC or wallet, and Solana's http, are `ready`. */
     get ready$(): Observable<boolean> {
         return combineLatest([
-            this.connections.ethereum.ethereumProviderConnectivity.state$,
-            this.connections.solana.solanaRpcConnectivity.state$,
+            this.ethereumHttpReady$,
+            this.walletState$,
+            this.connections.solana.http.connection.state$,
         ]).pipe(
-            map(([ethereum, solana]) => ethereum.node === 'ready' && solana.node === 'ready'),
+            map(
+                ([ethereumHttp, wallet, solana]) =>
+                    (ethereumHttp || wallet.node === 'ready') && solana.node === 'ready',
+            ),
             distinctUntilChanged(),
         );
     }
@@ -157,12 +120,28 @@ export class ConnectionsService {
         return 'cluster' in this.options.solana ? this.options.solana.cluster : 'custom';
     }
 
+    /** Nori's websocket URL. */
+    get noriUrl(): string {
+        return this.options.nori?.websocket?.url ?? DEFAULT_NORI_WEBSOCKET_URL;
+    }
+
     /**
-     * Closes the bridge websocket, and the network, Ethereum and Solana connections.
+     * One request to the wallet while it is `ready`.
+     *
+     * @param method The request's method; it takes no params.
+     * @returns The wallet's answer, or nothing when it is not ready or refuses.
+     */
+    private walletRequest$(method: string): Observable<unknown> {
+        return from(this.wallet.ready().then((provider) => provider.send(method, []))).pipe(
+            catchError(() => EMPTY),
+        );
+    }
+
+    /**
+     * Closes the network, Ethereum, Solana and Nori connections.
      * @returns {void}
      */
     onDestroy(): void {
-        this.bridge.close();
-        this.closeConnections();
+        this.connections.close();
     }
 }

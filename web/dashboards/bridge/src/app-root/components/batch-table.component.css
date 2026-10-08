@@ -1,0 +1,90 @@
+:host {
+    /* In rem, not ch: the header's smaller font would otherwise narrow its columns. */
+    --batch-columns: 5.5rem 8.5rem 7rem 7.5rem 1fr;
+    display: block;
+    margin-top: 2rem;
+    overflow-x: auto;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+    font-size: 0.9rem;
+}
+.filter {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+.filter input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.45rem 0.75rem;
+    border: 1px solid rgb(255 255 255 / 20%);
+    border-radius: 0;
+    background: rgb(0 0 0 / 30%);
+    color: var(--nori-text);
+    font: inherit;
+}
+.filter input:focus {
+    border-color: var(--nori-light-green);
+    outline: none;
+}
+.filter button,
+.retry {
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--nori-light-green);
+    border-radius: 0;
+    background: transparent;
+    color: var(--nori-light-green);
+    cursor: pointer;
+    font: inherit;
+}
+.filter button:hover,
+.retry:hover {
+    background: rgb(100 225 142 / 12%);
+}
+.summary {
+    margin: 0 0 1rem;
+    color: var(--nori-text);
+}
+.summary:empty {
+    display: none;
+}
+.head {
+    display: grid;
+    grid-template-columns: var(--batch-columns);
+    gap: 1rem;
+    padding-bottom: 0.5rem;
+    color: var(--nori-muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+}
+/* Opening a batch scrolls inside the table instead of growing the card. */
+.rows {
+    height: 26rem;
+    overflow-y: auto;
+    scrollbar-color: rgb(100 225 142 / 45%) transparent;
+    scrollbar-width: thin;
+}
+.rows::-webkit-scrollbar {
+    width: 6px;
+}
+.rows::-webkit-scrollbar-track {
+    background: transparent;
+}
+.rows::-webkit-scrollbar-thumb {
+    border-radius: 3px;
+    background: rgb(100 225 142 / 45%);
+}
+.rows::-webkit-scrollbar-thumb:hover {
+    background: var(--nori-light-green);
+}
+:host > .status {
+    margin: 1rem 0 0;
+    color: var(--nori-light-green);
+    text-align: center;
+}
+:host > .status:empty {
+    display: none;
+}
+.retry {
+    display: block;
+    margin: 0.75rem auto 0;
+}

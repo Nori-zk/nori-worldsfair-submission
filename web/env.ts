@@ -10,6 +10,8 @@ export interface WebEnv {
     ethereum: {
         /** The chain the wallet must be on. */
         chainId: number;
+        /** A public Ethereum RPC for reads, tried before the wallet. */
+        rpcUrl: string;
         /** The `NoriProofRequestQueue` address. */
         proofQueueAddress: string;
         /** The first block to read proof requests from: the queue's deploy block. */
@@ -97,6 +99,9 @@ export function loadWebEnv(): WebEnv {
         if (error instanceof WebEnvError) throw error;
         throw new WebEnvError('NORI_SOL_TOKEN_PROGRAM_ID', 'is not a Solana address');
     }
+    const rpcUrl = read('NORI_WEB_ETH_RPC_URL');
+    if (!/^https?:\/\//.test(rpcUrl))
+        throw new WebEnvError('NORI_WEB_ETH_RPC_URL', 'is not an http:// or https:// URL');
     const wssUrl = read('NORI_WEB_BRIDGE_WSS_URL');
     if (!/^wss?:\/\//.test(wssUrl))
         throw new WebEnvError('NORI_WEB_BRIDGE_WSS_URL', 'is not a ws:// or wss:// URL');
@@ -104,6 +109,7 @@ export function loadWebEnv(): WebEnv {
     return {
         ethereum: {
             chainId: readInteger('NORI_WEB_ETH_CHAIN_ID'),
+            rpcUrl,
             proofQueueAddress: readEthAddress('NORI_ETH_PROOF_QUEUE_ADDRESS'),
             proofQueueDeployBlock: readInteger('NORI_WEB_PROOF_QUEUE_DEPLOY_BLOCK'),
             snapshotAddress: readEthAddress('NORI_ETH_SNAPSHOT_ADDRESS'),

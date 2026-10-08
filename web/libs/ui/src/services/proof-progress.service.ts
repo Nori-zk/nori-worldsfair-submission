@@ -3,6 +3,7 @@ import { distinctUntilChanged, Observable, of, shareReplay, switchMap } from 'rx
 import {
     createProofRequestStateMachine,
     createUnprocessedProofRequestStateMachine,
+    getNoriBridgeInfraState$,
     type ProofRequestStateNodeUnion,
     type UnprocessedProofRequestStateNodeUnion,
 } from '@nori-zk/nori-bridge-solana-sdk';
@@ -32,7 +33,7 @@ export class ProofProgressService {
     >();
 
     /**
-     * @param connections The connections, the bridge websocket and the queue and program addresses.
+     * @param connections The connections, Nori's websocket among them, and the queue and program addresses.
      */
     constructor(private readonly connections: ConnectionsService) {}
 
@@ -46,13 +47,13 @@ export class ProofProgressService {
         const existing = this.followed.get(txHash);
         if (existing) return existing;
 
-        const { connections, bridge, options } = this.connections;
+        const { connections, options } = this.connections;
         const { proofRequestState, retry, close } = createProofRequestStateMachine(
             connections,
             { ...options.proofRequests, proofRequestTxHash: txHash },
             undefined,
             15_000,
-            bridge.topics.bridgeStateTopic$,
+            getNoriBridgeInfraState$(connections.nori),
         );
         const request$ = proofRequestState.state$.pipe(shareReplay({ bufferSize: 1, refCount: false }));
         const progress$ = request$.pipe(
@@ -62,7 +63,7 @@ export class ProofProgressService {
                     ? new Observable<UnprocessedProofRequestStateNodeUnion>((subscriber) => {
                           const unprocessed = createUnprocessedProofRequestStateMachine(
                               Number(request.data.requestBlockNumber),
-                              bridge.topics,
+                              connections.nori,
                           )
                               .close()
                               .start('WaitingForEthFinality');

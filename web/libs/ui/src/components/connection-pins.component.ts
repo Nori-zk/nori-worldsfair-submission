@@ -1,14 +1,10 @@
 import { Component, Inject, RxElement } from '@yaw-rx/core';
-import { combineLatest, map, of, type Observable } from 'rxjs';
-import type {
-    EthereumProviderConnection,
-    EthereumWalletState,
-} from '@nori-zk/nori-bridge-solana-sdk';
+import { map, type Observable } from 'rxjs';
 import { ConnectionsService } from '../services/connections.service.js';
 import styles from './connection-pins.component.css';
 
 /**
- * A pin's class for a connectivity machine's node: green when up, pulsing
+ * A pin's class for a connection machine's node: green when up, pulsing
  * blue while connecting, red otherwise.
  *
  * @param up The node that means up.
@@ -20,29 +16,10 @@ const pin =
     (state: { node: string }): string =>
         state.node === up ? 'pin green' : connecting.includes(state.node) ? 'pin blue' : 'pin red';
 
-/** The wallet nodes that are on their way to the expected chain without the user. */
-const walletConnecting = pin('', ['lookingForWallets', 'checkingChain', 'askingToSwitchChain']);
-
-/**
- * The Ethereum pin: the provider's connectivity, and while it waits for the
- * wallet, the wallet's own state, which says whether the user has something
- * to do.
- *
- * @param provider The provider connectivity machine's state.
- * @param wallet The wallet machine's state, when reads go through the wallet.
- * @returns The pin's class.
- */
-const ethereumPin = (
-    provider: EthereumProviderConnection,
-    wallet: EthereumWalletState | undefined,
-): string =>
-    provider.node === 'waitingForWallet' && wallet !== undefined
-        ? walletConnecting(wallet)
-        : pin('ready', ['checking'])(provider);
-
 /**
  * Every connection along the bottom of the page, each with a pin: the
- * network, Ethereum, Solana, and Nori's bridge websocket, linked to its page.
+ * network, Ethereum through the wallet, Solana, and Nori's websocket, linked
+ * to its page.
  */
 @Component({
     selector: 'connection-pins',
@@ -62,30 +39,32 @@ export class ConnectionPins extends RxElement {
     @Inject(ConnectionsService) private readonly connections!: ConnectionsService;
 
     get network$(): Observable<string> {
-        return this.connections.network.state$.pipe(map(pin('online', ['checking'])));
+        return this.connections.connections.network.connection.state$.pipe(
+            map(pin('online', ['checking'])),
+        );
     }
 
+    /** The wallet: blue while it is on its way to the expected chain without the user. */
     get ethereum$(): Observable<string> {
-        return combineLatest([
-            this.connections.connections.ethereum.ethereumProviderConnectivity.state$,
-            this.connections.wallet?.ethereumWallet.state$ ?? of(undefined),
-        ]).pipe(map(([provider, wallet]) => ethereumPin(provider, wallet)));
+        return this.connections.walletState$.pipe(
+            map(pin('ready', ['lookingForWallets', 'checking', 'askingToSwitchChain'])),
+        );
     }
 
     get solana$(): Observable<string> {
-        return this.connections.connections.solana.solanaRpcConnectivity.state$.pipe(
+        return this.connections.connections.solana.http.connection.state$.pipe(
             map(pin('ready', ['checking'])),
         );
     }
 
     get nori$(): Observable<string> {
-        return this.connections.bridge.connectivity.state$.pipe(
+        return this.connections.connections.nori.websocket.connection.state$.pipe(
             map(pin('open', ['connecting', 'reconnecting'])),
         );
     }
 
-    /** The bridge websocket's page: its `wss://` URL over `https://`. */
+    /** Nori's websocket page: its `wss://` URL over `https://`. */
     get noriUrl(): string {
-        return this.connections.options.bridge.wssUrl.replace(/^ws/, 'http');
+        return this.connections.noriUrl.replace(/^ws/, 'http');
     }
 }

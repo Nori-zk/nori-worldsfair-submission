@@ -32,8 +32,8 @@ const readRequest = {
  *   `reading`, from any node where the form is open, including `reading`
  *   itself, which reads again for the new request.
  * - `reading` reads the balance through the wallet with the same call the
- *   snapshot makes, and the snapshot fee, through both connections
- *   (`readThroughConnections$`). A connection that is down is
+ *   snapshot makes, and the snapshot fee, through Ethereum's calls order
+ *   (`forCalls`). A connection that is down is
  *   `waitingForConnection`, naming it in `waitingOn` and reading again once
  *   both are `ready`; a call that fails or returns anything but one 32-byte
  *   word is `readFailed`, which reads again by itself after a wait that

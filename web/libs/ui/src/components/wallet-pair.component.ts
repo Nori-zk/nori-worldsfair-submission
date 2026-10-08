@@ -1,7 +1,7 @@
 import { Component, Inject, RxElement } from '@yaw-rx/core';
 import { RxFor } from '@yaw-rx/core/directives/rx-for';
 import { RxIf } from '@yaw-rx/core/directives/rx-if';
-import { EMPTY, map, type Observable } from 'rxjs';
+import { map, type Observable } from 'rxjs';
 import type { WalletInfo } from '@nori-zk/nori-bridge-solana-sdk';
 import { swapIcon } from '../brand/brand.js';
 import { ConnectionsService } from '../services/connections.service.js';
@@ -36,20 +36,18 @@ export class WalletPair extends RxElement {
     @Inject(ConnectionsService) private readonly connections!: ConnectionsService;
 
     get choosing$(): Observable<boolean> {
-        return (this.connections.wallet?.ethereumWallet.state$ ?? EMPTY).pipe(
-            map((state) => state.node === 'choosingWallet'),
-        );
+        return this.connections.walletState$.pipe(map((state) => state.node === 'choosingWallet'));
     }
 
     get wallets$(): Observable<WalletInfo[]> {
-        return (this.connections.wallet?.ethereumWallet.state$ ?? EMPTY).pipe(
+        return this.connections.walletState$.pipe(
             map((state) => (state.node === 'choosingWallet' ? state.data.wallets : [])),
         );
     }
 
     /** A wallet picked from the installed ones. */
     private readonly onWalletChosen = (event: Event): void => {
-        this.connections.wallet?.chooseWallet((event as CustomEvent<string>).detail);
+        this.connections.wallet.chooseWallet((event as CustomEvent<string>).detail);
     };
 
     override onInit(): void {

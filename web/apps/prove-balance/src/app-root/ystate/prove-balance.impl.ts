@@ -1,36 +1,30 @@
 import {
     catchError,
     debounceTime,
+    defer,
     filter,
     from,
+    map,
     type Observable,
     of,
     ReplaySubject,
     share,
     Subject,
     switchMap,
-    take,
     timer,
 } from 'rxjs';
-import {
-    BrowserProvider,
-    Contract,
-    dataLength,
-    isAddress,
-    isError,
-    type Provider,
-} from 'ethers';
+import { Contract, dataLength, isAddress, isError } from 'ethers';
 import {
     bothReady$,
-    type ConnectedRead,
-    dataOnEntry$,
-    type EthereumWalletMachine,
+    ConnectionNotReadyError,
+    type ConnectionName,
+    type Connections,
+    type EthereumProvider,
+    forCalls,
     type ProofRequestConnections,
-    readThroughConnections$,
-    type StartedMachine,
-    stateOf$,
     waitingOnChanged$,
 } from '@nori-zk/nori-bridge-solana-sdk';
+import { dataOnEntry$, type StartedMachine, stateOf$ } from '@nori-zk/nori-bridge-solana-sdk/utils';
 import { encodeQueryData, NoriSnapshot__factory } from '@nori-zk/ethereum-snapshot';
 import { ProveBalanceGraph, type ProveBalanceState } from './prove-balance.js';
 
@@ -66,6 +60,12 @@ const TOKEN_ABI = [
     'function symbol() view returns (string)',
     'function decimals() view returns (uint8)',
 ];
+
+/** How reading a request ended. */
+type ReadOutcome =
+    | { outcome: 'succeeded'; value: Preview }
+    | { outcome: 'connectionLost'; waitingOn: ConnectionName[] }
+    | { outcome: 'failed'; error: string };
 
 /** How sending the snapshot ended. */
 type SendOutcome =
@@ -111,7 +111,7 @@ const balanceQuery = ({ asset, holder }: BalanceRequest): { target: string; data
  * @throws When the call does not return exactly one 32-byte word.
  */
 async function readPreview(
-    provider: Provider,
+    provider: EthereumProvider,
     snapshotAddress: string,
     request: BalanceRequest,
 ): Promise<Preview> {
@@ -130,33 +130,68 @@ async function readPreview(
 }
 
 /**
+ * Reads the balance and fee through Ethereum's calls order. Nothing in it
+ * able to serve the read is a lost connection, naming the chains; any other
+ * failure is the read's own.
+ *
+ * @param ethereum The Ethereum chain.
+ * @param snapshotAddress The `NoriSnapshot` address.
+ * @param request The asset and holder.
+ * @returns How the read ended, once.
+ */
+function readPreview$(
+    ethereum: Connections['ethereum'],
+    snapshotAddress: string,
+    request: BalanceRequest,
+): Observable<ReadOutcome> {
+    return defer(() => forCalls(ethereum, readPreview, snapshotAddress, request)).pipe(
+        map((value): ReadOutcome => ({ outcome: 'succeeded', value })),
+        catchError((error: unknown) =>
+            of<ReadOutcome>(
+                error instanceof ConnectionNotReadyError
+                    ? {
+                          outcome: 'connectionLost',
+                          waitingOn: [
+                              ...new Set(
+                                  error.notReady.map(
+                                      ({ transport }) => transport.split('.')[0] as ConnectionName,
+                                  ),
+                              ),
+                          ],
+                      }
+                    : {
+                          outcome: 'failed',
+                          error: error instanceof Error ? error.message : String(error),
+                      },
+            ),
+        ),
+    );
+}
+
+/**
  * Sends `NoriSnapshot.snapshot` with the balance query and the fee, signed
  * in the user's wallet.
  *
- * @param wallet The wallet machine, whose chosen provider signs.
+ * @param wallet The user's wallet, which signs while it is `ready`.
  * @param snapshotAddress The `NoriSnapshot` address.
  * @param request The asset, holder and fee.
  * @returns How the send ended.
  */
 function sendSnapshot$(
-    wallet: EthereumWalletMachine,
+    wallet: Connections['ethereum']['wallet'],
     snapshotAddress: string,
     request: BalanceRequest & { fee: bigint },
 ): Observable<SendOutcome> {
-    return wallet.walletProvider$.pipe(
-        take(1),
-        switchMap((walletProvider) =>
-            from(
-                (async (): Promise<SendOutcome> => {
-                    const signer = await new BrowserProvider(walletProvider).getSigner();
-                    const snapshot = NoriSnapshot__factory.connect(snapshotAddress, signer);
-                    const transaction = await snapshot.snapshot([balanceQuery(request)], {
-                        value: request.fee,
-                    });
-                    return { outcome: 'signed', txHash: transaction.hash };
-                })(),
-            ),
-        ),
+    return from(
+        (async (): Promise<SendOutcome> => {
+            const signer = await (await wallet.ready()).getSigner();
+            const snapshot = NoriSnapshot__factory.connect(snapshotAddress, signer);
+            const transaction = await snapshot.snapshot([balanceQuery(request)], {
+                value: request.fee,
+            });
+            return { outcome: 'signed', txHash: transaction.hash };
+        })(),
+    ).pipe(
         catchError((error: unknown) =>
             of<SendOutcome>(
                 isError(error, 'ACTION_REJECTED')
@@ -177,12 +212,12 @@ function sendSnapshot$(
  * @param outcomes The outcomes to keep.
  * @returns The reads with those outcomes.
  */
-function withOutcome<TRead extends ConnectedRead<unknown>, TOutcome extends TRead['outcome']>(
-    read$: Observable<TRead>,
+function withOutcome<TOutcome extends ReadOutcome['outcome']>(
+    read$: Observable<ReadOutcome>,
     ...outcomes: TOutcome[]
-): Observable<Extract<TRead, { outcome: TOutcome }>> {
+): Observable<Extract<ReadOutcome, { outcome: TOutcome }>> {
     return read$.pipe(
-        filter((read): read is Extract<TRead, { outcome: TOutcome }> =>
+        filter((read): read is Extract<ReadOutcome, { outcome: TOutcome }> =>
             outcomes.some((outcome) => outcome === read.outcome),
         ),
     );
@@ -207,8 +242,7 @@ function sentWith<TOutcome extends SendOutcome['outcome']>(
 /**
  * Starts the prove balance machine at `editing` with `initial`.
  *
- * @param connections The Ethereum provider and Solana RPC, with their running connectivity machines.
- * @param wallet The wallet machine that signs.
+ * @param connections The Ethereum and Solana chains; reads go through Ethereum's, the wallet signs.
  * @param snapshotAddress The `NoriSnapshot` address.
  * @param initial The asset and holder the form starts with.
  * @returns
@@ -220,7 +254,6 @@ function sentWith<TOutcome extends SendOutcome['outcome']>(
  */
 export function createProveBalanceMachine(
     connections: ProofRequestConnections,
-    wallet: EthereumWalletMachine,
     snapshotAddress: string,
     initial: BalanceRequest,
 ) {
@@ -239,16 +272,14 @@ export function createProveBalanceMachine(
             (state): state is Extract<ProveBalanceState, { node: 'reading' }> =>
                 state.node === 'reading',
         ),
-        switchMap(({ data }) =>
-            readThroughConnections$(connections, ({ provider }) =>
-                readPreview(provider, snapshotAddress, data),
-            ),
-        ),
+        switchMap(({ data }) => readPreview$(connections.ethereum, snapshotAddress, data)),
         share(),
     );
     // The outcome edges of `awaitingSignature` share one send per entry into it.
     const send$ = dataOnEntry$(state$, 'awaitingSignature').pipe(
-        switchMap((request) => sendSnapshot$(wallet, snapshotAddress, request)),
+        switchMap((request) =>
+            sendSnapshot$(connections.ethereum.wallet, snapshotAddress, request),
+        ),
         share(),
     );
 
@@ -266,7 +297,7 @@ export function createProveBalanceMachine(
             next: ({ value }, _dest, { asset, holder }) => ({ asset, holder, ...value }),
         },
         readError: {
-            $: () => withOutcome(read$, 'failed', 'failedOnHealthyConnection'),
+            $: () => withOutcome(read$, 'failed'),
             next: ({ error }, _dest, { asset, holder, failedReads }) => ({
                 asset,
                 holder,

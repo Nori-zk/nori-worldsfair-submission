@@ -48,8 +48,6 @@ export class ProveBalanceService {
      * @param connections The connections, the wallet and its account.
      */
     constructor(connections: ConnectionsService) {
-        const wallet = connections.wallet;
-        if (wallet === undefined) return;
         this.subscriptions.add(
             connections.account$
                 .pipe(
@@ -60,7 +58,6 @@ export class ProveBalanceService {
                     const initial: BalanceRequest = { asset: 'eth', holder: account };
                     const machine = createProveBalanceMachine(
                         connections.connections,
-                        wallet,
                         NORI_WEB_ENV.ethereum.snapshotAddress,
                         initial,
                     );
