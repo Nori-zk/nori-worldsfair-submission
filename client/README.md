@@ -27,6 +27,15 @@ run deploys the shadow lockbox and mint and creates the guards. It logs to
 `OUT/keeper.log` and writes `OUT/report.md` at the end (also when stopped early):
 snapshots, Ethereum block → reads applied, failures, checkpoint gaps, status changes.
 
+## Wormhole 2022 replay (showcase)
+
+`scripts/replay-wormhole.sh` replays the 2022 forgery on Sepolia + devnet with real proofs, on
+its own lockbox, mint and guard (`keeper.wormhole.json`: the demo guard's settings, tolerance 0):
+93,769.40 locked and minted → HEALTHY; 26,230.60 forged on Solana → WARN at once, and
+`assert_healthy` fails with `SupplyAboveBacking`; a snapshot one window (10 min) later →
+TRIPPED once proven, deficit 26,230.60. About 50 min; rerun to continue. It prints each status
+with its time; the keeper logs to `replay-wormhole.log`.
+
 ## Local dry run (no prover, no testnet)
 
 ```sh

@@ -15,6 +15,7 @@ dist
 web/*/*/public
 *.tsbuildinfo
 keeper.json
+keeper-wormhole-state.json
 keeper-state.json
 keeper-soak-state.json
 soak-*/

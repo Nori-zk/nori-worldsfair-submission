@@ -7,6 +7,8 @@
 # Usage: scripts/deploy-devnet.sh
 #        MINT_VAR=BACKSTOP_SHADOW_MINT scripts/deploy-devnet.sh   # a second mint
 #        (MINT_VAR names the variable; default BACKSTOP_DEMO_MINT)
+#        SUPPLY=93769.40 sets the new mint's supply (default 116700)
+#        SKIP_PROGRAMS=1 only creates the mint, leaving the programs as deployed
 # Reads SOLANA_RPC_NETWORK_URL and SOLANA_PAYER_KEYPAIR_PATH from the shell or
 # .env. The payer becomes the programs' upgrade authority and the mint authority.
 # Refuses any cluster but devnet or a local validator. NORI_SOL_ENV_DIR
@@ -15,7 +17,7 @@
 set -euo pipefail
 
 REPO=$(cd "$(dirname "$0")/.." && pwd)
-SUPPLY=116700
+SUPPLY=${SUPPLY:-116700}
 MINT_VAR=${MINT_VAR:-BACKSTOP_DEMO_MINT}
 [[ "$MINT_VAR" =~ ^[A-Z_][A-Z0-9_]*$ ]] || { echo "Invalid MINT_VAR: $MINT_VAR"; exit 1; }
 export CFLAGS=${CFLAGS:-"-isystem $HOME/.cache/solana/v1.54/platform-tools/llvm/sbpf/include"}
@@ -82,14 +84,15 @@ deploy_program() {
     rm -f "$deployed_so"
 }
 
-# build-sbf ignores --locked and would silently re-resolve a stale lock into
-# crates the SBF rustc can't build; catch that here with a clear message
-cargo metadata --locked --format-version 1 --manifest-path "$REPO/Cargo.toml" >/dev/null 2>&1 ||
-    { echo "Cargo.lock is out of date with Cargo.toml (cargo metadata --locked failed)"; exit 1; }
-
-deploy_program Backstop backstop backstop
-# The smallest nori-read consumer; Prove balance verifies results with it
-deploy_program nori-read-example nori-read-example nori_read_example
+if [ "${SKIP_PROGRAMS:-}" != 1 ]; then
+    # build-sbf ignores --locked and would silently re-resolve a stale lock into
+    # crates the SBF rustc can't build; catch that here with a clear message
+    cargo metadata --locked --format-version 1 --manifest-path "$REPO/Cargo.toml" >/dev/null 2>&1 ||
+        { echo "Cargo.lock is out of date with Cargo.toml (cargo metadata --locked failed)"; exit 1; }
+    deploy_program Backstop backstop backstop
+    # The smallest nori-read consumer; Prove balance verifies results with it
+    deploy_program nori-read-example nori-read-example nori_read_example
+fi
 
 MINT=$( [ -f "$OUT" ] && grep -E "^$MINT_VAR=" "$OUT" | cut -d= -f2- || true)
 if [ -n "$MINT" ]; then

@@ -19,17 +19,17 @@ Addresses and numbers: [docs/README.md](docs/README.md).
 
 ## Repo
 
-| Path            | What                                                                                                                          |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `ethereum/`     | `NoriSnapshot` contract, query list, deploy and snapshot tasks                                                                |
-| `nori-read/`    | Rust crate: verify a snapshot result on Solana in one call ([README](nori-read/README.md))                                    |
-| `programs/`     | Solana programs: `nori-read-example`, [`backstop`](programs/backstop) (circuit breaker)                                       |
-| `client/`       | Sample TS client and keeper CLI: create-guards, snapshot, checkpoint, submit, status, assert, unlatch, run                    |
-| `web/`          | Browser apps: prove an Ethereum balance on Solana, and a live dashboard of the proof queue ([README](web/README.md))          |
-| `test-vectors/` | Test data shared by the TS and Rust tests                                                                                     |
-| `test-harness/` | Surfpool helpers for the program tests                                                                                        |
-| `scripts/`      | `dry-run.sh` (the whole loop locally), `deploy-devnet.sh` (programs + demo mint), `soak.sh` (keeper for hours, then a report) |
-| `docs/`         | [Index of all docs](docs/README.md), diagrams, test deployments                                                               |
+| Path            | What                                                                                                                                                                      |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ethereum/`     | `NoriSnapshot` contract, query list, deploy and snapshot tasks                                                                                                            |
+| `nori-read/`    | Rust crate: verify a snapshot result on Solana in one call ([README](nori-read/README.md))                                                                                |
+| `programs/`     | Solana programs: `nori-read-example`, [`backstop`](programs/backstop) (circuit breaker)                                                                                   |
+| `client/`       | Sample TS client and keeper CLI: create-guards, snapshot, checkpoint, submit, status, assert, unlatch, run                                                                |
+| `web/`          | Browser apps: prove an Ethereum balance on Solana, and a live dashboard of the proof queue ([README](web/README.md))                                                      |
+| `test-vectors/` | Test data shared by the TS and Rust tests                                                                                                                                 |
+| `test-harness/` | Surfpool helpers for the program tests                                                                                                                                    |
+| `scripts/`      | `dry-run.sh` (the whole loop locally), `deploy-devnet.sh` (programs + demo mint), `soak.sh` (keeper for hours, then a report), `replay-wormhole.sh` (Wormhole 2022, live) |
+| `docs/`         | [Index of all docs](docs/README.md), diagrams, test deployments                                                                                                           |
 
 ## Run
 
