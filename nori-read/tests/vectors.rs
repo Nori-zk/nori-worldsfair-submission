@@ -1,5 +1,5 @@
 //! nori-read against test-vectors/nori-snapshot, generated from the
-//! NoriSnapshot and NoriProofRequestQueue contracts with nori-hash-utils
+//! NoriSnapshot and NoriProofRequestQueue contracts with the sdk's hashing wasm
 //! (`npm run vectors -w ethereum`), and against witnesses forged from them.
 
 use alloy_primitives::U256;

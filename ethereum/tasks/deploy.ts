@@ -152,19 +152,11 @@ export const deploy = task(
                 NORI_ETH_PROOF_QUEUE_ADDRESS: proofQueueAddress,
                 NORI_ETH_SNAPSHOT_DEPLOY_BLOCK: noriSnapshotReceipt.blockNumber,
             };
-            const envContent =
-                Object.entries(env)
-                    .map(function ([key, value]) {
-                        return `${key}=${value}`;
-                    })
-                    .join('\n') + '\n';
+            const envContent = Object.entries(env)
+                .map(([key, value]) => `${key}=${value}\n`)
+                .join('');
             writeFileSync(envFilePath, envContent, { encoding: 'utf8' });
-
-            logger.log(`Wrote ${envFilePath}`);
-            logger.log('Environment variables for future use:');
-            for (const [key, value] of Object.entries(env)) {
-                logger.log(`${key}=${value}`);
-            }
+            logger.log(`Wrote ${envFilePath}:\n${envContent}`);
         },
     }))
     .build();

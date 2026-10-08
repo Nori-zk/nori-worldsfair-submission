@@ -1,6 +1,6 @@
 //! The NoriSnapshot read vectors in test-vectors/nori-snapshot, generated
-//! from the NoriSnapshot and NoriProofRequestQueue contracts with
-//! nori-hash-utils (`npm run vectors -w ethereum`), as nori-read types.
+//! from the NoriSnapshot and NoriProofRequestQueue contracts with the sdk's
+//! hashing wasm (`npm run vectors -w ethereum`), as nori-read types.
 //! Enabled by the `test-vectors` feature, for tests only.
 
 use crate::{

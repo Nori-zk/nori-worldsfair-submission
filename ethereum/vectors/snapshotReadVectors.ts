@@ -48,7 +48,7 @@ export const MAINNET_VECTORS_FILE = path.join(
  * Test vectors for verifying NoriSnapshot results on Solana (nori-read):
  * one proof queue batch rebuilt from contract state exactly as a witness
  * builder does, with every request's witness and every snapshot result's
- * witness. Hashing comes from nori-hash-utils, the SP1 guest's own code.
+ * witness. Hashing comes from the sdk's hashing wasm, the SP1 guest's own code.
  */
 export interface SnapshotReadVectors {
     description: string;

@@ -10,7 +10,7 @@ coverage
 .vscode
 LICENSE
 
-# Submodules, generated files and keypairs
+# Generated files and keypairs
 test-vectors
 ethereum/types
 ethereum/artifacts
