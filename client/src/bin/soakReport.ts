@@ -50,7 +50,12 @@ for (const { at, text } of lines) {
     const snapshot = /^snapshot (0x[0-9a-f]{64}): (.*)$/.exec(text);
     if (snapshot?.[1] && snapshot[2]) {
         if (snapshot[2] === 'reads submitted') applied.set(snapshot[1], at);
-        else if (!sent.has(snapshot[1])) sent.set(snapshot[1], at);
+        // "N queries, block B" or "not mined after …": the keeper sent it
+        else if (
+            /queries|not mined/.test(snapshot[2]) &&
+            !sent.has(snapshot[1])
+        )
+            sent.set(snapshot[1], at);
     }
     if (/failed|FAILED/.test(text)) {
         const key = text

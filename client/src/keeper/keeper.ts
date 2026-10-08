@@ -14,13 +14,15 @@ import {
     submitReadInstruction,
     unlatchInstruction,
 } from '../backstop.js';
-import { fetchSnapshotRead } from '../fetchSnapshotRead.js';
+import {
+    fetchProvenSnapshot,
+    type ProvenSnapshot,
+} from '../fetchProvenSnapshot.js';
 import {
     guardConfigOf,
     queryOf,
     type GuardEntry,
     type KeeperConfig,
-    type QueryConfig,
 } from './config.js';
 import {
     connectSolana,
@@ -170,14 +172,18 @@ export class Keeper {
      * snapshots.
      */
     async submit(quiet = false) {
-        const state = this.loadState();
         const stillPending: string[] = [];
-        for (const snapshotTxHash of state.pending) {
-            if (await this.submitSnapshot(snapshotTxHash)) {
-                this.log(`snapshot ${snapshotTxHash}: reads submitted`);
-            } else {
-                stillPending.push(snapshotTxHash);
+        for (const snapshotTxHash of this.loadState().pending) {
+            let done = false;
+            try {
+                done = await this.submitSnapshot(snapshotTxHash);
+            } catch (error) {
+                this.log(
+                    `snapshot ${snapshotTxHash}: failed: ${errorMessage(error)}`
+                );
             }
+            if (done) this.log(`snapshot ${snapshotTxHash}: reads submitted`);
+            else stillPending.push(snapshotTxHash);
         }
         this.saveState({ pending: stillPending });
         if (stillPending.length && !quiet)
@@ -186,16 +192,21 @@ export class Keeper {
             );
     }
 
-    /** True once every guard's reads of the snapshot are applied. */
+    /** True once the snapshot is proven and every guard's reads are applied. */
     private async submitSnapshot(snapshotTxHash: string): Promise<boolean> {
+        const snapshot = await fetchProvenSnapshot({
+            rpc: this.solana.rpc,
+            provider: this.provider,
+            noriSnapshot: this.config.ethereum.noriSnapshot,
+            proofQueue: this.config.ethereum.proofQueue,
+            snapshotTxHash,
+            noriProgram: this.config.solana.noriProgram,
+        });
+        if (!snapshot.proven) return false;
         let done = true;
         for (const guard of this.config.guards) {
             try {
-                const proven = await this.submitGuardReads(
-                    snapshotTxHash,
-                    guard
-                );
-                if (!proven) return false; // the batch is the same for every guard
+                await this.submitGuardReads(guard, snapshot);
             } catch (error) {
                 this.log(
                     `${guard.name}: snapshot ${snapshotTxHash} failed: ${errorMessage(error)}`
@@ -206,42 +217,31 @@ export class Keeper {
         return done;
     }
 
-    /** Returns false while the snapshot's batch is not proven yet. */
+    /** Applies the guard's backing and pause results (an already-applied read is skipped). */
     private async submitGuardReads(
-        snapshotTxHash: string,
-        guard: GuardEntry
-    ): Promise<boolean> {
-        const reads: Array<{ kind: ReadKind; query: QueryConfig }> = [
-            { kind: ReadKind.Backing, query: guard.backing },
-        ];
-        if (guard.pause)
-            reads.push({ kind: ReadKind.Pause, query: guard.pause });
-        for (const { kind, query } of reads) {
-            const read = await fetchSnapshotRead({
-                rpc: this.solana.rpc,
-                provider: this.provider,
-                noriSnapshot: this.config.ethereum.noriSnapshot,
-                proofQueue: this.config.ethereum.proofQueue,
-                snapshotTxHash,
-                queryId: queryOf(query).queryId,
-                noriProgram: this.config.solana.noriProgram,
-            });
-            if (!read.proven) return false;
+        guard: GuardEntry,
+        snapshot: Extract<ProvenSnapshot, { proven: true }>
+    ) {
+        const reads = [
+            [ReadKind.Backing, guard.backing],
+            [ReadKind.Pause, guard.pause],
+        ] as const;
+        for (const [kind, query] of reads) {
+            if (!query) continue;
             try {
                 await this.solana.send(
                     submitReadInstruction({
                         guard: await this.guardAddress(guard),
                         mint: guard.mint,
-                        proofQueueBatch: read.proofQueueBatch,
+                        proofQueueBatch: snapshot.proofQueueBatch,
                         kind,
-                        witness: read.witness,
+                        witness: snapshot.witnessFor(queryOf(query).queryId),
                     })
                 );
             } catch (error) {
                 if (customErrorCode(error) !== ERR_READ_NOT_NEWER) throw error;
             }
         }
-        return true;
     }
 
     /**
@@ -350,7 +350,7 @@ export class Keeper {
                 try {
                     await job();
                 } catch (error) {
-                    this.log(`${name} failed: ${(error as Error).message}`);
+                    this.log(`${name} failed: ${errorMessage(error)}`);
                 }
             }
             try {

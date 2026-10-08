@@ -18,34 +18,35 @@ import {
     type SnapshotResultWitnessArgs,
 } from './snapshotWitness.js';
 
-export interface SnapshotReadRequest {
+export interface ProvenSnapshotRequest {
     rpc: Rpc<GetAccountInfoApi & GetMultipleAccountsApi>;
     provider: Provider;
     noriSnapshot: string;
     proofQueue: string;
     /** The transaction that called `NoriSnapshot.snapshot`. */
     snapshotTxHash: string;
-    queryId: string;
     /** The Nori program; defaults to the sdk's. */
     noriProgram?: Address;
 }
 
-export type SnapshotRead =
+export type ProvenSnapshot =
     | { proven: false; event: SnapshotEvent }
     | {
           proven: true;
           event: SnapshotEvent;
           proofQueueBatch: Address;
-          witness: SnapshotResultWitnessArgs;
+          /** The witness a Solana program verifies for one query's result. */
+          witnessFor(queryId: string): SnapshotResultWitnessArgs;
       };
 
 /**
- * From a snapshot transaction to the witness a Solana program verifies, once
- * Nori has proven its batch; until then `proven` is false.
+ * A snapshot transaction and, once Nori has proven its batch, everything
+ * needed to verify any of its results: the batch account, and the request's
+ * path in it (fetched once, shared by every query).
  */
-export async function fetchSnapshotRead(
-    request: SnapshotReadRequest
-): Promise<SnapshotRead> {
+export async function fetchProvenSnapshot(
+    request: ProvenSnapshotRequest
+): Promise<ProvenSnapshot> {
     const receipt = await request.provider.getTransactionReceipt(
         request.snapshotTxHash
     );
@@ -70,11 +71,12 @@ export async function fetchSnapshotRead(
         proven: true,
         event,
         proofQueueBatch: address(state.proofQueueBatchAddress),
-        witness: snapshotResultWitness(
-            request.noriSnapshot,
-            event,
-            request.queryId,
-            requestWitness
-        ),
+        witnessFor: (queryId) =>
+            snapshotResultWitness(
+                request.noriSnapshot,
+                event,
+                queryId,
+                requestWitness
+            ),
     };
 }
