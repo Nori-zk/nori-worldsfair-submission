@@ -22,6 +22,17 @@ const readRequest = {
     fee: 0n as bigint,
 };
 
+/** The proof queue batch on Solana that covers the snapshot's proof request. */
+const provenIn = {
+    /** The batch's index. */
+    proofQueueBatchIndex: 0n as bigint,
+    /** The batch account, base58. */
+    proofQueueBatchAddress: '',
+};
+
+/** The request, its snapshot transaction and the batch that proved it, while verifying. */
+const verifyRequest = { ...readRequest, txHash: '', ...provenIn, failedReads: 0 };
+
 /**
  * Proving a balance: the user picks an asset and a holder, the balance and
  * fee are read as soon as both are valid, and one `NoriSnapshot.snapshot`
@@ -44,10 +55,17 @@ const readRequest = {
  *   `declined`; any other failure to `sendFailed`. Both can send again or
  *   be edited.
  * - `proving` carries the signed transaction's hash. The sdk's proof request
- *   machine follows it from there, through mining, the bridge's stages and
- *   the proof landing on Solana. `another` starts another proof, reading
- *   the same asset and holder again. A transaction that reverts on Ethereum
- *   goes to `sendFailed`, to send again or edit.
+ *   machine follows it from there, through mining and the bridge's stages,
+ *   until a proof queue batch on Solana covers it: `proofAvailable` moves on
+ *   to `verifying`. `another` starts another proof, reading the same asset
+ *   and holder again, from here and every node after. A transaction that
+ *   reverts on Ethereum goes to `sendFailed`, to send again or edit.
+ * - `verifying` checks the result on Solana: it builds the result's witness
+ *   from the snapshot and the batch, and simulates nori-read-example's
+ *   `read_snapshot_result` (no signature, no fee). `verified` holds what the
+ *   program verified: the balance, the Ethereum block and its time, and the
+ *   compute units. A read or simulation that fails is `verifyFailed`, which
+ *   verifies again as `readFailed` reads again.
  */
 export const ProveBalanceGraph = define({
     nodes: {
@@ -60,6 +78,22 @@ export const ProveBalanceGraph = define({
         declined: { ...readRequest },
         sendFailed: { ...readRequest, error: '' },
         proving: { ...readRequest, txHash: '' },
+        verifying: { ...verifyRequest },
+        verifyFailed: { ...verifyRequest, error: '' },
+        verified: {
+            ...readRequest,
+            txHash: '',
+            ...provenIn,
+            /** The balance the program verified, in the asset's smallest unit. */
+            provenBalance: 0n as bigint,
+            /** The Ethereum block the balance was read in, and its time (seconds). */
+            ethBlockNumber: 0n as bigint,
+            ethTimestamp: 0n as bigint,
+            /** The finalized Ethereum block whose state the batch proved. */
+            provenBlockNumber: 0n as bigint,
+            /** What `read_snapshot_result` cost. */
+            unitsConsumed: 0n as bigint,
+        },
     },
     edges: {
         editedIncomplete: { from: 'editing', to: 'editing', on: 'editIncomplete.next' },
@@ -125,6 +159,23 @@ export const ProveBalanceGraph = define({
         proveRetriedAfterFailure: { from: 'sendFailed', to: 'awaitingSignature', on: 'prove.next' },
         anotherRequested: { from: 'proving', to: 'reading', on: 'another.next' },
         transactionReverted: { from: 'proving', to: 'sendFailed', on: 'transactionReverted.next' },
+
+        proofLanded: { from: 'proving', to: 'verifying', on: 'proofAvailable.next' },
+        resultVerified: { from: 'verifying', to: 'verified', on: 'verified.next' },
+        verifyErrored: { from: 'verifying', to: 'verifyFailed', on: 'verifyError.next' },
+        verifyRetried: { from: 'verifyFailed', to: 'verifying', on: 'verifyRetry.next' },
+        verifyRetryStarted: {
+            from: 'verifyFailed',
+            to: 'verifying',
+            on: 'verifyRetryDue.next',
+        },
+        anotherRequestedWhileVerifying: { from: 'verifying', to: 'reading', on: 'another.next' },
+        anotherRequestedAfterVerifyFailure: {
+            from: 'verifyFailed',
+            to: 'reading',
+            on: 'another.next',
+        },
+        anotherRequestedAfterVerified: { from: 'verified', to: 'reading', on: 'another.next' },
     },
 });
 

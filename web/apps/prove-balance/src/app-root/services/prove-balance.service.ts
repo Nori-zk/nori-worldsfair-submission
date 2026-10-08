@@ -11,8 +11,12 @@ import {
     take,
     withLatestFrom,
 } from 'rxjs';
-import { ConnectionsService } from '@nori-zk/solana-web-ui';
-import { type BalanceRequest, createProveBalanceMachine } from '../ystate/prove-balance.impl.js';
+import { ConnectionsService, ProofProgressService } from '@nori-zk/solana-web-ui';
+import {
+    type BalanceRequest,
+    createProveBalanceMachine,
+    type ProveBalanceAddresses,
+} from '../ystate/prove-balance.impl.js';
 import type { ProveBalanceState } from '../ystate/prove-balance.js';
 
 /** The prove balance machine and its controls, started. */
@@ -27,12 +31,20 @@ const FOLLOWS_ACCOUNT: ProveBalanceState['node'][] = [
     'balanceRead',
 ];
 
+/** The snapshot, queue and Nori program this build proves with, and the verifying simulation's fee payer. */
+const ADDRESSES: ProveBalanceAddresses = {
+    snapshotAddress: NORI_WEB_ENV.ethereum.snapshotAddress,
+    proofQueueAddress: NORI_WEB_ENV.ethereum.proofQueueAddress,
+    noriProgram: NORI_WEB_ENV.solana.programAddress,
+    feePayer: NORI_WEB_ENV.solana.feePayer,
+};
+
 /**
  * Owns the prove balance machine for the app's lifetime. It starts with the
  * first account the wallet shares, as the address, reading ETH at once; the
  * address then follows the wallet's account until the user types another.
  */
-@Injectable([ConnectionsService])
+@Injectable([ConnectionsService, ProofProgressService])
 export class ProveBalanceService {
     /** The running machine, once the wallet has shared an account. */
     readonly machine$ = new ReplaySubject<ProveBalanceMachine>(1);
@@ -46,8 +58,9 @@ export class ProveBalanceService {
 
     /**
      * @param connections The connections, the wallet and its account.
+     * @param proofProgress Follows each snapshot transaction's proof request.
      */
-    constructor(connections: ConnectionsService) {
+    constructor(connections: ConnectionsService, proofProgress: ProofProgressService) {
         this.subscriptions.add(
             connections.account$
                 .pipe(
@@ -58,7 +71,8 @@ export class ProveBalanceService {
                     const initial: BalanceRequest = { asset: 'eth', holder: account };
                     const machine = createProveBalanceMachine(
                         connections.connections,
-                        NORI_WEB_ENV.ethereum.snapshotAddress,
+                        ADDRESSES,
+                        (txHash) => proofProgress.follow(txHash).request$,
                         initial,
                     );
                     this.machine = machine;

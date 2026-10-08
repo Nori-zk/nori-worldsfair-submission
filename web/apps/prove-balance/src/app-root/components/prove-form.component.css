@@ -126,3 +126,60 @@ token-select {
 proof-progress {
     margin-top: var(--gap);
 }
+.verify {
+    margin-top: calc(var(--gap) * 1.5);
+    padding: 1rem 1.25rem;
+    border: 1px solid color-mix(in srgb, var(--nori-light-green) 35%, transparent);
+    border-radius: 0.75rem;
+    background: rgb(255 255 255 / 3%);
+}
+.verify-status {
+    margin: 0;
+    color: var(--nori-light-green);
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+.facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+    gap: 0.75rem 1rem;
+    margin: var(--gap) 0 0;
+}
+.fact {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+}
+.fact.wide {
+    grid-column: 1 / -1;
+}
+.fact dt {
+    color: var(--nori-muted);
+    font-size: 0.85rem;
+}
+.fact dd {
+    margin: 0;
+    color: var(--nori-text);
+    overflow-wrap: anywhere;
+}
+.fact dd.balance {
+    color: var(--nori-light-green);
+    font-size: 1.5rem;
+    line-height: 1.2;
+}
+.verify a,
+.link {
+    color: var(--nori-light-green);
+    text-decoration: none;
+}
+.verify a:hover,
+.link:hover {
+    text-decoration: underline;
+}
+.note {
+    margin: var(--gap) 0 0;
+    color: var(--nori-muted);
+    font-size: 0.85rem;
+    line-height: 1.5;
+}

@@ -24,6 +24,11 @@ export interface WebEnv {
         cluster: SolanaCluster;
         /** The Nori program that commits proof queue batches. */
         programAddress: Address;
+        /**
+         * Any existing system account holding SOL. Verifying a result simulates
+         * a transaction, which names it as fee payer; it signs and pays nothing.
+         */
+        feePayer: Address;
     };
     bridge: {
         /** The bridge's websocket, for the live processing stages. */
@@ -86,19 +91,21 @@ export function loadWebEnv(): WebEnv {
         }
     };
 
+    const readSolanaAddress = (name: string): Address => {
+        try {
+            return address(read(name));
+        } catch (error) {
+            if (error instanceof WebEnvError) throw error;
+            throw new WebEnvError(name, 'is not a Solana address');
+        }
+    };
+
     const cluster = read('NORI_WEB_SOLANA_CLUSTER');
     if (!isSolanaCluster(cluster))
         throw new WebEnvError(
             'NORI_WEB_SOLANA_CLUSTER',
             `is not one of ${SOLANA_CLUSTERS.join(', ')}`,
         );
-    let programAddress: Address;
-    try {
-        programAddress = address(read('NORI_SOL_TOKEN_PROGRAM_ID'));
-    } catch (error) {
-        if (error instanceof WebEnvError) throw error;
-        throw new WebEnvError('NORI_SOL_TOKEN_PROGRAM_ID', 'is not a Solana address');
-    }
     const rpcUrl = read('NORI_WEB_ETH_RPC_URL');
     if (!/^https?:\/\//.test(rpcUrl))
         throw new WebEnvError('NORI_WEB_ETH_RPC_URL', 'is not an http:// or https:// URL');
@@ -114,7 +121,11 @@ export function loadWebEnv(): WebEnv {
             proofQueueDeployBlock: readInteger('NORI_WEB_PROOF_QUEUE_DEPLOY_BLOCK'),
             snapshotAddress: readEthAddress('NORI_ETH_SNAPSHOT_ADDRESS'),
         },
-        solana: { cluster, programAddress },
+        solana: {
+            cluster,
+            programAddress: readSolanaAddress('NORI_SOL_TOKEN_PROGRAM_ID'),
+            feePayer: readSolanaAddress('NORI_WEB_SOLANA_FEE_PAYER'),
+        },
         bridge: { wssUrl },
     };
 }

@@ -3,6 +3,7 @@ import { RxIf } from '@yaw-rx/core/directives/rx-if';
 import { combineLatest, map, type Observable, take } from 'rxjs';
 import { formatEther, formatUnits } from 'ethers';
 import { ConnectionsService, TokenListService } from '@nori-zk/solana-web-ui';
+import { NORI_READ_EXAMPLE_PROGRAM } from '@nori-zk/backstop-client/read';
 import { TOKEN_CHOSEN } from './prove-form/token-option.component.js';
 import './prove-form/token-select.component.js';
 import type { BalanceRequest } from '../ystate/prove-balance.impl.js';
@@ -24,11 +25,46 @@ const atNode =
     (state: ProveBalanceState): boolean =>
         nodes.includes(state.node);
 
+/** The nodes that follow a snapshot transaction once it is sent. */
+const FOLLOWING: ProveBalanceState['node'][] = ['proving', 'verifying', 'verifyFailed', 'verified'];
+
+/** Each Ethereum chain's block explorer. */
+const ETHEREUM_EXPLORERS: Record<number, string> = {
+    1: 'https://etherscan.io',
+    11155111: 'https://sepolia.etherscan.io',
+};
+
+/** The Ethereum block explorer of the chain this build reads. */
+const ETHEREUM_EXPLORER =
+    ETHEREUM_EXPLORERS[NORI_WEB_ENV.ethereum.chainId] ?? 'https://etherscan.io';
+
+/**
+ * An account's page on the Solana explorer, for the cluster this build reads.
+ *
+ * @param address The account.
+ * @returns The URL.
+ */
+const solanaAccountUrl = (address: string): string =>
+    `https://explorer.solana.com/address/${address}` +
+    (NORI_WEB_ENV.solana.cluster === 'mainnet' ? '' : `?cluster=${NORI_WEB_ENV.solana.cluster}`);
+
+/**
+ * A short form of a long hex string or address.
+ *
+ * @param text The string.
+ * @returns `0x8a1f…9c2d`.
+ */
+const shortened = (text: string): string =>
+    text.length > 14 ? `${text.slice(0, 6)}…${text.slice(-4)}` : text;
+
+/** The verified node's data, while the machine is there. */
+type Verified = Extract<ProveBalanceState, { node: 'verified' }>['data'];
+
 /**
  * The form for proving a balance: the token and the address, the balance and
- * fee read as soon as both are valid, the snapshot sent from the wallet, and
- * the proof followed to Solana. It opens once the wallet has shared an
- * account, with that account as the address.
+ * fee read as soon as both are valid, the snapshot sent from the wallet, the
+ * proof followed to Solana, and the result verified there. It opens once the
+ * wallet has shared an account, with that account as the address.
  */
 @Component({
     selector: 'prove-form',
@@ -82,6 +118,54 @@ const atNode =
         </div>
         <div rx-if="proving">
             <proof-progress [txHash]="txHash"></proof-progress>
+            <section class="verify" rx-if="verifyShown">
+                <p class="verify-status">
+                    <span rx-if="verifying"><span class="spinner"></span></span>{{ verifyStatus }}
+                </p>
+                <div rx-if="verified">
+                    <dl class="facts">
+                        <div class="fact wide">
+                            <dt>Balance verified by nori-read</dt>
+                            <dd class="balance">{{ provenBalance }}</dd>
+                        </div>
+                        <div class="fact">
+                            <dt>Ethereum block</dt>
+                            <dd>
+                                <a [href]="ethBlockUrl" target="_blank" rel="noopener"
+                                    >{{ ethBlock }} ↗</a
+                                >
+                            </dd>
+                        </div>
+                        <div class="fact">
+                            <dt>Block time</dt>
+                            <dd>{{ ethTime }}</dd>
+                        </div>
+                        <div class="fact">
+                            <dt>Nori batch</dt>
+                            <dd>
+                                <a [href]="batchUrl" target="_blank" rel="noopener"
+                                    >{{ batch }} ↗</a
+                                >
+                            </dd>
+                        </div>
+                        <div class="fact">
+                            <dt>Compute units</dt>
+                            <dd>{{ computeUnits }}</dd>
+                        </div>
+                    </dl>
+                    <p class="note">
+                        Checked by
+                        <a [href]="readProgramUrl" target="_blank" rel="noopener"
+                            >nori-read-example ↗</a
+                        >
+                        in a simulated Solana transaction: no wallet, no fee. Any Solana program can
+                        make the same check with nori-read.
+                    </p>
+                </div>
+                <div class="actions" rx-if="verifyFailed">
+                    <button onclick="retry">Verify again</button>
+                </div>
+            </section>
             <div class="actions">
                 <button class="secondary" onclick="another">Prove another</button>
             </div>
@@ -116,12 +200,12 @@ export class ProveForm extends RxElement {
 
     /** Whether the form is fixed: the transaction is being confirmed, or the proof is under way. */
     get locked$(): Observable<boolean> {
-        return this.state$.pipe(map(atNode('awaitingSignature', 'proving')));
+        return this.state$.pipe(map(atNode('awaitingSignature', ...FOLLOWING)));
     }
 
     /** The one button stays in place until the proof is under way. */
     get actionShown$(): Observable<boolean> {
-        return this.state$.pipe(map((state) => !atNode('proving')(state)));
+        return this.state$.pipe(map((state) => !atNode(...FOLLOWING)(state)));
     }
 
     /** "Read again" after a failed read, else "Prove on Solana", or confirming while the wallet asks. */
@@ -212,6 +296,9 @@ export class ProveForm extends RxElement {
                     case 'balanceRead':
                     case 'awaitingSignature':
                     case 'proving':
+                    case 'verifying':
+                    case 'verifyFailed':
+                    case 'verified':
                         return '';
                 }
             }),
@@ -219,13 +306,103 @@ export class ProveForm extends RxElement {
     }
 
     get proving$(): Observable<boolean> {
-        return this.state$.pipe(map(atNode('proving')));
+        return this.state$.pipe(map(atNode(...FOLLOWING)));
     }
 
     get txHash$(): Observable<string> {
+        return this.state$.pipe(map((state) => ('txHash' in state.data ? state.data.txHash : '')));
+    }
+
+    /** The verification shows once a batch on Solana covers the proof request. */
+    get verifyShown$(): Observable<boolean> {
+        return this.state$.pipe(map(atNode('verifying', 'verifyFailed', 'verified')));
+    }
+
+    get verifying$(): Observable<boolean> {
+        return this.state$.pipe(map(atNode('verifying')));
+    }
+
+    get verifyFailed$(): Observable<boolean> {
+        return this.state$.pipe(map(atNode('verifyFailed')));
+    }
+
+    get verified$(): Observable<boolean> {
+        return this.state$.pipe(map(atNode('verified')));
+    }
+
+    /** What verifying the result on Solana is doing, found, or why it failed. */
+    get verifyStatus$(): Observable<string> {
         return this.state$.pipe(
-            map((state) => (state.node === 'proving' ? state.data.txHash : '')),
+            map((state) =>
+                state.node === 'verifying'
+                    ? `Verifying the balance on Solana against batch #${state.data.proofQueueBatchIndex.toString()}`
+                    : state.node === 'verifyFailed'
+                      ? `Verifying failed: ${state.data.error}`
+                      : state.node === 'verified'
+                        ? 'Verified on Solana'
+                        : '',
+            ),
         );
+    }
+
+    /**
+     * One fact of the verified result, or `''` before there is one.
+     *
+     * @param fact The fact, from the verified node's data.
+     * @returns The fact while verified.
+     */
+    private verifiedFact$(fact: (verified: Verified) => string): Observable<string> {
+        return this.state$.pipe(
+            map((state) => (state.node === 'verified' ? fact(state.data) : '')),
+        );
+    }
+
+    get provenBalance$(): Observable<string> {
+        return this.verifiedFact$(
+            ({ provenBalance, decimals, symbol }) =>
+                `${formatUnits(provenBalance, decimals)} ${symbol}`,
+        );
+    }
+
+    get ethBlock$(): Observable<string> {
+        return this.verifiedFact$(({ ethBlockNumber }) => ethBlockNumber.toLocaleString('en-US'));
+    }
+
+    get ethBlockUrl$(): Observable<string> {
+        return this.verifiedFact$(
+            ({ ethBlockNumber }) => `${ETHEREUM_EXPLORER}/block/${ethBlockNumber.toString()}`,
+        );
+    }
+
+    get ethTime$(): Observable<string> {
+        return this.verifiedFact$(({ ethTimestamp }) =>
+            new Date(Number(ethTimestamp) * 1000).toLocaleString('en-US', {
+                dateStyle: 'medium',
+                timeStyle: 'long',
+                timeZone: 'UTC',
+            }),
+        );
+    }
+
+    get batch$(): Observable<string> {
+        return this.verifiedFact$(
+            ({ proofQueueBatchIndex, proofQueueBatchAddress }) =>
+                `#${proofQueueBatchIndex.toString()} · ${shortened(proofQueueBatchAddress)}`,
+        );
+    }
+
+    get batchUrl$(): Observable<string> {
+        return this.verifiedFact$(({ proofQueueBatchAddress }) =>
+            solanaAccountUrl(proofQueueBatchAddress),
+        );
+    }
+
+    get computeUnits$(): Observable<string> {
+        return this.verifiedFact$(({ unitsConsumed }) => unitsConsumed.toLocaleString('en-US'));
+    }
+
+    get readProgramUrl(): string {
+        return solanaAccountUrl(NORI_READ_EXAMPLE_PROGRAM);
     }
 
     onTokenAddress(event: Event): void {
@@ -248,6 +425,11 @@ export class ProveForm extends RxElement {
     onHolder(event: Event): void {
         const holder = (event.target as HTMLInputElement).value.trim();
         this.editRequest((request) => ({ ...request, holder }));
+    }
+
+    /** Verifies again after a failure. */
+    retry(): void {
+        this.control((machine) => machine.retry());
     }
 
     /** The one button: reads again after a failed read, otherwise proves. */

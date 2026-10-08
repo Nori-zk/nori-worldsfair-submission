@@ -1,20 +1,25 @@
 import {
     catchError,
+    concat,
     debounceTime,
     defer,
-    EMPTY,
     filter,
     from,
     map,
+    NEVER,
     type Observable,
     of,
     ReplaySubject,
     share,
     Subject,
     switchMap,
+    take,
+    throwError,
+    timeout,
     timer,
 } from 'rxjs';
 import { Contract, dataLength, isAddress, isError, type TransactionReceipt } from 'ethers';
+import type { Address } from '@solana/kit';
 import {
     bothReady$,
     ConnectionNotReadyError,
@@ -23,10 +28,17 @@ import {
     type EthereumProvider,
     forCalls,
     type ProofRequestConnections,
+    type ProofRequestStateNodeUnion,
     waitingOnChanged$,
 } from '@nori-zk/nori-bridge-solana-sdk';
-import { dataOnEntry$, type StartedMachine, stateOf$ } from '@nori-zk/nori-bridge-solana-sdk/utils';
-import { encodeQueryData, NoriSnapshot__factory } from '@nori-zk/ethereum-snapshot';
+import {
+    atNode,
+    dataOnEntry$,
+    type StartedMachine,
+    stateOf$,
+} from '@nori-zk/nori-bridge-solana-sdk/utils';
+import { encodeQueryData, NoriSnapshot__factory, queryIdOf } from '@nori-zk/ethereum-snapshot';
+import { verifySnapshotResult } from '@nori-zk/backstop-client/read';
 import { ProveBalanceGraph, type ProveBalanceState } from './prove-balance.js';
 
 /** Multicall3, at the same address on every chain: its `getEthBalance` makes an ETH balance a view call. */
@@ -39,6 +51,23 @@ const EDIT_SETTLE_MS = 400;
 const RETRY_INITIAL_MS = 1000;
 /** The longest wait between reads after failures. */
 const RETRY_MAX_MS = 30_000;
+/** The longest verifying a result may take before it counts as failed. */
+const READ_TIMEOUT_MS = 60_000;
+
+/** Where the machine reads, proves and verifies. */
+export interface ProveBalanceAddresses {
+    /** The `NoriSnapshot` address. */
+    snapshotAddress: string;
+    /** The proof request queue `NoriSnapshot` enqueues on. */
+    proofQueueAddress: string;
+    /** The Nori program that commits proof queue batches. */
+    noriProgram: Address;
+    /** An existing system account holding SOL: the simulation's fee payer, which pays nothing. */
+    feePayer: Address;
+}
+
+/** The proof request a snapshot transaction enqueued, as the sdk's proof request machine follows it. */
+export type FollowProof = (txHash: string) => Observable<ProofRequestStateNodeUnion>;
 
 /** The asset and holder the form holds. */
 export interface BalanceRequest {
@@ -67,6 +96,18 @@ type ReadOutcome =
     | { outcome: 'succeeded'; value: Preview }
     | { outcome: 'connectionLost'; waitingOn: ConnectionName[] }
     | { outcome: 'failed'; error: string };
+
+/** How verifying a result ended. */
+type Outcome<T> = { outcome: 'succeeded'; value: T } | { outcome: 'failed'; error: string };
+
+/** What `read_snapshot_result` verified on Solana, and what it cost. */
+interface VerifiedBalance {
+    provenBalance: bigint;
+    ethBlockNumber: bigint;
+    ethTimestamp: bigint;
+    provenBlockNumber: bigint;
+    unitsConsumed: bigint;
+}
 
 /** How sending the snapshot ended. */
 type SendOutcome =
@@ -219,7 +260,104 @@ function receiptOf$(
 ): Observable<TransactionReceipt> {
     return from((async () => (await wallet.ready()).waitForTransaction(txHash))()).pipe(
         filter((receipt): receipt is TransactionReceipt => receipt !== null),
-        catchError(() => EMPTY),
+        catchError(() => NEVER),
+    );
+}
+
+/**
+ * How long a failed read waits before reading again: doubling from
+ * `RETRY_INITIAL_MS` with each failure in a row, up to `RETRY_MAX_MS`.
+ *
+ * @param failedReads The failed reads in a row, from 1.
+ * @returns The wait in ms.
+ */
+const retryDelayMs = (failedReads: number): number =>
+    Math.min(RETRY_INITIAL_MS * 2 ** (failedReads - 1), RETRY_MAX_MS);
+
+/**
+ * Verifies the balance a proven snapshot recorded, on Solana: builds the
+ * result's witness and simulates `read_snapshot_result` with it.
+ *
+ * @param connections The Ethereum and Solana chains.
+ * @param addresses The snapshot, queue and programs, and the simulation's fee payer.
+ * @param request The asset, holder and snapshot transaction.
+ * @returns What the program verified, and its compute units.
+ */
+async function verifyBalance(
+    connections: ProofRequestConnections,
+    addresses: ProveBalanceAddresses,
+    request: BalanceRequest & { txHash: string },
+): Promise<VerifiedBalance> {
+    const query = balanceQuery(request);
+    const { read, unitsConsumed } = await verifySnapshotResult({
+        connections,
+        noriSnapshot: addresses.snapshotAddress,
+        proofQueue: addresses.proofQueueAddress,
+        snapshotTxHash: request.txHash,
+        noriProgram: addresses.noriProgram,
+        queryId: queryIdOf(query.target, query.data),
+        feePayer: addresses.feePayer,
+    });
+    return {
+        provenBalance: BigInt(read.result),
+        ethBlockNumber: read.ethBlockNumber,
+        ethTimestamp: read.ethTimestamp,
+        provenBlockNumber: read.provenBlockNumber,
+        unitsConsumed,
+    };
+}
+
+/**
+ * Runs `read` once both chains can serve it, and gives up after
+ * `READ_TIMEOUT_MS`.
+ *
+ * @param connections The Ethereum and Solana chains.
+ * @param read The read.
+ * @returns How it ended, once.
+ */
+function attempt$<T>(
+    connections: ProofRequestConnections,
+    read: () => Promise<T>,
+): Observable<Outcome<T>> {
+    return bothReady$(connections).pipe(
+        switchMap(() =>
+            defer(read).pipe(
+                timeout({
+                    first: READ_TIMEOUT_MS,
+                    with: () =>
+                        throwError(
+                            () =>
+                                new Error(`No answer in ${(READ_TIMEOUT_MS / 1000).toString()} s`),
+                        ),
+                }),
+            ),
+        ),
+        map((value): Outcome<T> => ({ outcome: 'succeeded', value })),
+        catchError((error: unknown) =>
+            of<Outcome<T>>({
+                outcome: 'failed',
+                error: error instanceof Error ? error.message : String(error),
+            }),
+        ),
+    );
+}
+
+/**
+ * Keeps only the attempts with one outcome, narrowed to it.
+ *
+ * @param outcome$ Attempts.
+ * @param outcome The outcome to keep.
+ * @returns The attempts with that outcome.
+ */
+function endedWith<T, TOutcome extends Outcome<T>['outcome']>(
+    outcome$: Observable<Outcome<T>>,
+    outcome: TOutcome,
+): Observable<Extract<Outcome<T>, { outcome: TOutcome }>> {
+    return outcome$.pipe(
+        filter(
+            (attempt): attempt is Extract<Outcome<T>, { outcome: TOutcome }> =>
+                attempt.outcome === outcome,
+        ),
     );
 }
 
@@ -260,21 +398,23 @@ function sentWith<TOutcome extends SendOutcome['outcome']>(
 }
 
 /**
- * Starts the prove balance machine at `editing` with `initial`.
+ * Starts the prove balance machine at `editing`.
  *
  * @param connections The Ethereum and Solana chains; reads go through Ethereum's, the wallet signs.
- * @param snapshotAddress The `NoriSnapshot` address.
+ * @param addresses The snapshot, queue and programs, and the simulation's fee payer.
+ * @param followProof The proof request a snapshot transaction enqueued, followed by the sdk.
  * @param initial The asset and holder the form starts with.
  * @returns
  *   - `proveBalance`: the running machine.
  *   - `edit(request)`: replaces the asset and holder; a complete request is read once edits settle.
- *   - `retry()`: reads again after a failed read.
+ *   - `retry()`: reads or verifies again after a failure.
  *   - `prove()`: sends the snapshot.
  *   - `another()`: starts another proof.
  */
 export function createProveBalanceMachine(
     connections: ProofRequestConnections,
-    snapshotAddress: string,
+    addresses: ProveBalanceAddresses,
+    followProof: FollowProof,
     initial: BalanceRequest,
 ): {
     proveBalance: StartedMachine<ProveBalanceState> & { stop: () => void };
@@ -298,13 +438,22 @@ export function createProveBalanceMachine(
             (state): state is Extract<ProveBalanceState, { node: 'reading' }> =>
                 state.node === 'reading',
         ),
-        switchMap(({ data }) => readPreview$(connections.ethereum, snapshotAddress, data)),
+        switchMap(({ data }) =>
+            readPreview$(connections.ethereum, addresses.snapshotAddress, data),
+        ),
         share(),
     );
     // The outcome edges of `awaitingSignature` share one send per entry into it.
     const send$ = dataOnEntry$(state$, 'awaitingSignature').pipe(
         switchMap((request) =>
-            sendSnapshot$(connections.ethereum.wallet, snapshotAddress, request),
+            sendSnapshot$(connections.ethereum.wallet, addresses.snapshotAddress, request),
+        ),
+        share(),
+    );
+    // The outcome edges of `verifying` share one verification per entry into it.
+    const verify$ = dataOnEntry$(state$, 'verifying').pipe(
+        switchMap((request) =>
+            attempt$(connections, async () => verifyBalance(connections, addresses, request)),
         ),
         share(),
     );
@@ -334,9 +483,7 @@ export function createProveBalanceMachine(
         retryDue: {
             $: () =>
                 dataOnEntry$(state$, 'readFailed').pipe(
-                    switchMap(({ failedReads }) =>
-                        timer(Math.min(RETRY_INITIAL_MS * 2 ** (failedReads - 1), RETRY_MAX_MS)),
-                    ),
+                    switchMap(({ failedReads }) => timer(retryDelayMs(failedReads))),
                 ),
             next: (_due, _dest, { asset, holder, failedReads }) => ({ asset, holder, failedReads }),
         },
@@ -391,7 +538,8 @@ export function createProveBalanceMachine(
             $: () =>
                 dataOnEntry$(state$, 'proving').pipe(
                     switchMap(({ txHash }) => receiptOf$(connections.ethereum.wallet, txHash)),
-                    filter((receipt) => receipt.status === 0),
+                    // Silent unless it reverted: completing without a value would error the machine.
+                    switchMap((receipt) => (receipt.status === 0 ? of(receipt) : NEVER)),
                 ),
             next: (receipt, _dest, { asset, holder, symbol, decimals, balance, fee }) => ({
                 asset,
@@ -402,6 +550,47 @@ export function createProveBalanceMachine(
                 fee,
                 error: `The transaction ${receipt.hash} failed on Ethereum`,
             }),
+        },
+        proofAvailable: {
+            $: () =>
+                dataOnEntry$(state$, 'proving').pipe(
+                    // Silent if the proof request machine closes first.
+                    switchMap(({ txHash }) => concat(followProof(txHash), NEVER)),
+                    filter(atNode('proofAvailable')),
+                    take(1),
+                ),
+            next: ({ data }, _dest, source) => ({
+                ...source,
+                proofQueueBatchIndex: data.proofQueueBatchIndex,
+                proofQueueBatchAddress: data.proofQueueBatchAddress,
+                failedReads: 0,
+            }),
+        },
+        verified: {
+            $: () => endedWith(verify$, 'succeeded'),
+            next: ({ value }, _dest, { failedReads: _failedReads, ...source }) => ({
+                ...source,
+                ...value,
+            }),
+        },
+        verifyError: {
+            $: () => endedWith(verify$, 'failed'),
+            next: ({ error }, _dest, source) => ({
+                ...source,
+                error,
+                failedReads: source.failedReads + 1,
+            }),
+        },
+        verifyRetry: {
+            $: () => retry$,
+            next: (_retry, _dest, { error: _error, ...source }) => source,
+        },
+        verifyRetryDue: {
+            $: () =>
+                dataOnEntry$(state$, 'verifyFailed').pipe(
+                    switchMap(({ failedReads }) => timer(retryDelayMs(failedReads))),
+                ),
+            next: (_due, _dest, { error: _error, ...source }) => source,
         },
     });
 
