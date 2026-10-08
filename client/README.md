@@ -1,8 +1,8 @@
 # Backstop client
 
-Sample client and keeper CLI. The full client (WSS/rxjs on Nori's infra) comes later.
+Sample client and keeper CLI, in Node. The browser apps are in [web/](../web/README.md).
 
-- `fetchProvenSnapshot`: snapshot transaction -> the witness for any of its results, once Nori has proven its batch.
+- `fetchProvenSnapshot`: snapshot transaction -> the witness for any of its results, once Nori has proven its batch. Reads through the sdk's `createConnections`.
 - `createGuardInstruction`, `submitReadInstruction`, `checkpointInstruction`, `decodeGuard`: bytes pinned to the Rust program (`test-vectors/backstop`).
 
 ## Keeper

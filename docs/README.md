@@ -14,12 +14,13 @@
 | [nori-read/README.md](../nori-read/README.md)                                   | Verify a snapshot result in your Solana program                                   |
 | [programs/backstop/README.md](../programs/backstop/README.md)                   | Circuit breaker for one bridged asset; [guard diagram](backstop-guard.drawio.png) |
 | [client/README.md](../client/README.md)                                         | Sample client, keeper CLI and the local dry run                                   |
+| [web/README.md](../web/README.md)                                               | Browser apps: prove a balance, bridge dashboard                                   |
 | [test-vectors/nori-snapshot/README.md](../test-vectors/nori-snapshot/README.md) | Test data shared by the TS and Rust tests                                         |
 
-Upstream: the Nori SDK at the pinned release (npm 0.0.5, git `8e0b0fb`)
-[README](https://github.com/Nori-zk/nori-solana-sdk/blob/8e0b0fbe4ff5018a9a7e72a6acd4fdc398b7b7de/README.md),
-[TypeScript SDK](https://github.com/Nori-zk/nori-solana-sdk/blob/8e0b0fbe4ff5018a9a7e72a6acd4fdc398b7b7de/sdk/README.md) and
-[deployment runbook](https://github.com/Nori-zk/nori-solana-sdk/blob/8e0b0fbe4ff5018a9a7e72a6acd4fdc398b7b7de/DEPLOYMENT.md),
+Upstream: the Nori SDK at the pinned release (npm 0.1.1, git `4e43865`)
+[README](https://github.com/Nori-zk/nori-solana-sdk/blob/4e43865b23e9b75d16f44cd9e9c351ae720de6bd/README.md),
+[TypeScript SDK](https://github.com/Nori-zk/nori-solana-sdk/blob/4e43865b23e9b75d16f44cd9e9c351ae720de6bd/sdk/README.md) and
+[deployment runbook](https://github.com/Nori-zk/nori-solana-sdk/blob/4e43865b23e9b75d16f44cd9e9c351ae720de6bd/DEPLOYMENT.md),
 and the [bridge-head (prover) README](https://github.com/Nori-zk/nori-bridge-head/blob/FEAT/solana-bridge-sepolia-glamsterdam/README.md).
 
 ## Diagrams

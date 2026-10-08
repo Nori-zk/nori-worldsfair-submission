@@ -1,15 +1,12 @@
-import {
-    address,
-    type Address,
-    type GetAccountInfoApi,
-    type GetMultipleAccountsApi,
-    type Rpc,
-} from '@solana/kit';
-import type { Provider } from 'ethers';
+import { address, type Address } from '@solana/kit';
 import {
     ProofRequestState,
-    fetchProofRequestWitness,
+    forCalls,
     getProofRequestStateSnapshot,
+    getProofRequestWitness,
+    type Ethereum,
+    type EthereumProvider,
+    type Solana,
 } from '@nori-zk/nori-bridge-solana-sdk';
 import {
     parseSnapshotEvent,
@@ -19,8 +16,8 @@ import {
 } from './snapshotWitness.js';
 
 export interface ProvenSnapshotRequest {
-    rpc: Rpc<GetAccountInfoApi & GetMultipleAccountsApi>;
-    provider: Provider;
+    /** The sdk's chains, from `createConnections`. */
+    connections: { ethereum: Ethereum; solana: Solana };
     noriSnapshot: string;
     proofQueue: string;
     /** The transaction that called `NoriSnapshot.snapshot`. */
@@ -39,6 +36,9 @@ export type ProvenSnapshot =
           witnessFor(queryId: string): SnapshotResultWitnessArgs;
       };
 
+const fetchReceipt = (provider: EthereumProvider, hash: string) =>
+    provider.getTransactionReceipt(hash);
+
 /**
  * A snapshot transaction and, once Nori has proven its batch, everything
  * needed to verify any of its results: the batch account, and the request's
@@ -47,15 +47,16 @@ export type ProvenSnapshot =
 export async function fetchProvenSnapshot(
     request: ProvenSnapshotRequest
 ): Promise<ProvenSnapshot> {
-    const receipt = await request.provider.getTransactionReceipt(
+    const { ethereum } = request.connections;
+    const receipt = await forCalls(
+        ethereum,
+        fetchReceipt,
         request.snapshotTxHash
     );
     if (!receipt) throw new Error(`No receipt for ${request.snapshotTxHash}`);
     const event = parseSnapshotEvent(receipt, request.noriSnapshot);
 
-    const state = await getProofRequestStateSnapshot({
-        rpc: request.rpc,
-        provider: request.provider,
+    const state = await getProofRequestStateSnapshot(request.connections, {
         proofQueueAddress: request.proofQueue,
         proofRequestTxHash: request.snapshotTxHash,
         programAddress: request.noriProgram,
@@ -63,10 +64,11 @@ export async function fetchProvenSnapshot(
     if (state.state !== ProofRequestState.ProofAvailable)
         return { proven: false, event };
 
-    const requestWitness = await fetchProofRequestWitness(state, {
-        provider: request.provider,
-        proofQueueAddress: request.proofQueue,
-    });
+    const requestWitness = await getProofRequestWitness(
+        ethereum,
+        state,
+        request.proofQueue
+    );
     return {
         proven: true,
         event,

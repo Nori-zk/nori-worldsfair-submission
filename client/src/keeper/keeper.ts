@@ -1,8 +1,14 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { FetchRequest, isError, JsonRpcProvider, Wallet } from 'ethers';
+import { firstValueFrom } from 'rxjs';
 import { NoriSnapshot__factory } from '@nori-zk/ethereum-snapshot';
-import { NoriProofRequestQueue__factory } from '@nori-zk/ethereum-solana-bridge';
-import { fetchBridgeState } from '@nori-zk/nori-bridge-solana-sdk';
+import {
+    bothReady$,
+    createConnections,
+    getBridgeState,
+    getProofQueueHead,
+    type Connections,
+} from '@nori-zk/nori-bridge-solana-sdk';
 import { findStatePda } from '@nori-zk/nori-bridge-solana-sdk/program';
 import {
     checkpointInstruction,
@@ -34,6 +40,8 @@ import {
 
 /** How long `snapshot` waits for its transaction to be mined. */
 const SNAPSHOT_WAIT_MS = 3 * 60_000;
+/** The sdk's requests have no timeout of their own; a hung one would stall the loop. */
+const PROVEN_SNAPSHOT_TIMEOUT_MS = 2 * 60_000;
 
 // Backstop error codes the keeper treats as "nothing to do" (pinned by
 // programs/backstop/tests/instruction_fixture.rs)
@@ -49,9 +57,11 @@ export class Keeper {
     private constructor(
         private readonly config: KeeperConfig,
         private readonly solana: Solana,
-        private readonly provider: JsonRpcProvider
+        private readonly provider: JsonRpcProvider,
+        private readonly connections: Connections
     ) {}
 
+    /** The keeper signs through its own clients and reads through the sdk's connections. */
     static async connect(config: KeeperConfig): Promise<Keeper> {
         const solana = await connectSolana(
             config.solana.rpcUrl,
@@ -60,7 +70,27 @@ export class Keeper {
         // ethers' default is 5 min per request; a hung one would stall the loop
         const request = new FetchRequest(config.ethereum.rpcUrl);
         request.timeout = RPC_TIMEOUT_MS;
-        return new Keeper(config, solana, new JsonRpcProvider(request));
+        const provider = new JsonRpcProvider(request);
+        const [{ chainId }, genesisHash] = await Promise.all([
+            provider.getNetwork(),
+            solana.rpc.getGenesisHash().send(),
+        ]);
+        const connections = createConnections({
+            ethereum: {
+                expectedChainId: chainId,
+                http: { rpcUrl: config.ethereum.rpcUrl },
+            },
+            solana: {
+                expectedGenesisHash: genesisHash,
+                http: { rpcUrls: [config.solana.rpcUrl] },
+            },
+        });
+        await withTimeout(
+            firstValueFrom(bothReady$(connections)),
+            RPC_TIMEOUT_MS,
+            'Ethereum and Solana connections'
+        );
+        return new Keeper(config, solana, provider, connections);
     }
 
     private log(message: string) {
@@ -208,14 +238,17 @@ export class Keeper {
 
     /** True once the snapshot is proven and every guard's reads are applied. */
     private async submitSnapshot(snapshotTxHash: string): Promise<boolean> {
-        const snapshot = await fetchProvenSnapshot({
-            rpc: this.solana.rpc,
-            provider: this.provider,
-            noriSnapshot: this.config.ethereum.noriSnapshot,
-            proofQueue: this.config.ethereum.proofQueue,
-            snapshotTxHash,
-            noriProgram: this.config.solana.noriProgram,
-        });
+        const snapshot = await withTimeout(
+            fetchProvenSnapshot({
+                connections: this.connections,
+                noriSnapshot: this.config.ethereum.noriSnapshot,
+                proofQueue: this.config.ethereum.proofQueue,
+                snapshotTxHash,
+                noriProgram: this.config.solana.noriProgram,
+            }),
+            PROVEN_SNAPSHOT_TIMEOUT_MS,
+            'reading the proof request'
+        );
         if (!snapshot.proven) return false;
         let done = true;
         for (const guard of this.config.guards) {
@@ -303,16 +336,15 @@ export class Keeper {
         const lines: string[] = [];
         const now = BigInt(Math.floor(Date.now() / 1000));
         const { noriProgram } = this.config.solana;
-        const queue = NoriProofRequestQueue__factory.connect(
-            this.config.ethereum.proofQueue,
-            this.provider
+        const { ethereum, solana } = this.connections;
+        const [nori, requests] = await withTimeout(
+            Promise.all([
+                getBridgeState(solana, noriProgram).catch((): null => null),
+                getProofQueueHead(ethereum, this.config.ethereum.proofQueue),
+            ]),
+            RPC_TIMEOUT_MS,
+            "reading Nori's progress"
         );
-        const [nori, requests] = await Promise.all([
-            fetchBridgeState(this.solana.rpc, noriProgram).catch(
-                (): null => null
-            ),
-            queue.head(),
-        ]);
         if (nori) {
             lines.push(
                 `nori: beacon slot ${nori.latestHead} | ${nori.queueCursor} of ${requests} queue requests proven` +
@@ -396,4 +428,20 @@ export class Keeper {
 
 function errorMessage(error: unknown): string {
     return error instanceof Error ? error.message : String(error);
+}
+
+/** Rejects once `ms` pass; the work itself is left to finish or fail on its own. */
+function withTimeout<T>(
+    work: Promise<T>,
+    ms: number,
+    what: string
+): Promise<T> {
+    let timer: NodeJS.Timeout | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+        timer = setTimeout(
+            () => reject(new Error(`${what} timed out after ${ms / 1000} s`)),
+            ms
+        );
+    });
+    return Promise.race([work, timeout]).finally(() => clearTimeout(timer));
 }

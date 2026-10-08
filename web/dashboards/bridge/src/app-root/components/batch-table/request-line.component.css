@@ -1,0 +1,25 @@
+/*
+ * On the table's grid: the id under BATCH and the contract under REQUESTS.
+ * Its address and the transaction follow, each cut short and linked. No
+ * commas in comments: yaw's style scoping splits selectors on them.
+ */
+:host {
+    display: grid;
+    grid-template-columns: 5.5rem 8.5rem auto auto 1fr;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.65rem 0;
+    color: var(--nori-muted);
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+/* Muted against its row: the links keep their green dimmed. */
+a {
+    color: var(--nori-light-green);
+    opacity: 0.6;
+    text-decoration: none;
+}
+a:hover {
+    opacity: 1;
+    text-decoration: underline;
+}

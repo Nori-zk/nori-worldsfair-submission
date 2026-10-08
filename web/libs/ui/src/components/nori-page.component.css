@@ -1,0 +1,86 @@
+:host {
+    --card-width: min(830px, calc(100vw - 3rem));
+    /* The beams' height as a multiple of the card's, centred on it. */
+    --beam-scale: 1.45;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    /* The beams reach past the card on both axes; they never make the page scroll. */
+    overflow: clip;
+}
+header {
+    display: flex;
+    justify-content: center;
+    padding: 1.25rem 1rem 0;
+}
+.logo {
+    height: 50px;
+}
+main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1.5rem 6rem;
+}
+.stage {
+    position: relative;
+    width: var(--card-width);
+}
+nori-card {
+    position: relative;
+    z-index: 1;
+}
+.beam {
+    position: absolute;
+    top: calc((1 - var(--beam-scale)) * 50%);
+    bottom: calc((1 - var(--beam-scale)) * 50%);
+    width: calc((100vw - var(--card-width)) / 2);
+    container-type: size;
+    overflow: hidden;
+    pointer-events: none;
+}
+.beam.left {
+    right: 100%;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #fff 25%);
+    mask-image: linear-gradient(to right, transparent 0%, #fff 25%);
+}
+.beam.right {
+    left: 100%;
+    -webkit-mask-image: linear-gradient(to left, transparent 0%, #fff 25%);
+    mask-image: linear-gradient(to left, transparent 0%, #fff 25%);
+}
+.beam laser-flow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100cqh;
+    height: 100cqw;
+}
+.beam.left laser-flow {
+    transform: translate(-50%, -50%) rotate(-90deg);
+}
+.beam.right laser-flow {
+    transform: translate(-50%, -50%) rotate(90deg);
+}
+.lede {
+    max-width: 36rem;
+    margin: 0 auto 1.75rem;
+    color: var(--nori-muted);
+    font-size: clamp(1rem, 2.2vw, 1.2rem);
+    line-height: 1.6;
+    text-align: center;
+}
+@media (max-width: 1100px) {
+    .beam {
+        display: none;
+    }
+}
+@media (max-width: 480px) {
+    .logo {
+        height: 38px;
+    }
+    main {
+        padding: 1.25rem 0.75rem 7rem;
+    }
+}

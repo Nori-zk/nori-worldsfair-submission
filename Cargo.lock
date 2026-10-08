@@ -4947,7 +4947,7 @@ dependencies = [
 [[package]]
 name = "test-utils"
 version = "0.1.0"
-source = "git+https://github.com/Nori-zk/nori-solana-sdk?rev=8e0b0fbe4ff5018a9a7e72a6acd4fdc398b7b7de#8e0b0fbe4ff5018a9a7e72a6acd4fdc398b7b7de"
+source = "git+https://github.com/Nori-zk/nori-solana-sdk?rev=4e43865b23e9b75d16f44cd9e9c351ae720de6bd#4e43865b23e9b75d16f44cd9e9c351ae720de6bd"
 dependencies = [
  "base64 0.22.1",
  "serde_json",
@@ -5020,7 +5020,7 @@ checksum = "fd3ca314f692efd6c868f8408f53fe444634a845f96c028b97d35f6a1f79f0ee"
 [[package]]
 name = "token"
 version = "0.1.0"
-source = "git+https://github.com/Nori-zk/nori-solana-sdk?rev=8e0b0fbe4ff5018a9a7e72a6acd4fdc398b7b7de#8e0b0fbe4ff5018a9a7e72a6acd4fdc398b7b7de"
+source = "git+https://github.com/Nori-zk/nori-solana-sdk?rev=4e43865b23e9b75d16f44cd9e9c351ae720de6bd#4e43865b23e9b75d16f44cd9e9c351ae720de6bd"
 dependencies = [
  "alloy-primitives",
  "anchor-lang",

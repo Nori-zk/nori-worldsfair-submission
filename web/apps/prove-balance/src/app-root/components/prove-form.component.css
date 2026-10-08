@@ -1,0 +1,128 @@
+:host {
+    /* Space between the form's parts. */
+    --gap: 1rem;
+    display: block;
+    margin-top: var(--gap);
+}
+label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: var(--gap);
+    color: var(--nori-muted);
+    font-size: 0.85rem;
+}
+input {
+    padding: 0.75rem 1rem;
+    border: 1px solid rgb(255 255 255 / 20%);
+    border-radius: 0.5rem;
+    background: transparent;
+    color: #fff;
+    font: inherit;
+    font-size: 1rem;
+}
+input:focus {
+    outline: none;
+    border-color: var(--nori-light-green);
+}
+input:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+.label {
+    margin-bottom: 0.35rem;
+    color: var(--nori-muted);
+    font-size: 0.85rem;
+}
+token-select {
+    margin-bottom: var(--gap);
+}
+.summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    gap: 1rem;
+    margin-top: var(--gap);
+}
+.stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1rem 1.25rem;
+    border: 1px solid rgb(255 255 255 / 12%);
+    border-radius: 0.75rem;
+    background: rgb(255 255 255 / 3%);
+}
+.stat-label {
+    color: var(--nori-muted);
+    font-size: 0.85rem;
+}
+.stat-value {
+    min-height: 1.2em;
+    color: var(--nori-light-green);
+    font-size: 1.5rem;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+.spinner {
+    display: inline-block;
+    width: 0.9em;
+    height: 0.9em;
+    margin-right: 0.5rem;
+    vertical-align: -0.1em;
+    border: 2px solid rgb(100 225 142 / 25%);
+    border-top-color: var(--nori-light-green);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .spinner {
+        animation-duration: 2.4s;
+    }
+}
+.actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: var(--gap);
+}
+.actions button {
+    flex: 1;
+    padding: 1rem 1.25rem;
+    border: none;
+    border-radius: 0.5rem;
+    background: var(--nori-light-green);
+    color: var(--nori-very-dark-green);
+    cursor: pointer;
+    font: inherit;
+    font-size: 1rem;
+}
+.actions button:disabled {
+    cursor: progress;
+    opacity: 0.6;
+}
+.actions button.secondary {
+    background: var(--nori-connected-green);
+    color: #fff;
+}
+.message,
+.reading {
+    margin: var(--gap) 0 0;
+    color: var(--nori-muted);
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+.message {
+    /* Always one line tall, so a message appearing does not move the card. */
+    min-height: 1.5em;
+    line-height: 1.5;
+}
+.reading {
+    color: var(--nori-light-green);
+}
+proof-progress {
+    margin-top: var(--gap);
+}

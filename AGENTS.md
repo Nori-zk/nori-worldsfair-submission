@@ -4,6 +4,15 @@ Nori's Colosseum World's Fair submission (deadline 2026-10-13 06:59 UTC).
 How it works: [docs/how-it-works.drawio.png](docs/how-it-works.drawio.png). All docs: [docs/README.md](docs/README.md).
 Product spec: `../NORI-backstop-spec.md` (outside the repo).
 Status: live on real proofs, Sepolia → Solana devnet (results and addresses in [docs/README.md](docs/README.md)).
+Working in `web/`: also read [web/AGENTS.md](web/AGENTS.md) (yaw + ystate idiom, toolchain, quirks).
+
+## Required reading
+
+Read before writing code: code written first tends to reinvent what already exists.
+
+- This repo: [README.md](README.md), [docs/README.md](docs/README.md), and the README of the part you change.
+- The sdk: the sibling checkout `../nori-solana-sdk` at the pinned commit (Quirks: one sdk release): its `AGENTS.md`, `README.md` and `sdk/README.md`. Use what it exports before writing your own; changing it follows its AGENTS.md procedure.
+- Before any `web/` change: [web/AGENTS.md](web/AGENTS.md) and its full reading list.
 
 ## Layout
 
@@ -17,17 +26,21 @@ Status: live on real proofs, Sepolia → Solana devnet (results and addresses in
 | `programs/backstop/`          | Guards: proven backing vs Solana supply ([diagram](docs/backstop-guard.drawio.png))                                                                                                                                           |
 | `scripts/`                    | `dry-run.sh` (local loop, fake prover), `deploy-devnet.sh` (Backstop + demo mint), `soak.sh` (keeper for hours, then `report.md`)                                                                                             |
 | `client/`                     | Sample TS client and keeper CLI (`npm run keeper`). Encoders are pinned to Rust bytes. `fake-prover` is for local dry runs only. Tests run with `node --test` on the build, since the wasm hasher breaks jest                 |
+| `web/`                        | yaw + vite UIs ([README](web/README.md)): `apps/prove-balance`, `dashboards/bridge`, shared `libs/ui` (`@nori-zk/solana-web-ui`). Build constants in `web/.env` via `web/env.ts`                                              |
 | `test-harness/`               | Test context for the program tests (validator, client, payer, Anchor events) over the sdk's `test-utils` (deploy, plant accounts, time travel, send)                                                                          |
 | (no submodules)               | The Nori SDK is the npm packages `@nori-zk/nori-bridge-solana-sdk`, `@nori-zk/ethereum-solana-bridge`, `@nori-zk/ethereum-solana-proof-queue-utils-glam` and, for Rust, `token` and `test-utils` from the sdk repo by git rev |
 
 ## Commands
 
 ```bash
-npm install && npm run build
+npm install && npm run build      # build: every workspace's build, --workspaces --if-present
 npm test                          # ethereum (incl. vector drift check) + client
 npm run test:fork -w ethereum     # mainnet fork (network)
 npm run vectors -w ethereum       # regenerate test vectors
-npm run lint && npm run format    # eslint; prettier check (format:fix writes)
+npm run typecheck                 # every workspace's typecheck, --workspaces --if-present
+npm run lint                      # every workspace's lint, --workspaces --if-present
+npm run format                    # prettier check over the repo (format:fix writes)
+npm run dev -w web/apps/prove-balance # also build:ssg, preview; same for web/dashboards/bridge
 
 cargo test --locked -p nori-read
 export CFLAGS="-isystem $HOME/.cache/solana/v1.54/platform-tools/llvm/sbpf/include"
@@ -39,10 +52,11 @@ cargo fmt --all --check
 
 ## Quirks
 
-- One sdk release everywhere: the npm versions in `client/` and `ethereum/` `package.json` (exact, no ranges) and the cargo `rev` in `nori-read/` and `test-harness/` `Cargo.toml` (an sdk commit whose TypeScript is that npm release: now `8e0b0fb`, npm 0.0.5 plus the `test-utils` helpers). Bump them together; `Cargo.lock` then changes only those sources.
+- One sdk release everywhere: the npm versions in every `package.json` (exact, no ranges) and the cargo `rev` in `nori-read/` and `test-harness/` `Cargo.toml` (the sdk commit npm published: now 0.1.1, `4e43865`). Bump them together; `Cargo.lock` then changes only those sources.
 - Node 23 needs `--experimental-wasm-modules` for the hashing wasm (`@nori-zk/ethereum-solana-proof-queue-utils-glam`); the test scripts set it.
 - Toolchain: solana-cli (Agave) 3.1.x with platform-tools v1.54 (SBF rustc 1.89). That's what the tests ran on.
 - `cargo build-sbf` ignores `--locked`: if `Cargo.lock` drifts from `Cargo.toml`, it re-resolves (e.g. to alloy 1.8, which needs rustc 1.91) and fails with "requires rustc 1.91". `cargo metadata --locked` checks the lock; the scripts run it first.
+- The keeper signs through its own Ethereum and Solana clients and reads proof requests and Nori's state through the sdk's `createConnections`. The sdk's requests have no timeout, so the keeper caps each read.
 - surfpool must be 1.5 or later (1.0 breaks `solana program deploy`).
 - A Hardhat fork's clock lags real time. Align it (`evm_setNextBlockTimestamp`) before testing guards, or no supply checkpoint falls in the window.
 - Config: one root `.env` (`.env.example`) for Hardhat, the ethereum scripts and the keeper; deploy outputs land in `ethereum/.env.nori-eth-*` and `.env.nori-sol-demo` (`scripts/deploy-devnet.sh`). The shell environment wins over both; `dry-run.sh` blanks the queue settings so it never uses yours.
@@ -60,6 +74,9 @@ cargo fmt --all --check
 
 ## Conventions
 
+- Follow the conventions already in use; don't invent new ones. Before choosing a structure, config, script, dependency layout or API usage, find how this repo, nori-solana-sdk, yaw ([yaw-example](https://github.com/yaw-rx/yaw/tree/main/packages/yaw-example)) or ystate ([studio](https://github.com/yaw-rx/ystate/tree/main/packages/studio)) already does it, and do the same.
+- Build, test, typecheck, lint and format only through the npm scripts (root and per package). Never call `tsc`, `eslint`, `prettier`, `vite`, `jest` or `hardhat` directly: the scripts carry the flags, configs and env files each package needs, and a bare `tsc` in a `web/` package writes `.js` into `src/`.
 - Follow nori-solana-sdk: npm workspaces, `@nori-zk/*`, Hardhat 3, Anchor, surfpool tests.
+- Root `package.json` lists every workspace by its path (`"web/apps/prove-balance"`, not `"web/apps/*"`), in build order (libraries before the apps that use them). Root scripts run a script across them with `--workspaces --if-present`; a new package picks them up by defining the script.
 - Keep docs short. Prefer a diagram in `docs/` over prose.
 - What this repo needs from the sdk goes through the sdk's change procedure (its AGENTS.md): one request covering everything, the user approves, commits and publishes; then bump the pins here.

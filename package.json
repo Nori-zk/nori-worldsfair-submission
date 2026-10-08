@@ -5,7 +5,10 @@
     "type": "module",
     "workspaces": [
         "ethereum",
-        "client"
+        "client",
+        "web/libs/ui",
+        "web/apps/prove-balance",
+        "web/dashboards/bridge"
     ],
     "devDependencies": {
         "@eslint/js": "^9.39.2",
@@ -14,11 +17,14 @@
         "prettier": "^3.8.1",
         "rimraf": "^6.1.2",
         "typescript": "^5.1.0",
-        "typescript-eslint": "^8.55.0"
+        "typescript-eslint": "^8.55.0",
+        "@yaw-rx/vscode": "^0.1.2"
     },
     "scripts": {
         "build": "npm run build --workspaces --if-present",
-        "lint": "npm run typecheck -w ethereum && npm run lint -w ethereum && npm run lint -w client",
+        "vscode:install": "ln -sfn \"$(pwd)/node_modules/@yaw-rx/vscode\" \"$HOME/.vscode/extensions/yaw-rx.yaw-vscode\"",
+        "typecheck": "npm run typecheck --workspaces --if-present",
+        "lint": "npm run lint --workspaces --if-present",
         "format": "prettier --check .",
         "format:fix": "prettier --write .",
         "test": "npm run test -w ethereum && npm run test -w client",

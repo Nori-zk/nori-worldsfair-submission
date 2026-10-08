@@ -1,0 +1,43 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "ES2022",
+        "moduleResolution": "bundler",
+        "lib": ["ES2022", "DOM", "DOM.Iterable"],
+
+        "strict": true,
+        "noImplicitAny": true,
+        "strictNullChecks": true,
+        "strictFunctionTypes": true,
+        "strictBindCallApply": true,
+        "strictPropertyInitialization": true,
+        "noImplicitThis": true,
+        "useUnknownInCatchVariables": true,
+        "alwaysStrict": true,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true,
+        "noUncheckedIndexedAccess": true,
+        "noImplicitOverride": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "isolatedModules": true,
+        "resolveJsonModule": true,
+        "skipLibCheck": true,
+        "verbatimModuleSyntax": true,
+        "paths": {
+            "rxjs": ["${configDir}/node_modules/rxjs"],
+            "rxjs/*": ["${configDir}/node_modules/rxjs/*"]
+        },
+        "plugins": [
+            { "name": "@yaw-rx/ts-plugin" },
+            {
+                "transform": "@yaw-rx/transformer",
+                "import": "programTransformer",
+                "transformProgram": true
+            }
+        ]
+    }
+}

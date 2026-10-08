@@ -1,0 +1,89 @@
+/* As batch-row with the run's header tinted green. */
+:host {
+    display: block;
+    border-top: 1px solid rgb(100 225 142 / 35%);
+}
+/* Centred: the status can wrap onto a second line. */
+.row {
+    display: grid;
+    grid-template-columns: var(--batch-columns);
+    gap: 1rem;
+    align-items: center;
+    width: 100%;
+    padding: 0.45rem 0;
+    border: none;
+    background: rgb(100 225 142 / 5%);
+    color: var(--nori-muted);
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+    white-space: nowrap;
+}
+.row > span {
+    overflow: hidden;
+    text-align: left;
+    text-overflow: ellipsis;
+}
+.row:hover {
+    background: rgb(100 225 142 / 10%);
+}
+/* The step is a whole sentence: it wraps rather than being cut. */
+.row > .status {
+    white-space: normal;
+}
+/* The opened row is the header of its requests. */
+.nested {
+    border-top: 1px solid rgb(255 255 255 / 12%);
+    color: var(--nori-muted);
+    font-size: 0.85rem;
+}
+.nested request-line {
+    display: grid;
+    grid-template-columns: 5.5rem 8.5rem auto 1fr;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.65rem 0;
+    white-space: nowrap;
+}
+.nested a {
+    color: var(--nori-light-green);
+    opacity: 0.6;
+    text-decoration: none;
+}
+.nested a:hover {
+    opacity: 1;
+}
+.batch,
+.requests {
+    color: var(--nori-light-green);
+}
+.bar {
+    color: var(--nori-light-green);
+    letter-spacing: 0.05em;
+}
+.stages {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr 1fr;
+    gap: 1rem;
+    margin: 0;
+    padding: 0 2.5ch 0.45rem;
+    background: rgb(100 225 142 / 5%);
+    color: var(--nori-muted);
+    font-size: 0.8rem;
+    list-style: none;
+    text-align: center;
+}
+.stages .previous,
+.stages .next {
+    color: var(--nori-light-green);
+    opacity: 0.35;
+}
+.stages .previous::after {
+    content: ' ─';
+}
+.stages .next::before {
+    content: '─ ';
+}
+.stages .current {
+    color: var(--nori-light-green);
+}

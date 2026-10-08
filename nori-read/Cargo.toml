@@ -15,7 +15,7 @@ alloy-primitives = { version = "1.7.1", features = ["borsh"] }
 anchor-lang = "1.1.2"
 bytemuck = "1"
 solana-sha256-hasher = "3.1.0"
-token = { git = "https://github.com/Nori-zk/nori-solana-sdk", rev = "8e0b0fbe4ff5018a9a7e72a6acd4fdc398b7b7de", features = ["no-entrypoint"] }
+token = { git = "https://github.com/Nori-zk/nori-solana-sdk", rev = "4e43865b23e9b75d16f44cd9e9c351ae720de6bd", features = ["no-entrypoint"] }
 serde = { version = "1", features = ["derive"], optional = true }
 serde_json = { version = "1", optional = true }
 

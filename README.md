@@ -12,6 +12,7 @@ Read Ethereum state from any Solana program, proven instead of relayed.
   guard stayed HEALTHY all night.
 - **Drain demo:** draining the lockbox trips the guard; a refill doesn't reset it; the
   admin's `unlatch` does, once the backing is back.
+- **Apps:** a live bridge dashboard and a prove-balance app in the browser ([web/](web/README.md)).
 - **Next:** Ethereum + Solana mainnet, once Nori proves mainnet.
 
 Addresses and numbers: [docs/README.md](docs/README.md).
@@ -24,6 +25,7 @@ Addresses and numbers: [docs/README.md](docs/README.md).
 | `nori-read/`    | Rust crate: verify a snapshot result on Solana in one call ([README](nori-read/README.md))                                    |
 | `programs/`     | Solana programs: `nori-read-example`, [`backstop`](programs/backstop) (circuit breaker)                                       |
 | `client/`       | Sample TS client and keeper CLI: create-guards, snapshot, checkpoint, submit, status, unlatch, run                            |
+| `web/`          | Browser apps: prove an Ethereum balance on Solana, and a live dashboard of the proof queue ([README](web/README.md))          |
 | `test-vectors/` | Test data shared by the TS and Rust tests                                                                                     |
 | `test-harness/` | Surfpool helpers for the program tests                                                                                        |
 | `scripts/`      | `dry-run.sh` (the whole loop locally), `deploy-devnet.sh` (Backstop + demo mint), `soak.sh` (keeper for hours, then a report) |
@@ -33,8 +35,10 @@ Addresses and numbers: [docs/README.md](docs/README.md).
 
 ```sh
 git clone https://github.com/Nori-zk/nori-worldsfair-submission
+cp web/.env.example web/.env   # public build settings for the browser apps
 npm install && npm run build
-npm test                 # Ethereum contracts
+npm test                 # ethereum contracts, then the client
+npm run lint             # every workspace
 cargo test --locked -p nori-read  # Solana-side verification
 scripts/dry-run.sh       # the whole loop on local chains, with a fake prover
 ```
@@ -42,6 +46,15 @@ scripts/dry-run.sh       # the whole loop on local chains, with a fake prover
 Validator tests and toolchain notes: [AGENTS.md](AGENTS.md).
 The Nori SDK comes from npm (`@nori-zk/nori-bridge-solana-sdk` and friends) and,
 for Rust, a cargo git dependency, both pinned to one sdk release; TypeScript needs no Rust.
+
+## Apps
+
+Browser apps on Sepolia + Solana devnet ([web/README.md](web/README.md)):
+
+```sh
+npm run dev -w web/apps/prove-balance   # prove an address's ETH or token balance on Solana: http://localhost:5180
+npm run dev -w web/dashboards/bridge    # every proof request from Ethereum to Solana, live: http://localhost:7400
+```
 
 ## Deploy (Sepolia + Solana devnet)
 
@@ -71,6 +84,7 @@ Create guards only after that program is initialized: a guard pins it.
 | NoriSnapshot (batched reads) and `nori-read`                                             | Built                                                                                                              |
 | Backstop guards: trip rule, latch, paused-at-source, stale, `assert_healthy` for lenders | Built                                                                                                              |
 | Keeper, local dry run                                                                    | Built                                                                                                              |
+| Browser apps: prove a balance, bridge dashboard                                          | Built (Sepolia + Solana devnet)                                                                                    |
 | Live loop on Sepolia + Solana devnet                                                     | Running on real proofs since 7 Oct ([results](docs/README.md#test-deployments-sepolia--solana-devnet-68-oct-2026)) |
 | `enforce`: pause a Token-2022 mint when its guard trips                                  | Roadmap                                                                                                            |
 | Separate warn tolerance (in-flight transfers) from the trip tolerance                    | Roadmap (one `tolerance` today)                                                                                    |
