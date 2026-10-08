@@ -1,6 +1,6 @@
 :host {
-    /* Space between the form's parts, growing with the viewport's height. */
-    --gap: clamp(1rem, 2.5vh, 2rem);
+    /* Space between the form's parts. */
+    --gap: 1rem;
     display: block;
     margin-top: var(--gap);
 }
@@ -13,7 +13,7 @@ label {
     font-size: 0.85rem;
 }
 input {
-    padding: clamp(0.75rem, 1.6vh, 1.1rem) 1rem;
+    padding: 0.75rem 1rem;
     border: 1px solid rgb(255 255 255 / 20%);
     border-radius: 0.5rem;
     background: transparent;
@@ -47,7 +47,7 @@ token-select {
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
-    padding: clamp(1rem, 2.5vh, 1.75rem) 1.25rem;
+    padding: 1rem 1.25rem;
     border: 1px solid rgb(255 255 255 / 12%);
     border-radius: 0.75rem;
     background: rgb(255 255 255 / 3%);
@@ -59,7 +59,7 @@ token-select {
 .stat-value {
     min-height: 1.2em;
     color: var(--nori-light-green);
-    font-size: clamp(1.25rem, 3.5vh, 2.25rem);
+    font-size: 1.5rem;
     line-height: 1.2;
     overflow-wrap: anywhere;
 }
@@ -91,14 +91,14 @@ token-select {
 }
 .actions button {
     flex: 1;
-    padding: clamp(1rem, 2.5vh, 1.5rem) 1.25rem;
+    padding: 1rem 1.25rem;
     border: none;
     border-radius: 0.5rem;
     background: var(--nori-light-green);
     color: var(--nori-very-dark-green);
     cursor: pointer;
     font: inherit;
-    font-size: clamp(1rem, 2.2vh, 1.25rem);
+    font-size: 1rem;
 }
 .actions button:disabled {
     cursor: progress;

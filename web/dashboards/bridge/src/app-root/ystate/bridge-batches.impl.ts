@@ -164,7 +164,7 @@ async function readView(
         ...(target === '' ? {} : { target }),
     });
     const finalizedBlock = await getFinalizedBlockNumber(ethereum);
-    return { batchCount, queueCursor, batches, waiting, finalizedBlock };
+    return { batchCount, queueCursor, batches, waiting, finalizedBlock, latestBlock };
 }
 
 /**

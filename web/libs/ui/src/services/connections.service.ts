@@ -132,7 +132,7 @@ export class ConnectionsService {
      * @returns The wallet's answer, or nothing when it is not ready or refuses.
      */
     private walletRequest$(method: string): Observable<unknown> {
-        return from(this.wallet.ready().then((provider) => provider.send(method, []))).pipe(
+        return from(this.wallet.ready().then(async (provider): Promise<unknown> => provider.send(method, []))).pipe(
             catchError(() => EMPTY),
         );
     }

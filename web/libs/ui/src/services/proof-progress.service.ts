@@ -3,11 +3,11 @@ import { distinctUntilChanged, Observable, of, shareReplay, switchMap } from 'rx
 import {
     createProofRequestStateMachine,
     createUnprocessedProofRequestStateMachine,
-    getNoriBridgeInfraState$,
     type ProofRequestStateNodeUnion,
     type UnprocessedProofRequestStateNodeUnion,
 } from '@nori-zk/nori-bridge-solana-sdk';
 import { ConnectionsService } from './connections.service.js';
+import { NoriBridgeInfraService } from './nori-bridge-infra.service.js';
 
 /** One followed proof request: its state, its bridge progress while unprocessed, and its controls. */
 export interface FollowedProof {
@@ -25,7 +25,7 @@ export interface FollowedProof {
  * where it left it. While a request is `unprocessed`, the unprocessed
  * machine follows the bridge's progress on it from the websocket.
  */
-@Injectable([ConnectionsService])
+@Injectable([ConnectionsService, NoriBridgeInfraService])
 export class ProofProgressService {
     private readonly followed = new Map<
         string,
@@ -34,8 +34,12 @@ export class ProofProgressService {
 
     /**
      * @param connections The connections, Nori's websocket among them, and the queue and program addresses.
+     * @param noriBridgeInfra Nori's bridge state.
      */
-    constructor(private readonly connections: ConnectionsService) {}
+    constructor(
+        private readonly connections: ConnectionsService,
+        private readonly noriBridgeInfra: NoriBridgeInfraService,
+    ) {}
 
     /**
      * The proof request enqueued by `txHash`, followed from the first call on.
@@ -53,7 +57,7 @@ export class ProofProgressService {
             { ...options.proofRequests, proofRequestTxHash: txHash },
             undefined,
             15_000,
-            getNoriBridgeInfraState$(connections.nori),
+            this.noriBridgeInfra.state$,
         );
         const request$ = proofRequestState.state$.pipe(shareReplay({ bufferSize: 1, refCount: false }));
         const progress$ = request$.pipe(

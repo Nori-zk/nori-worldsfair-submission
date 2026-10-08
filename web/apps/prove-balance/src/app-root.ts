@@ -1,6 +1,7 @@
 import { Component, RxElement } from '@yaw-rx/core';
 import {
     ConnectionsService,
+    NoriBridgeInfraService,
     PROOF_REQUEST_CONNECTIONS_OPTIONS,
     TokenListService,
     ProofProgressService,
@@ -25,6 +26,7 @@ const connectionsOptions: ConnectionsOptions = {
     providers: [
         { provide: PROOF_REQUEST_CONNECTIONS_OPTIONS, useValue: connectionsOptions },
         ConnectionsService,
+        NoriBridgeInfraService,
         TokenListService,
         ProofProgressService,
         ProveBalanceService,

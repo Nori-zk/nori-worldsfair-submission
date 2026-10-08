@@ -45,7 +45,9 @@ const readRequest = {
  *   be edited.
  * - `proving` carries the signed transaction's hash. The sdk's proof request
  *   machine follows it from there, through mining, the bridge's stages and
- *   the proof landing on Solana. `another` starts another proof.
+ *   the proof landing on Solana. `another` starts another proof, reading
+ *   the same asset and holder again. A transaction that reverts on Ethereum
+ *   goes to `sendFailed`, to send again or edit.
  */
 export const ProveBalanceGraph = define({
     nodes: {
@@ -105,7 +107,8 @@ export const ProveBalanceGraph = define({
         sendRejected: { from: 'awaitingSignature', to: 'sendFailed', on: 'sendRejected.next' },
         proveRetriedAfterDecline: { from: 'declined', to: 'awaitingSignature', on: 'prove.next' },
         proveRetriedAfterFailure: { from: 'sendFailed', to: 'awaitingSignature', on: 'prove.next' },
-        anotherRequested: { from: 'proving', to: 'editing', on: 'another.next' },
+        anotherRequested: { from: 'proving', to: 'reading', on: 'another.next' },
+        transactionReverted: { from: 'proving', to: 'sendFailed', on: 'transactionReverted.next' },
     },
 });
 

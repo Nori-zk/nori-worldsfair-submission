@@ -2,6 +2,7 @@ import {
     catchError,
     debounceTime,
     defer,
+    EMPTY,
     filter,
     from,
     map,
@@ -13,7 +14,7 @@ import {
     switchMap,
     timer,
 } from 'rxjs';
-import { Contract, dataLength, isAddress, isError } from 'ethers';
+import { Contract, dataLength, isAddress, isError, type TransactionReceipt } from 'ethers';
 import {
     bothReady$,
     ConnectionNotReadyError,
@@ -144,7 +145,7 @@ function readPreview$(
     snapshotAddress: string,
     request: BalanceRequest,
 ): Observable<ReadOutcome> {
-    return defer(() => forCalls(ethereum, readPreview, snapshotAddress, request)).pipe(
+    return defer(async () => forCalls(ethereum, readPreview, snapshotAddress, request)).pipe(
         map((value): ReadOutcome => ({ outcome: 'succeeded', value })),
         catchError((error: unknown) =>
             of<ReadOutcome>(
@@ -202,6 +203,23 @@ function sendSnapshot$(
                       },
             ),
         ),
+    );
+}
+
+/**
+ * The transaction's receipt once it is mined, through the user's wallet.
+ *
+ * @param wallet The user's wallet.
+ * @param txHash The transaction's hash.
+ * @returns The receipt, once; nothing when it cannot be read.
+ */
+function receiptOf$(
+    wallet: Connections['ethereum']['wallet'],
+    txHash: string,
+): Observable<TransactionReceipt> {
+    return from((async () => (await wallet.ready()).waitForTransaction(txHash))()).pipe(
+        filter((receipt): receipt is TransactionReceipt => receipt !== null),
+        catchError(() => EMPTY),
     );
 }
 
@@ -355,7 +373,23 @@ export function createProveBalanceMachine(
         },
         another: {
             $: () => another$,
-            next: (_another, _dest, { asset, holder }) => ({ asset, holder }),
+            next: (_another, _dest, { asset, holder }) => ({ asset, holder, failedReads: 0 }),
+        },
+        transactionReverted: {
+            $: () =>
+                dataOnEntry$(state$, 'proving').pipe(
+                    switchMap(({ txHash }) => receiptOf$(connections.ethereum.wallet, txHash)),
+                    filter((receipt) => receipt.status === 0),
+                ),
+            next: (receipt, _dest, { asset, holder, symbol, decimals, balance, fee }) => ({
+                asset,
+                holder,
+                symbol,
+                decimals,
+                balance,
+                fee,
+                error: `The transaction ${receipt.hash} failed on Ethereum`,
+            }),
         },
     });
 

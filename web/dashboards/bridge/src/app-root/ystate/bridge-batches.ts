@@ -23,6 +23,8 @@ export interface BatchesView {
     waiting: EnqueuedProofRequest[];
     /** Ethereum's finalized block, which a waiting request must be at or below to be proven. */
     finalizedBlock: number;
+    /** Ethereum's latest block when the view was read. */
+    latestBlock: number;
 }
 
 /** The view before the first read. */
@@ -32,6 +34,7 @@ export const EMPTY_VIEW: BatchesView = {
     batches: [],
     waiting: [],
     finalizedBlock: 0,
+    latestBlock: 0,
 };
 
 /**

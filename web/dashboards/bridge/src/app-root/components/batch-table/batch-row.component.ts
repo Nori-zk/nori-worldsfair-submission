@@ -12,53 +12,19 @@ import {
     startWith,
     switchMap,
 } from 'rxjs';
-import { type EnqueuedProofRequest } from '@nori-zk/nori-bridge-solana-sdk';
 import { BridgeDashboardService } from '../../services/bridge-dashboard.service.js';
 import { type ShownBatch as Batch } from '../../ystate/bridge-batches.js';
 import { asciiBar } from '../../utils/ascii.js';
-import {
-    addressUrl,
-    blockText,
-    contractName,
-    cursorRange,
-    shortHex,
-    transactionUrl,
-} from '../../utils/format.js';
+import { blockText, cursorRange } from '../../utils/format.js';
+import { type Line, lineOf } from '../../utils/request-line.js';
 import './request-line.component.js';
 import styles from './batch-row.component.css';
-
-/** A request as `request-line` takes it. */
-interface Line {
-    key: string;
-    request: string;
-    contract: string;
-    detail: string;
-    detailUrl: string;
-    transaction: string;
-    transactionUrl: string;
-}
 
 /** An opened batch's requests, or why they are not shown yet. */
 interface Opened {
     lines: Line[];
     status: string;
 }
-
-/**
- * A request inside a batch as a line.
- *
- * @param request The request.
- * @returns The line.
- */
-const lineOf = (request: EnqueuedProofRequest): Line => ({
-    key: request.requestId.toString(),
-    request: `#${request.requestId.toString()}`,
-    contract: contractName(request.target),
-    detail: shortHex(request.target),
-    detailUrl: addressUrl(request.target),
-    transaction: shortHex(request.transactionHash),
-    transactionUrl: transactionUrl(request.transactionHash),
-});
 
 /**
  * One committed batch: its index, its requests (with a filter, how many of

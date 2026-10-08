@@ -1,6 +1,7 @@
 import { Component, RxElement } from '@yaw-rx/core';
 import {
     ConnectionsService,
+    NoriBridgeInfraService,
     PROOF_REQUEST_CONNECTIONS_OPTIONS,
     type ConnectionsOptions,
 } from '@nori-zk/solana-web-ui';
@@ -29,6 +30,7 @@ const connectionsOptions: ConnectionsOptions = {
     providers: [
         { provide: PROOF_REQUEST_CONNECTIONS_OPTIONS, useValue: connectionsOptions },
         ConnectionsService,
+        NoriBridgeInfraService,
         BridgeDashboardService,
     ],
     template: `

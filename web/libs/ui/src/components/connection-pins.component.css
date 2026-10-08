@@ -22,8 +22,25 @@
     color: inherit;
     text-decoration: none;
 }
-a.item:hover {
+a.item {
     color: var(--nori-light-green);
+}
+a.item .link {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+}
+a.item:hover {
+    color: var(--nori-logo-green);
+}
+.clip {
+    margin-left: -0.2rem;
+    width: 0.9em;
+    height: 0.9em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 .pin {
     width: 0.5rem;
