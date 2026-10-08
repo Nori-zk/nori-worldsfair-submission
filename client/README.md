@@ -2,7 +2,7 @@
 
 Sample client and keeper CLI. The full client (WSS/rxjs on Nori's infra) comes later.
 
-- `fetchSnapshotRead`: snapshot transaction -> witness, once Nori has proven its batch.
+- `fetchProvenSnapshot`: snapshot transaction -> the witness for any of its results, once Nori has proven its batch.
 - `createGuardInstruction`, `submitReadInstruction`, `checkpointInstruction`, `decodeGuard`: bytes pinned to the Rust program (`test-vectors/backstop`).
 
 ## Keeper

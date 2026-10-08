@@ -3,6 +3,7 @@
 Nori's Colosseum World's Fair submission (deadline 2026-10-13 06:59 UTC).
 How it works: [docs/how-it-works.drawio.png](docs/how-it-works.drawio.png). All docs: [docs/README.md](docs/README.md).
 Product spec: `../NORI-backstop-spec.md` (outside the repo).
+Status: live on real proofs, Sepolia → Solana devnet (results and addresses in [docs/README.md](docs/README.md)).
 
 ## Layout
 

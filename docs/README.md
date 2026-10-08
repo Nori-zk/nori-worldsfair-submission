@@ -26,20 +26,28 @@ and the [bridge-head (prover) README](https://github.com/Nori-zk/nori-bridge-hea
 
 Edit the `.drawio` files in [draw.io](https://app.diagrams.net); the `.drawio.png` exports embed them, so either one opens for editing.
 
-## Test deployments (Sepolia + Solana devnet, 6 Oct 2026)
+## Test deployments (Sepolia + Solana devnet, 6–8 Oct 2026)
 
-| What                       | Address                                                                                                                                           |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Proof queue (Sepolia)      | [`0x9AeAc0174f7bDf397C6dB1f62c120E8170e5B87e`](https://sepolia.etherscan.io/address/0x9AeAc0174f7bDf397C6dB1f62c120E8170e5B87e)                   |
-| NoriSnapshot (Sepolia)     | [`0xC377EbBF516a9DB2Fe5AEB65fA19D4dca1717340`](https://sepolia.etherscan.io/address/0xC377EbBF516a9DB2Fe5AEB65fA19D4dca1717340)                   |
-| DemoLockbox (Sepolia)      | [`0xC8e4AAF5Db40bCE6aC2Ed89e1676D882044FD543`](https://sepolia.etherscan.io/address/0xC8e4AAF5Db40bCE6aC2Ed89e1676D882044FD543)                   |
-| Nori light client (devnet) | [`EUz5RMQxYkc9zu12wpCDu9syvr4MarghoYb6jHAvdAcg`](https://explorer.solana.com/address/EUz5RMQxYkc9zu12wpCDu9syvr4MarghoYb6jHAvdAcg?cluster=devnet) |
-| Backstop (devnet)          | [`JAZNGzLyN1TKhjnDDKrSsaQveAhUZUjiG8usM9Du5UD9`](https://explorer.solana.com/address/JAZNGzLyN1TKhjnDDKrSsaQveAhUZUjiG8usM9Du5UD9?cluster=devnet) |
-| Demo mint (devnet)         | [`Fhw5m3W34LuGNNuTWxHu8wVbre7wUE445hxir3Xwcbhi`](https://explorer.solana.com/address/Fhw5m3W34LuGNNuTWxHu8wVbre7wUE445hxir3Xwcbhi?cluster=devnet) |
-| Demo guard (devnet)        | [`E8M7dU4Dp3j6AE3FnFv6fNJXp5tBg3xEUw1xg4eF7PYD`](https://explorer.solana.com/address/E8M7dU4Dp3j6AE3FnFv6fNJXp5tBg3xEUw1xg4eF7PYD?cluster=devnet) |
+| What                         | Address                                                                                                                                                                                                                                                                                               |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Proof queue (Sepolia)        | [`0x9AeAc0174f7bDf397C6dB1f62c120E8170e5B87e`](https://sepolia.etherscan.io/address/0x9AeAc0174f7bDf397C6dB1f62c120E8170e5B87e)                                                                                                                                                                       |
+| NoriSnapshot (Sepolia)       | [`0xC377EbBF516a9DB2Fe5AEB65fA19D4dca1717340`](https://sepolia.etherscan.io/address/0xC377EbBF516a9DB2Fe5AEB65fA19D4dca1717340)                                                                                                                                                                       |
+| Demo lockbox (Sepolia)       | [`0xC8e4AAF5Db40bCE6aC2Ed89e1676D882044FD543`](https://sepolia.etherscan.io/address/0xC8e4AAF5Db40bCE6aC2Ed89e1676D882044FD543)                                                                                                                                                                       |
+| Shadow lockbox (Sepolia)     | [`0xC1E34c6f16d4284520EFE86AE304a895F1Be84C9`](https://sepolia.etherscan.io/address/0xC1E34c6f16d4284520EFE86AE304a895F1Be84C9)                                                                                                                                                                       |
+| Nori light client (devnet)   | [`EUz5RMQxYkc9zu12wpCDu9syvr4MarghoYb6jHAvdAcg`](https://explorer.solana.com/address/EUz5RMQxYkc9zu12wpCDu9syvr4MarghoYb6jHAvdAcg?cluster=devnet)                                                                                                                                                     |
+| Backstop (devnet)            | [`JAZNGzLyN1TKhjnDDKrSsaQveAhUZUjiG8usM9Du5UD9`](https://explorer.solana.com/address/JAZNGzLyN1TKhjnDDKrSsaQveAhUZUjiG8usM9Du5UD9?cluster=devnet)                                                                                                                                                     |
+| Demo mint / guard (devnet)   | [`Fhw5m3W34LuGNNuTWxHu8wVbre7wUE445hxir3Xwcbhi`](https://explorer.solana.com/address/Fhw5m3W34LuGNNuTWxHu8wVbre7wUE445hxir3Xwcbhi?cluster=devnet) / [`E8M7dU4Dp3j6AE3FnFv6fNJXp5tBg3xEUw1xg4eF7PYD`](https://explorer.solana.com/address/E8M7dU4Dp3j6AE3FnFv6fNJXp5tBg3xEUw1xg4eF7PYD?cluster=devnet) |
+| Shadow mint / guard (devnet) | [`Dnt2Mjnvj38E59bnUBkw8EEoW1sy6HzMavbDSQkXTuoX`](https://explorer.solana.com/address/Dnt2Mjnvj38E59bnUBkw8EEoW1sy6HzMavbDSQkXTuoX?cluster=devnet) / [`3YPpzexzi6MyTnbqHesq63Jchir5gnaBgKk7PmNq9vgN`](https://explorer.solana.com/address/3YPpzexzi6MyTnbqHesq63Jchir5gnaBgKk7PmNq9vgN?cluster=devnet) |
 
-Measured on 7 Oct (real proofs): a snapshot is provable on Solana 14–19 min after its
-Ethereum block; Nori's `update` with a request costs ~110k CU and `submit_read` ~17k CU.
-The Sepolia drain (223.52) tripped the guard; a refill to 40,300 plus a pause kept it tripped.
+Measured on real proofs (Sepolia → devnet):
 
-`npm run keeper -w client -- status` shows how far Nori has proven the queue, and the guard's status.
+- **10-hour soak (7–8 Oct, `scripts/soak.sh`):** 39 of 39 snapshots proven and applied;
+  Ethereum block → read applied on Solana in 15–22 min, median 18. Of that, ~3 min waiting
+  for the next checkpoint block, ~15 min Ethereum finality + proving, ~30 s the keeper.
+  The shadow guard (a lockbox nobody touches) stayed HEALTHY all night: no false alarms.
+- **Drain demo:** the lockbox drained to 223.52 tripped the guard (deficit 116,475.48); a
+  refill to 40,300 plus a pause kept it tripped; `unlatch` plus a full refill → HEALTHY.
+- **Costs:** Nori `update` with requests ~110k CU; `submit_read` ~17k CU (backing),
+  ~14k (pause); a 4-query snapshot 753,817 gas on Sepolia (see `ethereum/README.md`).
+
+`npm run keeper -w client -- status` shows how far Nori has proven the queue, and each guard.

@@ -109,7 +109,7 @@
         <mxCell id="notrust" value="&lt;b&gt;You don't trust:&lt;/b&gt; guardian sets, DVNs, oracle committees, relayers or RPC providers. They can delay a read, not forge it." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=left;spacingLeft=12;spacingRight=12;" vertex="1" parent="1">
           <mxGeometry x="760" y="620" width="700" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="legend" value="Solid border: built, not yet run end to end · Dashed: roadmap · Latency: ~13 min Ethereum finality, 16–27 min end to end (estimate)" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#555555;" vertex="1" parent="1">
+        <mxCell id="legend" value="Solid border: built, running on Sepolia + Solana devnet · Dashed: roadmap · Measured: 15–22 min end to end (median 18), ~15 of it Ethereum finality + proving" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#555555;" vertex="1" parent="1">
           <mxGeometry x="40" y="690" width="1420" height="30" as="geometry" />
         </mxCell>
       </root>

@@ -48,3 +48,8 @@ Config: the repo's `.env` (`../.env.example`). `deploy` writes `.env.nori-eth-sn
 | ---------- | ------- | ---------------------------- |
 | 6 tokens   | 264,587 | $0.77                        |
 | 10 queries | 317,908 | $0.93                        |
+
+On Sepolia, which already runs Glamsterdam, a snapshot costs ~730k gas plus ~5.6k per
+query (753,817 for the soak's 4 queries): the queue's `requestProof` alone is ~593k, as new
+storage got dearer. Expect that on mainnet after its fork; one snapshot for every guard
+keeps the fixed cost shared.

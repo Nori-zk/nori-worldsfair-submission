@@ -4,18 +4,30 @@ Read Ethereum state from any Solana program, proven instead of relayed.
 
 ![How a read works](docs/how-it-works.drawio.png)
 
+## Where it stands (8 Oct)
+
+- **Live on real Nori proofs**, Ethereum Sepolia → Solana devnet, since 7 Oct.
+- **10-hour soak:** 39 of 39 snapshots proven and applied; a read reaches Solana a median
+  18 min after its Ethereum block (15–22), almost all of it Ethereum finality. An untouched
+  guard stayed HEALTHY all night.
+- **Drain demo:** draining the lockbox trips the guard; a refill doesn't reset it; the
+  admin's `unlatch` does, once the backing is back.
+- **Next:** Ethereum + Solana mainnet, once Nori proves mainnet.
+
+Addresses and numbers: [docs/README.md](docs/README.md).
+
 ## Repo
 
-| Path            | What                                                                                       |
-| --------------- | ------------------------------------------------------------------------------------------ |
-| `ethereum/`     | `NoriSnapshot` contract, query list, deploy and snapshot tasks                             |
-| `nori-read/`    | Rust crate: verify a snapshot result on Solana in one call ([README](nori-read/README.md)) |
-| `programs/`     | Solana programs: `nori-read-example`, [`backstop`](programs/backstop) (circuit breaker)    |
-| `client/`       | Sample TS client and keeper CLI (snapshot, checkpoint, submit, status)                     |
-| `test-vectors/` | Test data shared by the TS and Rust tests                                                  |
-| `test-harness/` | Surfpool helpers for the program tests                                                     |
-| `scripts/`      | `dry-run.sh` (the whole loop locally), `deploy-devnet.sh` (Backstop + demo mint)           |
-| `docs/`         | [Index of all docs](docs/README.md), diagrams, test deployments                            |
+| Path            | What                                                                                                                          |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `ethereum/`     | `NoriSnapshot` contract, query list, deploy and snapshot tasks                                                                |
+| `nori-read/`    | Rust crate: verify a snapshot result on Solana in one call ([README](nori-read/README.md))                                    |
+| `programs/`     | Solana programs: `nori-read-example`, [`backstop`](programs/backstop) (circuit breaker)                                       |
+| `client/`       | Sample TS client and keeper CLI: create-guards, snapshot, checkpoint, submit, status, unlatch, run                            |
+| `test-vectors/` | Test data shared by the TS and Rust tests                                                                                     |
+| `test-harness/` | Surfpool helpers for the program tests                                                                                        |
+| `scripts/`      | `dry-run.sh` (the whole loop locally), `deploy-devnet.sh` (Backstop + demo mint), `soak.sh` (keeper for hours, then a report) |
+| `docs/`         | [Index of all docs](docs/README.md), diagrams, test deployments                                                               |
 
 ## Run
 
@@ -54,17 +66,17 @@ Create guards only after that program is initialized: a guard pins it.
 
 ## Built vs roadmap
 
-|                                                                                          | Status                                                                                   |
-| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| NoriSnapshot (batched reads) and `nori-read`                                             | Built                                                                                    |
-| Backstop guards: trip rule, latch, paused-at-source, stale, `assert_healthy` for lenders | Built                                                                                    |
-| Keeper, local dry run                                                                    | Built                                                                                    |
-| Live loop on Sepolia + Solana devnet                                                     | Running on real proofs since 7 Oct: the drain trips the guard, a refill doesn't reset it |
-| `enforce`: pause a Token-2022 mint when its guard trips                                  | Roadmap                                                                                  |
-| Separate warn tolerance (in-flight transfers) from the trip tolerance                    | Roadmap (one `tolerance` today)                                                          |
-| Auto-unlatch for Solana-only custody; timelocked admin `unlatch`                         | Roadmap (admin `unlatch` today)                                                          |
-| Check the Solana mint's authority is the expected bridge                                 | Roadmap                                                                                  |
-| Direct storage proofs: any slot, no Ethereum transaction                                 | Roadmap                                                                                  |
+|                                                                                          | Status                                                                                                             |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| NoriSnapshot (batched reads) and `nori-read`                                             | Built                                                                                                              |
+| Backstop guards: trip rule, latch, paused-at-source, stale, `assert_healthy` for lenders | Built                                                                                                              |
+| Keeper, local dry run                                                                    | Built                                                                                                              |
+| Live loop on Sepolia + Solana devnet                                                     | Running on real proofs since 7 Oct ([results](docs/README.md#test-deployments-sepolia--solana-devnet-68-oct-2026)) |
+| `enforce`: pause a Token-2022 mint when its guard trips                                  | Roadmap                                                                                                            |
+| Separate warn tolerance (in-flight transfers) from the trip tolerance                    | Roadmap (one `tolerance` today)                                                                                    |
+| Auto-unlatch for Solana-only custody; timelocked admin `unlatch`                         | Roadmap (admin `unlatch` today)                                                                                    |
+| Check the Solana mint's authority is the expected bridge                                 | Roadmap                                                                                                            |
+| Direct storage proofs: any slot, no Ethereum transaction                                 | Roadmap                                                                                                            |
 
 Direct proofs work because each Nori update already puts Ethereum's state
 root on Solana. The hackathon build uses snapshots through the existing proof queue.
