@@ -8,24 +8,17 @@
         "client"
     ],
     "devDependencies": {
-        "@babel/preset-env": "^7.29.0",
-        "@babel/preset-typescript": "^7.28.5",
-        "@types/jest": "^30.0.0",
-        "@typescript-eslint/eslint-plugin": "^8.55.0",
-        "@typescript-eslint/parser": "^8.55.0",
+        "@eslint/js": "^9.39.2",
         "eslint": "^9.39.2",
-        "jest": "^30.2.0",
         "npm-workspaces-publish-tool": "0.0.18",
         "prettier": "^3.8.1",
         "rimraf": "^6.1.2",
-        "ts-jest": "^29.4.6",
-        "ts-node": "^10.9.2",
         "typescript": "^5.1.0",
         "typescript-eslint": "^8.55.0"
     },
     "scripts": {
         "build": "npm run build --workspaces --if-present",
-        "lint": "npm run lint -w ethereum && npm run lint -w client",
+        "lint": "npm run typecheck -w ethereum && npm run lint -w ethereum && npm run lint -w client",
         "format": "prettier --check .",
         "format:fix": "prettier --write .",
         "test": "npm run test -w ethereum && npm run test -w client",

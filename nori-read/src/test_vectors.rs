@@ -10,8 +10,9 @@ use crate::{
 use alloy_primitives::{hex, Address, B256, U256};
 use serde::Deserialize;
 
-/// Reproducible vectors: batch `[1, 4)` on a local network, holding a request
-/// that is not a snapshot and two snapshots (two and five queries).
+/// Reproducible vectors: batch `[1, 5)` on a local network, holding a request
+/// that is not a snapshot and three snapshots (two and five queries, and the
+/// identity-precompile forgery).
 pub const LOCAL_JSON: &str =
     include_str!("../../test-vectors/nori-snapshot/snapshot-read-vectors.json");
 /// One snapshot of every mainnet query, taken on a mainnet fork.
