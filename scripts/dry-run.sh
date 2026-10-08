@@ -198,6 +198,6 @@ sleep 6
 keeper snapshot
 prove
 keeper submit
-expect_status TRIPPED
+expect_status "TRIPPED .*paused true"
 
 say "Done: HEALTHY -> TRIPPED on the drain -> still TRIPPED after the refill"

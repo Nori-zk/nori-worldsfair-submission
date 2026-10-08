@@ -7,12 +7,14 @@ import { Logger } from 'esm-iso-logger';
 import { encodeQueryData, queryIdOf } from '../queries.js';
 
 const logger = new Logger('Demo');
-// NORI_ETH_ENV_DIR redirects the output (scripts/dry-run.sh uses it)
-const ENV_FILE = path.join(
-    process.env.NORI_ETH_ENV_DIR ??
-        path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'),
-    '.env.nori-eth-demo'
-);
+// NORI_ETH_ENV_DIR redirects the output (scripts/dry-run.sh uses it). Read
+// when the task runs, after hardhat.config.ts has loaded .env
+const envFile = () =>
+    path.join(
+        process.env.NORI_ETH_ENV_DIR ??
+            path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'),
+        '.env.nori-eth-demo'
+    );
 
 /** Sets `name=value` in an env file, keeping its other lines. */
 function setEnvVar(file: string, name: string, value: string) {
@@ -59,7 +61,7 @@ export const deployDemo = task(
             const lockbox = await factory.deploy(ethers.parseEther(locked));
             await lockbox.waitForDeployment();
             const address = await lockbox.getAddress();
-            setEnvVar(ENV_FILE, envVar, address);
+            setEnvVar(envFile(), envVar, address);
 
             logger.log(`DemoLockbox deployed to ${address}, locked ${locked}`);
             for (const signature of ['locked()', 'paused()']) {
@@ -68,7 +70,7 @@ export const deployDemo = task(
                     `query ${signature}: target ${address}, queryId ${queryIdOf(address, data)}`
                 );
             }
-            logger.log(`Wrote ${envVar} to ${ENV_FILE}`);
+            logger.log(`Wrote ${envVar} to ${envFile()}`);
         },
     }))
     .build();

@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { FetchRequest, JsonRpcProvider, Wallet } from 'ethers';
+import { FetchRequest, isError, JsonRpcProvider, Wallet } from 'ethers';
 import { NoriSnapshot__factory } from '@nori-zk/ethereum-snapshot';
 import { NoriProofRequestQueue__factory } from '@nori-zk/ethereum-solana-bridge';
 import { fetchBridgeState } from '@nori-zk/nori-bridge-solana-sdk';
@@ -139,7 +139,16 @@ export class Keeper {
             this.log(
                 `snapshot ${tx.hash}: ${queries.size} queries, block ${receipt?.blockNumber}`
             );
-        } catch {
+        } catch (error) {
+            if (isError(error, 'CALL_EXCEPTION')) {
+                // Reverted (e.g. the queue fee changed): it has no reads
+                this.saveState({
+                    pending: this.loadState().pending.filter(
+                        (hash) => hash !== tx.hash
+                    ),
+                });
+                throw new Error(`snapshot ${tx.hash} reverted`);
+            }
             this.log(
                 `snapshot ${tx.hash}: not mined after ${SNAPSHOT_WAIT_MS / 60_000} min; its reads go in once it is`
             );
@@ -167,13 +176,14 @@ export class Keeper {
     }
 
     /**
-     * Submits every pending snapshot's reads whose batch is proven. A failed
-     * read is logged and retried next round; it never blocks other guards or
-     * snapshots.
+     * Submits every pending snapshot's reads whose batch is proven. A read the
+     * program rejects is logged and dropped; one that fails in transit is
+     * retried next round. Neither blocks other guards or snapshots.
      */
     async submit(quiet = false) {
+        const pending = this.loadState().pending;
         const stillPending: string[] = [];
-        for (const snapshotTxHash of this.loadState().pending) {
+        for (const snapshotTxHash of pending) {
             let done = false;
             try {
                 done = await this.submitSnapshot(snapshotTxHash);
@@ -185,7 +195,11 @@ export class Keeper {
             if (done) this.log(`snapshot ${snapshotTxHash}: reads submitted`);
             else stillPending.push(snapshotTxHash);
         }
-        this.saveState({ pending: stillPending });
+        // Keep what another keeper process (a CLI `snapshot`) added meanwhile
+        const added = this.loadState().pending.filter(
+            (hash) => !pending.includes(hash)
+        );
+        this.saveState({ pending: [...stillPending, ...added] });
         if (stillPending.length && !quiet)
             this.log(
                 `${stillPending.length} snapshot(s) pending: waiting for a proof or retrying`
@@ -239,7 +253,13 @@ export class Keeper {
                     })
                 );
             } catch (error) {
-                if (customErrorCode(error) !== ERR_READ_NOT_NEWER) throw error;
+                const code = customErrorCode(error);
+                // A program error is final for this read; only transport errors retry
+                if (code === undefined) throw error;
+                if (code !== ERR_READ_NOT_NEWER)
+                    this.log(
+                        `${guard.name}: read rejected (program error ${code}), dropped`
+                    );
             }
         }
     }
@@ -342,8 +362,14 @@ export class Keeper {
                 jobs.push(['checkpoint', () => this.checkpoint()]);
             }
             if (now - last.snapshot >= snapshotSecs) {
-                last.snapshot = now;
-                jobs.push(['snapshot', () => this.snapshot()]);
+                // Only once sent: a failed snapshot retries next round
+                jobs.push([
+                    'snapshot',
+                    async () => {
+                        await this.snapshot();
+                        last.snapshot = now;
+                    },
+                ]);
             }
             jobs.push(['submit', () => this.submit(true)]);
             for (const [name, job] of jobs) {

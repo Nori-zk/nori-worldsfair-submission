@@ -10,11 +10,6 @@ const __dirname = path.dirname(__filename);
 
 const logger = new Logger('Deploy');
 
-// Mirrors NoriProofRequestQueue; validated here so a bad value fails before
-// anything is deployed.
-const PROOF_REQUEST_QUEUE_FEE_GRANULARITY_WEI = 10n ** 12n;
-const MAX_PROOF_REQUEST_QUEUE_FEE_WEI = 5n * 10n ** 16n; // 0.05 ETH
-
 export const deploy = task(
     'deploy',
     'Deploy NoriSnapshot, and a dedicated NoriProofRequestQueue unless NORI_ETH_PROOF_QUEUE_ADDRESS is set'
@@ -52,18 +47,6 @@ export const deploy = task(
                         `NORI_ETH_SNAPSHOT_PROOF_REQUEST_QUEUE_FEE_WEI must be an integer amount of wei, got: ${possibleProofRequestQueueFeeWei}`
                     );
                 }
-                if (proofRequestQueueFeeWei > MAX_PROOF_REQUEST_QUEUE_FEE_WEI)
-                    issues.push(
-                        `NORI_ETH_SNAPSHOT_PROOF_REQUEST_QUEUE_FEE_WEI exceeds MAX_PROOF_REQUEST_QUEUE_FEE of ${MAX_PROOF_REQUEST_QUEUE_FEE_WEI.toString()} wei`
-                    );
-                if (
-                    proofRequestQueueFeeWei %
-                        PROOF_REQUEST_QUEUE_FEE_GRANULARITY_WEI !==
-                    0n
-                )
-                    issues.push(
-                        `NORI_ETH_SNAPSHOT_PROOF_REQUEST_QUEUE_FEE_WEI must be a multiple of ${PROOF_REQUEST_QUEUE_FEE_GRANULARITY_WEI.toString()} wei`
-                    );
             }
 
             if (issues.length) {
@@ -84,8 +67,8 @@ export const deploy = task(
             );
 
             // A dedicated queue keeps snapshot requests apart from other consumers:
-            // its batches only hold write-once snapshot words, so witnesses never
-            // need archive reads, and its fee is set for snapshots alone.
+            // its batches only hold write-once snapshot words, and its fee is set
+            // for snapshots alone. The queue's constructor checks the fee.
             let proofQueueAddress = possibleProofQueueAddress;
             if (!proofQueueAddress) {
                 const queueOperator =
@@ -123,6 +106,12 @@ export const deploy = task(
                 );
                 logger.log(`Gas used: ${proofQueueReceipt.gasUsed.toString()}`);
             } else {
+                // NoriSnapshot pins it for good: an address left over from
+                // another network would brick every snapshot
+                if ((await ethers.provider.getCode(proofQueueAddress)) === '0x')
+                    throw new Error(
+                        `No contract at NORI_ETH_PROOF_QUEUE_ADDRESS ${proofQueueAddress} on chain ${network.chainId}`
+                    );
                 logger.log(
                     `Using existing NoriProofRequestQueue: ${proofQueueAddress}`
                 );

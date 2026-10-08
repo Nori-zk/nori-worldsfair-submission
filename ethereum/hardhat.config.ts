@@ -112,8 +112,9 @@ const config: HardhatUserConfig = {
         mocha: {
             rootHooks: {
                 afterAll() {
-                    // Force exit after tests — ethers .once() listeners keep the process alive
-                    setTimeout(() => process.exit(0), 100);
+                    // Force exit after tests — ethers .once() listeners keep the process alive.
+                    // No code: keep the exitCode Hardhat sets when a test fails
+                    setTimeout(() => process.exit(), 1000).unref();
                 },
             },
         },
