@@ -9,8 +9,14 @@
     font-size: 0.9rem;
 }
 .title {
-    margin: 0 0 1rem;
+    margin: 0 0 0.5rem;
     color: var(--nori-text);
+}
+.explain {
+    margin: 0 0 1rem;
+    color: var(--nori-muted);
+    font-size: 0.85rem;
+    line-height: 1.5;
 }
 .summary {
     margin: 0 0 1rem;
@@ -51,10 +57,4 @@
 }
 .again:hover {
     background: rgb(100 225 142 / 12%);
-}
-.note {
-    margin: 0.75rem 0 0;
-    color: var(--nori-muted);
-    font-size: 0.85rem;
-    line-height: 1.5;
 }

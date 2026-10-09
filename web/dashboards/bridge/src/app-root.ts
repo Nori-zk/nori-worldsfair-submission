@@ -45,7 +45,7 @@ const connectionsOptions: ConnectionsOptions = {
     template: `
         <nori-page
             heading="Bridge dashboard"
-            lede="The newest proof requests contracts have submitted, from Ethereum to Solana."
+            lede="The proof queue from Ethereum to Solana, and how long reads take."
         >
             <wallet-pair></wallet-pair>
             <dashboard-views></dashboard-views>

@@ -22,6 +22,11 @@ import styles from './latency-table.component.css';
     directives: [RxFor],
     template: `
         <p class="title">READ LATENCY: Ethereum block → landed on Solana</p>
+        <p class="explain">
+            Each NoriSnapshot read, from its Ethereum block to the Solana transaction that landed
+            its batch. Most of the wait is Ethereum finality (~15 min); the keeper applies a read
+            30–50 s after its batch lands.
+        </p>
         <p class="summary">{{ summary }}</p>
         <div class="head">
             <span>REQUEST</span>
@@ -36,7 +41,6 @@ import styles from './latency-table.component.css';
         </div>
         <p class="status">{{ status }}</p>
         <button type="button" class="again" onclick="readAgain">[ Read again ]</button>
-        <p class="note">The keeper applies a read to a guard 30–50 s after its batch lands.</p>
     `,
     styles,
 })
