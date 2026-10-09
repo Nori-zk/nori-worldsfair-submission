@@ -3,9 +3,12 @@ import {
     ConnectionsService,
     PROOF_REQUEST_CONNECTIONS_OPTIONS,
     type ConnectionsOptions,
+    BatchTimesService,
     FactsService,
     GuardBoardService,
+    LatencyService,
 } from '@nori-zk/solana-web-ui';
+import './app-root/components/latency-headline.component.js';
 import './app-root/components/snapshot-list.component.js';
 
 /**
@@ -40,12 +43,15 @@ const connectionsOptions: ConnectionsOptions = {
         ConnectionsService,
         GuardBoardService,
         FactsService,
+        BatchTimesService,
+        LatencyService,
     ],
     template: `
         <nori-page
             heading="Proven facts"
             lede="What NoriSnapshot read on Ethereum, proven on Solana."
         >
+            <latency-headline></latency-headline>
             <snapshot-list></snapshot-list>
         </nori-page>
     `,
