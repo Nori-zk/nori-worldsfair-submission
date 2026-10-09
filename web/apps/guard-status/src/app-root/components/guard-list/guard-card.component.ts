@@ -1,13 +1,24 @@
-import { Component, RxElement, state } from '@yaw-rx/core';
-import { type GuardRead } from '@nori-zk/solana-web-ui';
-import { type GuardStatus } from '../../utils/status-text.js';
+import { Component, Inject, RxElement, state } from '@yaw-rx/core';
+import { map, type Observable } from 'rxjs';
+import {
+    ConnectionsService,
+    depositTransaction,
+    STATUS_COLOUR,
+    verdictText,
+    type GuardRead,
+} from '@nori-zk/solana-web-ui';
+import { checkFailed, depositSentence, type GuardStatus } from '../../utils/status-text.js';
 import styles from './guard-card.component.css';
 
 /**
  * One guard, in plain words: its status and what it means, its mint, the
  * backing Nori last proved on Ethereum against the mint's live supply on
- * Solana, and what a lender's deposit would get now. Every field is set by
- * the list's `rx-for` on each read.
+ * Solana, and what a lender's deposit would get now. The view's fields are
+ * set by the list's `rx-for` on each read.
+ *
+ * `[ Check my deposit ]` simulates a lender's deposit against the guard: one
+ * `assert_healthy` by CPI, no wallet, no fee. One click, one simulation; its
+ * result is the card's own state, not a view field, so a refresh keeps it.
  */
 @Component({
     selector: 'guard-card',
@@ -45,7 +56,14 @@ import styles from './guard-card.component.css';
             <span class="detail">live</span>
         </div>
         <p class="coverage">{{ coverage }}</p>
-        <p class="lender">{{ lender }}</p>
+        <div class="lender">
+            <span>{{ lender }}</span>
+            <button type="button" [disabled]="simulating" onclick="checkDeposit">
+                {{ buttonLabel }}
+            </button>
+        </div>
+        <p class="result" [style]="resultStyle">{{ result }}</p>
+        <p class="note">Simulated assert_healthy by CPI: no wallet, no fee.</p>
     `,
     styles,
 })
@@ -69,4 +87,44 @@ export class GuardCard extends RxElement {
     @state supply = '';
     @state coverage = '';
     @state lender = '';
+    /** The deposit check's own state. */
+    @state result = '';
+    @state resultStyle = '';
+    @state simulating = false;
+
+    @Inject(ConnectionsService) private readonly connections!: ConnectionsService;
+
+    get buttonLabel$(): Observable<string> {
+        return this.simulating$.pipe(
+            map((simulating) => (simulating ? '[ Simulating… ]' : '[ Check my deposit ]')),
+        );
+    }
+
+    /** Simulates the deposit once and says what it got. */
+    async checkDeposit(): Promise<void> {
+        const read = this.read;
+        if (read === undefined || this.simulating) return;
+        this.simulating = true;
+        try {
+            const rpc = await this.connections.connections.solana.http.ready();
+            const { value } = await rpc
+                .simulateTransaction(
+                    depositTransaction(read.address, read.guard.mint, NORI_WEB_ENV.solana.feePayer),
+                    {
+                        encoding: 'base64',
+                        sigVerify: false,
+                        replaceRecentBlockhash: true,
+                        commitment: 'confirmed',
+                    },
+                )
+                .send();
+            this.result = depositSentence(value);
+            this.resultStyle = verdictText(value, STATUS_COLOUR[read.status]).style;
+        } catch (error: unknown) {
+            this.result = checkFailed(error);
+            this.resultStyle = 'color: var(--nori-muted)';
+        } finally {
+            this.simulating = false;
+        }
+    }
 }

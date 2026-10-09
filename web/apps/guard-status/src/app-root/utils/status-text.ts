@@ -1,4 +1,10 @@
-import type { GuardRead } from '@nori-zk/solana-web-ui';
+import {
+    BACKSTOP_ERROR_MESSAGE,
+    backstopErrorName,
+    customErrorOf,
+    transactionErrorText,
+} from '@nori-zk/backstop-client/guard';
+import type { GuardRead, Simulated } from '@nori-zk/solana-web-ui';
 
 // Every sentence the page says about a guard. The numbers come in formatted
 // (`amount()`, `blockText()`, `duration()`), so the words are tested alone.
@@ -109,3 +115,33 @@ export function coverageText(backing: bigint, supply: bigint, shortfall: string)
     const cents = (hundredths % 100n).toString().padStart(2, '0');
     return `The backing covers ${whole}.${cents}% of the supply.`;
 }
+
+/**
+ * What a simulated deposit got from `assert_healthy`, as a sentence. Its
+ * colour is `verdictText`'s, from the shared library.
+ *
+ * @param value The simulation's value.
+ * @returns `Your deposit would be allowed (3,956 CU).`, `Your deposit would be
+ *   blocked: Stale (6008), No recent proven backing.`, or `The check failed: <error>.`
+ */
+export function depositSentence(value: Simulated): string {
+    if (value.err === null) {
+        const units = Number(value.unitsConsumed ?? 0n).toLocaleString('en-US');
+        return `Your deposit would be allowed (${units} CU).`;
+    }
+    const code = customErrorOf(value.err);
+    const name = code === undefined ? undefined : backstopErrorName(code);
+    if (code === undefined || name === undefined)
+        return `The check failed: ${transactionErrorText(value.err)}.`;
+    const message = BACKSTOP_ERROR_MESSAGE[code];
+    return `Your deposit would be blocked: ${name} (${code.toString()})${message === undefined ? '' : `, ${message}`}.`;
+}
+
+/**
+ * A check that threw, as a sentence.
+ *
+ * @param error What was thrown.
+ * @returns `The check failed: <message>.`
+ */
+export const checkFailed = (error: unknown): string =>
+    `The check failed: ${error instanceof Error ? error.message : String(error)}.`;

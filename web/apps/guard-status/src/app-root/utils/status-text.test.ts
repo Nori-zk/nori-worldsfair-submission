@@ -1,7 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { type TransactionError } from '@solana/kit';
 import {
+    checkFailed,
     coverageText,
+    depositSentence,
     lenderSentence,
     statusSentence,
     statusWord,
@@ -98,4 +101,30 @@ void test('guards sort HEALTHY and WARN, then TRIPPED and PAUSED, then STALE, th
         ordered(guards).map((g) => g.address),
         ['a', 'b', 'c', 'e', 'd'],
     );
+});
+
+/** @solana/kit types the numbers in `err` as numbers but returns bigints. */
+const asError = (value: unknown): TransactionError => value as TransactionError;
+
+void test('a deposit check reads allowed with its compute units, or blocked with the error', () => {
+    assert.equal(
+        depositSentence({ err: null, unitsConsumed: 3956n }),
+        'Your deposit would be allowed (3,956 CU).',
+    );
+    assert.equal(
+        depositSentence({
+            err: asError({ InstructionError: [0n, { Custom: 6008n }] }),
+            unitsConsumed: 3500n,
+        }),
+        'Your deposit would be blocked: Stale (6008), No recent proven backing.',
+    );
+    assert.equal(
+        depositSentence({ err: asError({ InstructionError: [0, { Custom: 6010 }] }) }),
+        'Your deposit would be blocked: Tripped (6010), Tripped: supply exceeded proven backing.',
+    );
+    assert.equal(
+        depositSentence({ err: asError('AccountNotFound') }),
+        'The check failed: "AccountNotFound".',
+    );
+    assert.equal(checkFailed(new Error('fetch failed')), 'The check failed: fetch failed.');
 });

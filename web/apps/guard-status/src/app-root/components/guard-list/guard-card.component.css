@@ -75,7 +75,41 @@ p {
     display: none;
 }
 .lender {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem 1rem;
     margin-top: 0.9rem;
+}
+button {
+    padding: 0.35rem 0.75rem;
+    border: 1px solid var(--nori-light-green);
+    border-radius: 0;
+    background: transparent;
+    color: var(--nori-light-green);
+    cursor: pointer;
+    font: inherit;
+    white-space: nowrap;
+}
+button:hover:enabled {
+    background: rgb(100 225 142 / 12%);
+}
+button:disabled {
+    cursor: progress;
+    opacity: 0.6;
+}
+.result {
+    margin-top: 0.4rem;
+    overflow-wrap: anywhere;
+}
+.result:empty {
+    display: none;
+}
+.note {
+    margin-top: 0.25rem;
+    color: var(--nori-muted);
+    font-size: 0.8rem;
 }
 @media (max-width: 560px) {
     :host {
