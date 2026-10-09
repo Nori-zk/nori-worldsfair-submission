@@ -459,11 +459,11 @@ export function createProveBalanceMachine(
     );
 
     const machine = ProveBalanceGraph.implement({
-        editIncomplete: {
-            $: () => edit$.pipe(filter((request) => !isComplete(request))),
+        edit: {
+            $: () => edit$,
             next: (request) => request,
         },
-        editComplete: {
+        editSettled: {
             $: () => edit$.pipe(debounceTime(EDIT_SETTLE_MS), filter(isComplete)),
             next: (request) => ({ ...request, failedReads: 0 }),
         },

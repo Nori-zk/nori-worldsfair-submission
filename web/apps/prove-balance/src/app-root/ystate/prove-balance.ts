@@ -38,10 +38,10 @@ const verifyRequest = { ...readRequest, txHash: '', ...provenIn, failedReads: 0 
  * fee are read as soon as both are valid, and one `NoriSnapshot.snapshot`
  * transaction enqueues the proof request. No node is a dead end.
  *
- * - Every edit carries the whole request. `editIncomplete` (the asset or
- *   holder is not valid yet) goes to `editing`; `editComplete` goes to
- *   `reading`, from any node where the form is open, including `reading`
- *   itself, which reads again for the new request.
+ * - Every edit carries the whole request and goes to `editing` at once, from
+ *   any node where the form is open, so nothing proves a request the form no
+ *   longer shows. `editSettled` (the request is valid and the edits stopped)
+ *   goes on to `reading`.
  * - `reading` reads the balance through the wallet with the same call the
  *   snapshot makes, and the snapshot fee, through Ethereum's calls order
  *   (`forCalls`). A connection that is down is
@@ -96,44 +96,34 @@ export const ProveBalanceGraph = define({
         },
     },
     edges: {
-        editedIncomplete: { from: 'editing', to: 'editing', on: 'editIncomplete.next' },
-        editedComplete: { from: 'editing', to: 'reading', on: 'editComplete.next' },
-        editedIncompleteWhileReading: { from: 'reading', to: 'editing', on: 'editIncomplete.next' },
-        editedWhileReading: { from: 'reading', to: 'reading', on: 'editComplete.next' },
-        editedIncompleteWhileWaiting: {
-            from: 'waitingForConnection',
-            to: 'editing',
-            on: 'editIncomplete.next',
-        },
+        edited: { from: 'editing', to: 'editing', on: 'edit.next' },
+        editSettled: { from: 'editing', to: 'reading', on: 'editSettled.next' },
+        editedWhileReading: { from: 'reading', to: 'editing', on: 'edit.next' },
         editedWhileWaiting: {
             from: 'waitingForConnection',
-            to: 'reading',
-            on: 'editComplete.next',
+            to: 'editing',
+            on: 'edit.next',
         },
-        editedIncompleteAfterFailure: {
+        editedAfterFailure: {
             from: 'readFailed',
             to: 'editing',
-            on: 'editIncomplete.next',
+            on: 'edit.next',
         },
-        editedAfterFailure: { from: 'readFailed', to: 'reading', on: 'editComplete.next' },
-        editedIncompleteAfterRead: {
+        editedAfterRead: {
             from: 'balanceRead',
             to: 'editing',
-            on: 'editIncomplete.next',
+            on: 'edit.next',
         },
-        editedAfterRead: { from: 'balanceRead', to: 'reading', on: 'editComplete.next' },
-        editedIncompleteAfterDecline: {
+        editedAfterDecline: {
             from: 'declined',
             to: 'editing',
-            on: 'editIncomplete.next',
+            on: 'edit.next',
         },
-        editedAfterDecline: { from: 'declined', to: 'reading', on: 'editComplete.next' },
-        editedIncompleteAfterSendFailure: {
+        editedAfterSendFailure: {
             from: 'sendFailed',
             to: 'editing',
-            on: 'editIncomplete.next',
+            on: 'edit.next',
         },
-        editedAfterSendFailure: { from: 'sendFailed', to: 'reading', on: 'editComplete.next' },
 
         balanceArrived: { from: 'reading', to: 'balanceRead', on: 'balanceArrived.next' },
         readErrored: { from: 'reading', to: 'readFailed', on: 'readError.next' },
