@@ -458,13 +458,21 @@ export function createProveBalanceMachine(
         share(),
     );
 
+    // Every edit re-enters `editing`, which resubscribes its edges: the settle
+    // wait stays subscribed across those re-entries, or no edit would settle.
+    const settled$ = edit$.pipe(
+        debounceTime(EDIT_SETTLE_MS),
+        filter(isComplete),
+        share({ resetOnRefCountZero: false }),
+    );
+
     const machine = ProveBalanceGraph.implement({
         edit: {
             $: () => edit$,
             next: (request) => request,
         },
         editSettled: {
-            $: () => edit$.pipe(debounceTime(EDIT_SETTLE_MS), filter(isComplete)),
+            $: () => settled$,
             next: (request) => ({ ...request, failedReads: 0 }),
         },
         balanceArrived: {
