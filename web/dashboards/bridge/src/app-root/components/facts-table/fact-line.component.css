@@ -1,0 +1,19 @@
+:host {
+    /* Under its snapshot, indented past the marker column; the verify cell wraps instead of scrolling. */
+    display: block;
+    color: var(--nori-text);
+    font-size: 0.85rem;
+}
+.line {
+    display: grid;
+    grid-template-columns: var(--fact-columns);
+    gap: var(--facts-gap);
+    align-items: baseline;
+    padding: 0.25rem 0 0.25rem 2rem;
+}
+.what,
+.value {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

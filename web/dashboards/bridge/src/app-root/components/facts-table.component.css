@@ -2,6 +2,8 @@
     /* In rem, not ch: the header's smaller font would otherwise narrow its columns. The first is the row's ▸. */
     --facts-columns: 1.25rem 4.5rem 7.5rem 5.5rem 4.5rem 1fr;
     --facts-gap: 0.75rem;
+    /* An opened snapshot's lines: WHAT, VALUE, then the verify button and its result. */
+    --fact-columns: 10.5rem 13rem 1fr;
     display: block;
     margin-top: 2rem;
     overflow-x: auto;

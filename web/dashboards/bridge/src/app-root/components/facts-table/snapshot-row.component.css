@@ -19,3 +19,24 @@
     color: var(--nori-light-green);
     text-decoration: none;
 }
+.marker {
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--nori-muted);
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+}
+.marker:hover {
+    color: var(--nori-light-green);
+}
+.lines-head {
+    display: grid;
+    grid-template-columns: var(--fact-columns);
+    gap: var(--facts-gap);
+    padding: 0.1rem 0 0.3rem 2rem;
+    color: var(--nori-muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+}
