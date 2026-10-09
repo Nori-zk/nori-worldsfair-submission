@@ -4,12 +4,12 @@ Two apps on Sepolia + Solana devnet, built with [yaw](https://yaw-rx.github.io/)
 [ystate](https://ystate.github.io/) on the Nori SDK. Each app's flow is a ystate graph,
 drawn next to it (`ProveBalanceGraph.svg`, `BridgeBatchesGraph.svg`).
 
-| Package                  | What                                                                                                                                             |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `apps/prove-balance`     | Prove on Solana what an Ethereum address holds: one `NoriSnapshot` transaction from your wallet, followed until a batch on Solana covers it      |
-| `dashboards/bridge`      | The whole proof queue: every batch Nori has settled on Solana, the requests still waiting, and the stage Nori's prover is in                     |
-| `libs/ui`                | Shared: wallet and connection buttons, the connection status bar, following a proof request, Nori's page layout and look                         |
-| `.env`, `env.ts`         | Public build constants: chain id, Ethereum RPC, proof queue and its deploy block, `NoriSnapshot`, Solana cluster, Nori program, Nori's websocket |
+| Package              | What                                                                                                                                                                                |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/prove-balance` | Prove on Solana what an Ethereum address holds: one `NoriSnapshot` transaction from your wallet, proven and verified on Solana                                                      |
+| `dashboards/bridge`  | The whole proof queue: every batch Nori has settled on Solana, the requests still waiting, and the stage Nori's prover is in                                                        |
+| `libs/ui`            | Shared: wallet and connection buttons, the connection status bar, following a proof request, Nori's page layout and look                                                            |
+| `.env`, `env.ts`     | Public build constants: chain id, Ethereum RPC, proof queue and its deploy block, `NoriSnapshot`, Solana cluster, Nori program, the verify simulation's fee payer, Nori's websocket |
 
 ```sh
 npm run dev -w web/apps/prove-balance   # http://localhost:5180
@@ -18,18 +18,6 @@ npm run dev -w web/dashboards/bridge    # http://localhost:7400
 
 `build`, `build:ssg` (static pages) and `preview` work the same way. After a redeploy, update
 the addresses in `web/.env` (committed: public values only; everything in it reaches the browser).
-
-| Name                                | Value                                          |
-| ----------------------------------- | ---------------------------------------------- |
-| `NORI_WEB_ETH_CHAIN_ID`             | `11155111`                                     |
-| `NORI_WEB_ETH_RPC_URL`              | `https://sepolia.gateway.tenderly.co`          |
-| `NORI_ETH_PROOF_QUEUE_ADDRESS`      | `0x9AeAc0174f7bDf397C6dB1f62c120E8170e5B87e`   |
-| `NORI_WEB_PROOF_QUEUE_DEPLOY_BLOCK` | `11856173`                                     |
-| `NORI_ETH_SNAPSHOT_ADDRESS`         | `0xC377EbBF516a9DB2Fe5AEB65fA19D4dca1717340`   |
-| `NORI_WEB_SOLANA_CLUSTER`           | `devnet`                                       |
-| `NORI_SOL_TOKEN_PROGRAM_ID`         | `EUz5RMQxYkc9zu12wpCDu9syvr4MarghoYb6jHAvdAcg` |
-| `NORI_WEB_SOLANA_FEE_PAYER`         | `EuRkxPWMLFrNqzNFZYsC7JQZhNewxLfLz3aQFVzts27Y` |
-| `NORI_WEB_BRIDGE_WSS_URL`           | `wss://wss.solana.nori.it.com`                 |
 
 ## Prove balance
 
