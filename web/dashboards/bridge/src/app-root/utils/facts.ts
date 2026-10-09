@@ -52,3 +52,47 @@ export function valueOf(word: string, label: FactLabel): string {
             return value.toLocaleString('en-US');
     }
 }
+
+/** A verify line's text and its colour. */
+export interface VerifyVerdict {
+    text: string;
+    style: string;
+}
+
+/** Errors an Ethereum RPC gives for state it no longer keeps. */
+const PRUNED = /missing trie node|historical state|state.*(not available|unavailable)|pruned/i;
+
+/**
+ * What nori-read-example verified, against what the event recorded.
+ *
+ * @param result The result nori-read-example verified, 0x-hex.
+ * @param word The result the `Snapshot` event recorded, 0x-hex.
+ * @param unitsConsumed The simulation's compute units.
+ * @returns `verified by nori-read-example · N CU` in green, or `did not verify: …` muted.
+ */
+export function verifiedText(result: string, word: string, unitsConsumed: bigint): VerifyVerdict {
+    if (result.toLowerCase() !== word.toLowerCase()) {
+        return {
+            text: `did not verify: Solana verified ${shortHex(result)}, the event recorded ${shortHex(word)}`,
+            style: 'color: var(--nori-muted)',
+        };
+    }
+    return {
+        text: `verified by nori-read-example · ${Number(unitsConsumed).toLocaleString('en-US')} CU`,
+        style: 'color: var(--nori-light-green)',
+    };
+}
+
+/**
+ * A verify that threw, as the line shows it.
+ *
+ * @param error What was thrown.
+ * @returns `did not verify: <message>`, muted, saying when the RPC may have pruned the state.
+ */
+export function verifyFailedText(error: unknown): VerifyVerdict {
+    const message = error instanceof Error ? error.message : String(error);
+    const pruned = PRUNED.test(message)
+        ? " (the Ethereum RPC may have pruned that block's state)"
+        : '';
+    return { text: `did not verify: ${message}${pruned}`, style: 'color: var(--nori-muted)' };
+}

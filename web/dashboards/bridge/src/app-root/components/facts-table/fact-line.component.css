@@ -17,3 +17,32 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+.verify {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.75rem;
+    align-items: baseline;
+}
+.verify.hidden {
+    display: none;
+}
+button {
+    padding: 0.2rem 0.6rem;
+    border: 1px solid var(--nori-light-green);
+    border-radius: 0;
+    background: transparent;
+    color: var(--nori-light-green);
+    cursor: pointer;
+    font: inherit;
+    white-space: nowrap;
+}
+button:hover:enabled {
+    background: rgb(100 225 142 / 12%);
+}
+button:disabled {
+    cursor: default;
+    opacity: 0.6;
+}
+.verdict:empty {
+    display: none;
+}
