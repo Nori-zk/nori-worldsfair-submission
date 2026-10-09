@@ -74,6 +74,9 @@ backing was proven at and how long ago, and the status a lender's `assert_health
 (HEALTHY, WARN, STALE, PAUSED, TRIPPED). Read from Solana every 30 seconds while the tab is
 open; no keeper running means STALE.
 
+Under both, Nori's loop: the stage it is in, over a bar that fills through each epoch until its
+next job.
+
 Filter by contract in the box, or share a filtered view as `?target=<address>`.
 `?synthetic` fills the waiting rows with made-up requests, to preview the layout.
 
