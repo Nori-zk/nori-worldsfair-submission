@@ -116,6 +116,49 @@ export function coverageText(backing: bigint, supply: bigint, shortfall: string)
     return `The backing covers ${whole}.${cents}% of the supply.`;
 }
 
+/** What a guard checks, formatted, for its settings sentence. */
+export interface SettingsFacts {
+    /** The backing query, cut short: `0xd5ce…e29d`. */
+    query: string;
+    /** The lockbox's name when it is known, else empty. */
+    lockbox: string;
+    /** The pause query cut short, or empty when the guard has none. */
+    pauseQuery: string;
+    /** `10 min`. */
+    window: string;
+    /** `1`. */
+    tolerance: string;
+    /** `2 h`. */
+    staleness: string;
+    /** `2 min`. */
+    interval: string;
+    /** How many checkpoints the guard keeps. */
+    kept: number;
+}
+
+/**
+ * A guard's settings in sentences, with the lockbox linked when it is known.
+ *
+ * @param facts The settings, formatted.
+ * @returns `Backing is read from NoriSnapshot query 0x… on the Demo lockbox ↗ in every
+ *   snapshot; the guard trips when …`.
+ */
+export function settingsSentence(facts: SettingsFacts): Sentence {
+    const start = `Backing is read from NoriSnapshot query ${facts.query}`;
+    const pause =
+        facts.pauseQuery === ''
+            ? ' It reads no pause flag.'
+            : ` The pause flag is query ${facts.pauseQuery}.`;
+    const rest =
+        ` in every snapshot. The guard trips when the lowest supply checkpointed within ${facts.window}` +
+        ` of the backing's Ethereum time exceeds backing + ${facts.tolerance} tolerance;` +
+        ` a backing older than ${facts.staleness} is stale; supply is checkpointed every` +
+        ` ${facts.interval}, the last ${facts.kept.toString()} kept.${pause}`;
+    return facts.lockbox === ''
+        ? plain(start + rest)
+        : { text: `${start} on the`, link: facts.lockbox, end: rest };
+}
+
 /**
  * What a simulated deposit got from `assert_healthy`, as a sentence. Its
  * colour is `verdictText`'s, from the shared library.

@@ -1,0 +1,52 @@
+:host {
+    display: block;
+    margin-top: 0.6rem;
+    padding-left: 1rem;
+    border-left: 1px solid rgb(255 255 255 / 10%);
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+p {
+    margin: 0;
+}
+a {
+    color: var(--nori-light-green);
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+.hidden {
+    display: none;
+}
+.settings {
+    color: var(--nori-text);
+    overflow-wrap: anywhere;
+}
+.rule {
+    margin-top: 0.6rem;
+    overflow-wrap: anywhere;
+}
+.label {
+    margin-right: 0.5rem;
+    color: var(--nori-muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+}
+.checkpoints {
+    margin: 0.3rem 0 0;
+    color: var(--nori-muted);
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+    font-size: 0.8rem;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+.checkpoints:empty {
+    display: none;
+}
+.links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.25rem;
+    margin-top: 0.6rem;
+}

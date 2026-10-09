@@ -6,6 +6,7 @@ import {
     coverageText,
     depositSentence,
     lenderSentence,
+    settingsSentence,
     statusSentence,
     statusWord,
     type StatusFacts,
@@ -127,4 +128,29 @@ void test('a deposit check reads allowed with its compute units, or blocked with
         'The check failed: "AccountNotFound".',
     );
     assert.equal(checkFailed(new Error('fetch failed')), 'The check failed: fetch failed.');
+});
+
+void test("a guard's settings read as sentences, the lockbox linked when known", () => {
+    const settings = {
+        query: '0xd5ce…e29d',
+        lockbox: 'Demo lockbox',
+        pauseQuery: '0x975b…e1c5',
+        window: '10 min',
+        tolerance: '1',
+        staleness: '2 h',
+        interval: '2 min',
+        kept: 64,
+    };
+    const end =
+        " in every snapshot. The guard trips when the lowest supply checkpointed within 10 min of the backing's Ethereum time exceeds backing + 1 tolerance; a backing older than 2 h is stale; supply is checkpointed every 2 min, the last 64 kept.";
+    assert.deepEqual(settingsSentence(settings), {
+        text: 'Backing is read from NoriSnapshot query 0xd5ce…e29d on the',
+        link: 'Demo lockbox',
+        end: `${end} The pause flag is query 0x975b…e1c5.`,
+    });
+    assert.deepEqual(settingsSentence({ ...settings, lockbox: '', pauseQuery: '' }), {
+        text: `Backing is read from NoriSnapshot query 0xd5ce…e29d${end} It reads no pause flag.`,
+        link: '',
+        end: '',
+    });
 });

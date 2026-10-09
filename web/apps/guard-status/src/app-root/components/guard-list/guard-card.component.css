@@ -126,3 +126,16 @@ button:disabled {
         margin-bottom: 0.3rem;
     }
 }
+.how {
+    display: block;
+    margin-top: 0.6rem;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--nori-muted);
+    font-size: 0.85rem;
+}
+.how:hover:enabled {
+    background: transparent;
+    color: var(--nori-light-green);
+}
