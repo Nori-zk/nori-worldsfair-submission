@@ -53,6 +53,16 @@ export const solanaAccountUrl = (address: string): string =>
     (NORI_WEB_ENV.solana.cluster === 'mainnet' ? '' : `?cluster=${NORI_WEB_ENV.solana.cluster}`);
 
 /**
+ * A transaction on the Solana explorer, for the cluster this build reads.
+ *
+ * @param signature The transaction's signature.
+ * @returns Its explorer URL.
+ */
+export const solanaTransactionUrl = (signature: string): string =>
+    `https://explorer.solana.com/tx/${signature}` +
+    (NORI_WEB_ENV.solana.cluster === 'mainnet' ? '' : `?cluster=${NORI_WEB_ENV.solana.cluster}`);
+
+/**
  * A block number with thousands separators.
  *
  * @param block The block number.
@@ -159,3 +169,11 @@ export const duration = (secs: number): string =>
         : secs >= 60 && secs % 60 === 0
           ? `${(secs / 60).toString()} min`
           : `${secs.toString()} s`;
+
+/**
+ * A length of time in minutes, to one decimal.
+ *
+ * @param secs Seconds.
+ * @returns `18.2`.
+ */
+export const minutes = (secs: number): string => (secs / 60).toFixed(1);
