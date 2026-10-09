@@ -1,0 +1,26 @@
+:host {
+    display: block;
+}
+.views {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 2rem;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+    font-size: 0.9rem;
+}
+.views button {
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--nori-light-green);
+    border-radius: 0;
+    background: transparent;
+    color: var(--nori-light-green);
+    cursor: pointer;
+    font: inherit;
+}
+.views button:hover {
+    background: rgb(100 225 142 / 12%);
+}
+.views button.current {
+    background: var(--nori-light-green);
+    color: var(--nori-very-dark-green);
+}

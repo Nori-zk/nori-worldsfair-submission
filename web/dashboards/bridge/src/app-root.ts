@@ -7,8 +7,7 @@ import {
 } from '@nori-zk/solana-web-ui';
 import { BridgeDashboardService } from './app-root/services/bridge-dashboard.service.js';
 import { GuardBoardService } from './app-root/services/guard-board.service.js';
-import './app-root/components/batch-table.component.js';
-import './app-root/components/guard-table.component.js';
+import './app-root/components/dashboard-views.component.js';
 
 /** The chain, cluster, bridge websocket, queue and program this build reads, from `web/.env`. */
 const connectionsOptions: ConnectionsOptions = {
@@ -39,11 +38,10 @@ const connectionsOptions: ConnectionsOptions = {
     template: `
         <nori-page
             heading="Bridge dashboard"
-            lede="Backstop's guards on proven Ethereum backing, and the newest proof requests from Ethereum to Solana."
+            lede="The newest proof requests contracts have submitted, from Ethereum to Solana."
         >
             <wallet-pair></wallet-pair>
-            <guard-table></guard-table>
-            <batch-table></batch-table>
+            <dashboard-views></dashboard-views>
         </nori-page>
     `,
 })
