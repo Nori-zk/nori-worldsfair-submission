@@ -1,8 +1,8 @@
 import { Component, Inject, RxElement, state } from '@yaw-rx/core';
 import { filter, map, type Observable } from 'rxjs';
-import { ConnectionsService } from '@nori-zk/solana-web-ui';
-import { type GuardRead } from '../../services/guard-board.service.js';
 import {
+    ConnectionsService,
+    type GuardRead,
     addressUrl,
     amount,
     blockText,
@@ -11,9 +11,12 @@ import {
     duration,
     shortHex,
     solanaAccountUrl,
-} from '../../utils/format.js';
-import { checkpointLines, windowOf } from '../../utils/guard-rule.js';
-import { depositTransaction, simulationFailed, verdictText } from '../../utils/lender.js';
+    checkpointLines,
+    windowOf,
+    depositTransaction,
+    simulationFailed,
+    verdictText,
+} from '@nori-zk/solana-web-ui';
 import styles from './guard-pane.component.css';
 
 /**

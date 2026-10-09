@@ -4,12 +4,12 @@ import {
     NoriBridgeInfraService,
     PROOF_REQUEST_CONNECTIONS_OPTIONS,
     type ConnectionsOptions,
+    BatchTimesService,
+    FactsService,
+    GuardBoardService,
+    LatencyService,
 } from '@nori-zk/solana-web-ui';
-import { BatchTimesService } from './app-root/services/batch-times.service.js';
 import { BridgeDashboardService } from './app-root/services/bridge-dashboard.service.js';
-import { FactsService } from './app-root/services/facts.service.js';
-import { GuardBoardService } from './app-root/services/guard-board.service.js';
-import { LatencyService } from './app-root/services/latency.service.js';
 import './app-root/components/dashboard-views.component.js';
 
 /** The chain, cluster, bridge websocket, queue and program this build reads, from `web/.env`. */

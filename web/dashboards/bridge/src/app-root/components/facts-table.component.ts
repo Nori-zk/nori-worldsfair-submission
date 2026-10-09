@@ -1,9 +1,16 @@
 import { Component, Inject, RxElement } from '@yaw-rx/core';
 import { RxFor } from '@yaw-rx/core/directives/rx-for';
 import { map, type Observable } from 'rxjs';
-import { FactsService, type Facts, type SnapshotFact } from '../services/facts.service.js';
-import { labelOf, valueOf } from '../utils/facts.js';
-import { blockText, blockUrl, clock } from '../utils/format.js';
+import {
+    FactsService,
+    type Facts,
+    type SnapshotFact,
+    labelOf,
+    valueOf,
+    blockText,
+    blockUrl,
+    clock,
+} from '@nori-zk/solana-web-ui';
 import type { SnapshotRowView } from './facts-table/snapshot-row.component.js';
 import './facts-table/snapshot-row.component.js';
 import styles from './facts-table.component.css';

@@ -1,6 +1,6 @@
 import { Component, RxElement, state } from '@yaw-rx/core';
 import { map, type Observable } from 'rxjs';
-import { type LatencyRowView } from '../../utils/latency.js';
+import { type LatencyRowView } from '@nori-zk/solana-web-ui';
 import styles from './latency-row.component.css';
 
 export type { LatencyRowView };

@@ -12,10 +12,13 @@ import {
     type NoriBridgeInfraFinality,
     type NoriBridgeInfraStage,
     type NoriBridgeInfraState,
+    asciiBar,
+    timeLeft,
+    UNKNOWN_BAR,
+    blockText,
+    idRange,
 } from '@nori-zk/solana-web-ui';
 import { type BatchesView } from '../ystate/bridge-batches.js';
-import { asciiBar, timeLeft, UNKNOWN_BAR } from './ascii.js';
-import { blockText, idRange } from './format.js';
 import { type Line, lineOf } from './request-line.js';
 
 /** One row above the batches: a set of the requests no batch covers yet, and where they wait. */

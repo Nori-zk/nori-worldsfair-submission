@@ -11,7 +11,7 @@ import {
     Subject,
     switchMap,
 } from 'rxjs';
-import { ConnectionsService } from '@nori-zk/solana-web-ui';
+import { ConnectionsService } from './connections.service.js';
 import {
     bothReady$,
     getBridgeState,

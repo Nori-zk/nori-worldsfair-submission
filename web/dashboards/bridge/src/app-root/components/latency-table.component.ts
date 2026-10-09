@@ -1,8 +1,13 @@
 import { Component, Inject, RxElement } from '@yaw-rx/core';
 import { RxFor } from '@yaw-rx/core/directives/rx-for';
 import { map, type Observable } from 'rxjs';
-import { LatencyService } from '../services/latency.service.js';
-import { latencyMinutes, rowsOf, summaryOf, type LatencyRowView } from '../utils/latency.js';
+import {
+    LatencyService,
+    latencyMinutes,
+    rowsOf,
+    summaryOf,
+    type LatencyRowView,
+} from '@nori-zk/solana-web-ui';
 import './latency-table/latency-row.component.js';
 import styles from './latency-table.component.css';
 

@@ -2,8 +2,11 @@ import { Component, Inject, RxElement } from '@yaw-rx/core';
 import { RxIf } from '@yaw-rx/core/directives/rx-if';
 import { combineLatest, interval, map, type Observable, startWith } from 'rxjs';
 import { ETHEREUM_EPOCH_SEC, getCommitTimes } from '@nori-zk/nori-bridge-solana-sdk';
-import { NORI_BRIDGE_INFRA_STAGE_TEXT, NoriBridgeInfraService } from '@nori-zk/solana-web-ui';
-import { timeLeft } from '../utils/ascii.js';
+import {
+    NORI_BRIDGE_INFRA_STAGE_TEXT,
+    NoriBridgeInfraService,
+    timeLeft,
+} from '@nori-zk/solana-web-ui';
 import styles from './infra-state.component.css';
 
 /** How many blocks Nori's loop bar holds: more than the card's width shows. */

@@ -1,7 +1,7 @@
 import { Component, RxElement, state } from '@yaw-rx/core';
 import { RxFor } from '@yaw-rx/core/directives/rx-for';
 import { combineLatest, map, type Observable } from 'rxjs';
-import { type GuardRead } from '../../services/guard-board.service.js';
+import { type GuardRead } from '@nori-zk/solana-web-ui';
 import './guard-pane.component.js';
 import styles from './guard-row.component.css';
 

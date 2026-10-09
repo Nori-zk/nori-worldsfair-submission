@@ -1,8 +1,7 @@
 import { Component, Inject, RxElement, state } from '@yaw-rx/core';
 import { map, type Observable } from 'rxjs';
-import { ConnectionsService } from '@nori-zk/solana-web-ui';
+import { ConnectionsService, verifiedText, verifyFailedText } from '@nori-zk/solana-web-ui';
 import { verifySnapshotResult } from '@nori-zk/backstop-client/read';
-import { verifiedText, verifyFailedText } from '../../utils/facts.js';
 import styles from './fact-line.component.css';
 
 /** One query of a snapshot and its recorded result, as its line shows it. */

@@ -12,10 +12,9 @@ import {
     startWith,
     switchMap,
 } from 'rxjs';
+import { asciiBar, blockText, cursorRange } from '@nori-zk/solana-web-ui';
 import { BridgeDashboardService } from '../../services/bridge-dashboard.service.js';
 import { type ShownBatch as Batch } from '../../ystate/bridge-batches.js';
-import { asciiBar } from '../../utils/ascii.js';
-import { blockText, cursorRange } from '../../utils/format.js';
 import { type Line, lineOf } from '../../utils/request-line.js';
 import './request-line.component.js';
 import styles from './batch-row.component.css';

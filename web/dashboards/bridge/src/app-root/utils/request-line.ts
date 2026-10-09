@@ -1,5 +1,5 @@
 import { type EnqueuedProofRequest } from '@nori-zk/nori-bridge-solana-sdk';
-import { addressUrl, contractName, shortHex, transactionUrl } from './format.js';
+import { addressUrl, contractName, shortHex, transactionUrl } from '@nori-zk/solana-web-ui';
 
 /** A request as `request-line` takes it. */
 export interface Line {

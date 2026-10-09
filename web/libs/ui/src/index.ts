@@ -32,3 +32,54 @@ export {
     backgroundLight,
     bottomShadows,
 } from './brand/brand.js';
+export { GuardBoardService, type GuardRead } from './services/guard-board.service.js';
+export { FactsService, type Facts, type SnapshotFact } from './services/facts.service.js';
+export { LatencyService, type Latency } from './services/latency.service.js';
+export { BatchTimesService } from './services/batch-times.service.js';
+export {
+    shortHex,
+    transactionUrl,
+    addressUrl,
+    blockUrl,
+    solanaAccountUrl,
+    solanaTransactionUrl,
+    blockText,
+    idRange,
+    cursorRange,
+    contractName,
+    amount,
+    ago,
+    clock,
+    dateTime,
+    duration,
+    minutes,
+} from './utils/format.js';
+export { asciiBar, UNKNOWN_BAR, timeLeft } from './utils/ascii.js';
+export {
+    depositTransaction,
+    verdictText,
+    simulationFailed,
+    type Simulated,
+    type Verdict,
+} from './utils/lender.js';
+export {
+    labelOf,
+    valueOf,
+    verifiedText,
+    verifyFailedText,
+    type GuardQueries,
+    type FactLabel,
+    type VerifyVerdict,
+} from './utils/facts.js';
+export { windowOf, checkpointLines, type GuardWindow } from './utils/guard-rule.js';
+export {
+    ethTimeOf,
+    batchOf,
+    readsOf,
+    rowsOf,
+    latencyMinutes,
+    summaryOf,
+    type LatencyRowView,
+} from './utils/latency.js';
+export { landingOf, type BatchLanding, type SignatureEntry } from './utils/batch-landing.js';
+export { STATUS_COLOUR } from './utils/status-colour.js';

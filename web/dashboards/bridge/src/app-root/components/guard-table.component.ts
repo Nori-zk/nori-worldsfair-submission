@@ -1,20 +1,19 @@
 import { Component, Inject, RxElement } from '@yaw-rx/core';
 import { RxFor } from '@yaw-rx/core/directives/rx-for';
 import { map, type Observable, startWith } from 'rxjs';
-import { GuardBoardService, type GuardRead } from '../services/guard-board.service.js';
-import { ago, amount, blockText, blockUrl, solanaAccountUrl } from '../utils/format.js';
+import {
+    GuardBoardService,
+    type GuardRead,
+    ago,
+    amount,
+    blockText,
+    blockUrl,
+    solanaAccountUrl,
+    STATUS_COLOUR,
+} from '@nori-zk/solana-web-ui';
 import type { GuardRowView } from './guard-table/guard-row.component.js';
 import './guard-table/guard-row.component.js';
 import styles from './guard-table.component.css';
-
-/** Each status's colour. */
-const STATUS_COLOUR: Record<GuardRead['status'], string> = {
-    HEALTHY: 'var(--nori-light-green)',
-    WARN: 'var(--nori-neon-blue)',
-    PAUSED_AT_SOURCE: 'var(--nori-neon-blue)',
-    STALE: 'var(--nori-muted)',
-    TRIPPED: 'var(--nori-neon-red)',
-};
 
 /**
  * A guard as its row shows it.

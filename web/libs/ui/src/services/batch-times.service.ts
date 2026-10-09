@@ -1,6 +1,6 @@
 import { Injectable } from '@yaw-rx/core';
 import { address } from '@solana/kit';
-import { ConnectionsService } from '@nori-zk/solana-web-ui';
+import { ConnectionsService } from './connections.service.js';
 import { type ProofQueueBatchSummary } from '@nori-zk/nori-bridge-solana-sdk';
 import { landingOf, type BatchLanding } from '../utils/batch-landing.js';
 

@@ -12,7 +12,7 @@ import {
 } from 'rxjs';
 import { decodeBase64 } from 'ethers';
 import { type Address } from '@solana/kit';
-import { ConnectionsService } from '@nori-zk/solana-web-ui';
+import { ConnectionsService } from './connections.service.js';
 import { type SolanaRpc } from '@nori-zk/nori-bridge-solana-sdk';
 import {
     BACKSTOP_PROGRAM,

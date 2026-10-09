@@ -11,7 +11,7 @@ import {
     switchMap,
 } from 'rxjs';
 import { Interface, type Log } from 'ethers';
-import { ConnectionsService } from '@nori-zk/solana-web-ui';
+import { ConnectionsService } from './connections.service.js';
 import {
     bothReady$,
     forCalls,
