@@ -1,0 +1,39 @@
+:host {
+    display: block;
+    padding: 1rem 0;
+    border-top: 1px solid rgb(255 255 255 / 8%);
+}
+.top {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.25rem 1rem;
+    color: var(--nori-muted);
+    font-size: 0.9rem;
+}
+.where {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 0.4rem;
+}
+a {
+    color: var(--nori-light-green);
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+.status {
+    color: var(--nori-muted);
+}
+.status.proven {
+    color: var(--nori-light-green);
+}
+.sentence {
+    margin: 0.4rem 0 0;
+    color: var(--nori-text);
+    font-size: 1.05rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}

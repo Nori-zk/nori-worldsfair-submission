@@ -1,0 +1,38 @@
+:host {
+    display: block;
+}
+.status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.75rem;
+    align-items: baseline;
+    margin: 0.75rem 0 0;
+    color: var(--nori-muted);
+}
+.status span:empty {
+    display: none;
+}
+.status:has(span:empty):has(button.hidden) {
+    display: none;
+}
+button {
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--nori-light-green);
+    cursor: pointer;
+    font: inherit;
+    white-space: nowrap;
+}
+button:hover {
+    text-decoration: underline;
+}
+button.hidden {
+    display: none;
+}
+.note {
+    margin: 1.5rem 0 0;
+    color: var(--nori-muted);
+    font-size: 0.85rem;
+    line-height: 1.55;
+}
