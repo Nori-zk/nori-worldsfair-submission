@@ -31,6 +31,16 @@ export interface GuardConfig {
     maxStalenessSecs: number;
 }
 
+/** One supply checkpoint (Rust `Checkpoint`): the mint's supply at a Solana time. */
+export interface Checkpoint {
+    /** Unix seconds. */
+    time: bigint;
+    supply: bigint;
+}
+
+/** How many checkpoints a guard keeps (Rust `CHECKPOINTS`), as a ring. */
+export const CHECKPOINTS = 64;
+
 /** The parts of a Guard account a keeper or dashboard shows. */
 export interface GuardState {
     admin: Address;
@@ -45,6 +55,8 @@ export interface GuardState {
     tripEthBlock: bigint;
     tripDeficit: bigint;
     checkpointCount: bigint;
+    /** The checkpoints kept, oldest first: the last `min(count, 64)` written. */
+    checkpoints: Checkpoint[];
 }
 
 /** Decodes a Guard account (Anchor discriminator + Borsh). */
@@ -79,7 +91,25 @@ export function decodeGuard(data: Uint8Array): GuardState {
         tripEthBlock: u64(267),
         tripDeficit: u64(275),
         checkpointCount: u64(1307),
+        checkpoints: checkpointsOf(view, u64(1307)),
     };
+}
+
+/**
+ * A guard's checkpoint ring, oldest first: entry `k` of the `written` kept
+ * is at slot `(count - written + k) % 64`, each slot `{ time i64, supply u64 }`
+ * from byte 283.
+ */
+function checkpointsOf(view: DataView, count: bigint): Checkpoint[] {
+    const ring = BigInt(CHECKPOINTS);
+    const written = count < ring ? count : ring;
+    return Array.from({ length: Number(written) }, (_, k) => {
+        const at = 283 + 16 * Number((count - written + BigInt(k)) % ring);
+        return {
+            time: view.getBigInt64(at, true),
+            supply: view.getBigUint64(at + 8, true),
+        };
+    });
 }
 
 /** The guard's status, as the program's `status` computes it. */
