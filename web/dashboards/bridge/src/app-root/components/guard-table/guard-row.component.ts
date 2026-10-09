@@ -35,7 +35,8 @@ interface GuardPaneView {
  * One guard: its mint, status, backing, supply and ratio, and the Ethereum
  * block it was proven at. Opening it (▸ to ▾) shows its pane, built fresh
  * through `rx-for` each time. `open` is the row's own, not a view field, so
- * the table's refresh keeps it.
+ * the table's refresh keeps it. A link opens a row (`?guard=<address>`), and
+ * opening or closing one keeps the link in the URL.
  */
 @Component({
     selector: 'guard-row',
@@ -85,7 +86,20 @@ export class GuardRow extends RxElement {
         );
     }
 
+    /** Opens the row when the page's link names its guard. */
+    override onInit(): void {
+        const guard = new URLSearchParams(window.location.search).get('guard');
+        if (guard !== null && guard === this.read?.address) this.open = true;
+    }
+
+    /** Opens or closes the row, and writes its guard into the URL or takes it out. */
     toggle(): void {
         this.open = !this.open;
+        const address = this.read?.address;
+        if (address === undefined) return;
+        const url = new URL(window.location.href);
+        if (this.open) url.searchParams.set('guard', address);
+        else if (url.searchParams.get('guard') === address) url.searchParams.delete('guard');
+        window.history.replaceState(null, '', url);
     }
 }
