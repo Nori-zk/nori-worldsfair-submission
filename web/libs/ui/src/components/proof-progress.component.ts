@@ -33,47 +33,51 @@ const requestStatus = (request: ProofRequestStateNodeUnion): string => {
     }
 };
 
-/** The unprocessed machine's nodes in order: a quarter of the bar each, labelled under it. */
-const STAGES: UnprocessedProofRequestStateNodeUnion['node'][] = [
-    'WaitingForEthFinality',
-    'WaitingForPreviousJobCompletion',
-    'WaitingForCurrentJobCompletion',
-    'FinishedWaiting',
-];
+/**
+ * About how long, in words.
+ *
+ * @param seconds The seconds.
+ * @returns `about 12 min` from two minutes up, else `about 40s`.
+ */
+const about = (seconds: number): string =>
+    seconds >= 120
+        ? `about ${Math.round(seconds / 60).toString()} min`
+        : `about ${Math.max(0, Math.round(seconds)).toString()}s`;
 
 /**
- * The fill of the progress bar: the stages before this node's, full, then
- * the time spent in this node over the time it is expected to take. The
- * node comes from the machine, so a reload keeps the earlier stages full.
+ * The fill of the progress bar: the whole wait, from when this page first
+ * saw the request to its commit on Solana, as the machine estimates it. A
+ * reload starts it again, scaled to the time left then.
  *
  * @param progress The unprocessed machine's state.
  * @returns The fill, from 0 to 1.
  */
 const progressFill = (progress: UnprocessedProofRequestStateNodeUnion): number => {
     if (progress.node === 'FinishedWaiting') return 1;
-    const { elapsed_sec, time_remaining_sec } = progress.data;
-    const total = elapsed_sec + time_remaining_sec;
-    const within = Number.isFinite(total) && total > 0 ? Math.min(1, elapsed_sec / total) : 0;
-    return (STAGES.indexOf(progress.node) + within) / STAGES.length;
+    const { waiting_elapsed_sec, commit_time_remaining_sec } = progress.data;
+    const total = waiting_elapsed_sec + Math.max(0, commit_time_remaining_sec);
+    return Number.isFinite(total) && total > 0 ? Math.min(1, waiting_elapsed_sec / total) : 0;
 };
 
 /**
  * The detail under the bar for a node of the unprocessed machine: the
  * bridge's stage while the job that includes the request runs, and the time
- * left.
+ * left until it is committed on Solana.
  *
  * @param progress The unprocessed machine's state.
  * @returns The detail.
  */
 const progressDetail = (progress: UnprocessedProofRequestStateNodeUnion): string => {
     if (progress.node === 'FinishedWaiting') return 'Confirming on Solana';
-    const { stage_name, time_remaining_sec } = progress.data;
-    const left = Number.isFinite(time_remaining_sec)
-        ? ` · about ${Math.max(0, Math.round(time_remaining_sec)).toString()}s left`
-        : '';
-    return progress.node === 'WaitingForCurrentJobCompletion'
-        ? `${stage_name}${left}`
-        : left.slice(3);
+    const { stage_name, commit_time_remaining_sec } = progress.data;
+    const left = !Number.isFinite(commit_time_remaining_sec)
+        ? ''
+        : commit_time_remaining_sec > 0
+          ? `${about(commit_time_remaining_sec)} to Solana`
+          : 'taking longer than expected';
+    return progress.node === 'WaitingForCurrentJobCompletion' && left !== ''
+        ? `${stage_name} · ${left}`
+        : left;
 };
 
 /**
