@@ -1,3 +1,5 @@
+import { formatUnits } from 'ethers';
+
 /** Each Ethereum chain's block explorer. */
 const EXPLORERS: Record<number, string> = {
     1: 'https://etherscan.io',
@@ -100,3 +102,34 @@ export const contractName = (target: string): string =>
     target.toLowerCase() === NORI_WEB_ENV.ethereum.snapshotAddress.toLowerCase()
         ? 'NoriSnapshot'
         : shortHex(target);
+
+/**
+ * An amount in a mint's units, for reading.
+ *
+ * @param value The amount in the mint's smallest unit.
+ * @param decimals The mint's decimals.
+ * @returns `116,723.52`.
+ */
+export const amount = (value: bigint, decimals: number): string =>
+    Number(formatUnits(value, decimals)).toLocaleString('en-US', { maximumFractionDigits: 2 });
+
+/**
+ * How long ago something happened, roughly.
+ *
+ * @param secs Seconds since.
+ * @returns `12 min ago`, `3 h ago` or `2 d ago`.
+ */
+export const ago = (secs: number): string =>
+    secs < 3600
+        ? `${Math.floor(secs / 60).toString()} min ago`
+        : secs < 172_800
+          ? `${Math.floor(secs / 3600).toString()} h ago`
+          : `${Math.floor(secs / 86_400).toString()} d ago`;
+
+/**
+ * A time of day in UTC.
+ *
+ * @param secs Unix seconds.
+ * @returns `18:59:48`.
+ */
+export const clock = (secs: number): string => new Date(secs * 1000).toISOString().slice(11, 19);

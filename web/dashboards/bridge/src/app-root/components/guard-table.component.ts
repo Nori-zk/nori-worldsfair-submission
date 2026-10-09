@@ -1,9 +1,8 @@
 import { Component, Inject, RxElement } from '@yaw-rx/core';
 import { RxFor } from '@yaw-rx/core/directives/rx-for';
 import { map, type Observable, startWith } from 'rxjs';
-import { formatUnits } from 'ethers';
 import { GuardBoardService, type GuardRead } from '../services/guard-board.service.js';
-import { blockText, blockUrl, solanaAccountUrl } from '../utils/format.js';
+import { ago, amount, blockText, blockUrl, solanaAccountUrl } from '../utils/format.js';
 import type { GuardRowView } from './guard-table/guard-row.component.js';
 import './guard-table/guard-row.component.js';
 import styles from './guard-table.component.css';
@@ -16,29 +15,6 @@ const STATUS_COLOUR: Record<GuardRead['status'], string> = {
     STALE: 'var(--nori-muted)',
     TRIPPED: 'var(--nori-neon-red)',
 };
-
-/**
- * An amount in a mint's units, for reading.
- *
- * @param value The amount in the mint's smallest unit.
- * @param decimals The mint's decimals.
- * @returns `116,723.52`.
- */
-const amount = (value: bigint, decimals: number): string =>
-    Number(formatUnits(value, decimals)).toLocaleString('en-US', { maximumFractionDigits: 2 });
-
-/**
- * How long ago something happened, roughly.
- *
- * @param secs Seconds since.
- * @returns `12 min ago`, `3 h ago` or `2 d ago`.
- */
-const ago = (secs: number): string =>
-    secs < 3600
-        ? `${Math.floor(secs / 60).toString()} min ago`
-        : secs < 172_800
-          ? `${Math.floor(secs / 3600).toString()} h ago`
-          : `${Math.floor(secs / 86_400).toString()} d ago`;
 
 /**
  * A guard as its row shows it.
