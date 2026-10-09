@@ -133,3 +133,29 @@ export const ago = (secs: number): string =>
  * @returns `18:59:48`.
  */
 export const clock = (secs: number): string => new Date(secs * 1000).toISOString().slice(11, 19);
+
+/**
+ * A date and time in UTC, as Prove balance shows an Ethereum time.
+ *
+ * @param secs Unix seconds.
+ * @returns `Oct 9, 2026, 6:59:48 PM UTC`.
+ */
+export const dateTime = (secs: number): string =>
+    new Date(secs * 1000).toLocaleString('en-US', {
+        dateStyle: 'medium',
+        timeStyle: 'long',
+        timeZone: 'UTC',
+    });
+
+/**
+ * A length of time in its largest whole unit.
+ *
+ * @param secs Seconds.
+ * @returns `2 h`, `10 min` or `90 s`.
+ */
+export const duration = (secs: number): string =>
+    secs >= 3600 && secs % 3600 === 0
+        ? `${(secs / 3600).toString()} h`
+        : secs >= 60 && secs % 60 === 0
+          ? `${(secs / 60).toString()} min`
+          : `${secs.toString()} s`;

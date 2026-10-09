@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ago, amount, clock } from './format.js';
+import { ago, amount, clock, dateTime, duration } from './format.js';
 
 void test('an amount reads in the mint units, two decimals at most', () => {
     assert.equal(amount(11_672_352n, 2), '116,723.52');
@@ -18,4 +18,17 @@ void test('ago rounds down to minutes, hours or days', () => {
 void test('clock is the UTC time of day', () => {
     assert.equal(clock(0), '00:00:00');
     assert.equal(clock(1_791_572_388), '18:59:48');
+});
+
+void test('dateTime is the UTC date and time, as Prove balance shows it', () => {
+    assert.equal(dateTime(1_791_572_388), 'Oct 9, 2026, 6:59:48 PM UTC');
+});
+
+void test('a duration reads in its largest whole unit', () => {
+    assert.equal(duration(7_200), '2 h');
+    assert.equal(duration(600), '10 min');
+    assert.equal(duration(60), '1 min');
+    assert.equal(duration(5_400), '90 min');
+    assert.equal(duration(90), '90 s');
+    assert.equal(duration(0), '0 s');
 });
