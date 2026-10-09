@@ -41,3 +41,48 @@ button:disabled {
     color: var(--nori-muted);
     line-height: 1.5;
 }
+/* The guard's settings: label and value pairs that wrap as the width allows. */
+.facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.5rem;
+    margin-top: 1rem;
+}
+.fact {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0 0.5rem;
+    align-items: baseline;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.fact.wide {
+    flex-basis: 100%;
+}
+.hidden {
+    display: none;
+}
+.facts a {
+    color: var(--nori-light-green);
+    text-decoration: none;
+}
+.facts a:hover {
+    text-decoration: underline;
+}
+.rule {
+    margin-top: 1rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+.rule .label {
+    margin-right: 0.75rem;
+}
+.checkpoints {
+    margin: 0.4rem 0 0;
+    font: inherit;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+.checkpoints:empty {
+    display: none;
+}
