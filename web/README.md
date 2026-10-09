@@ -51,7 +51,8 @@ Once the batch lands, the app verifies the balance on Solana: it builds the resu
 shows what the program verified: the balance, the Ethereum block and its time, the Nori batch,
 and the compute units (~2.5k). A simulation needs no wallet and no fee; it names
 `NORI_WEB_SOLANA_FEE_PAYER` as fee payer, which signs and pays nothing. Any Solana program can
-make the same check with [`nori-read`](../nori-read/README.md).
+make the same check with [`nori-read`](../nori-read/README.md). To record it on-chain, with a
+transaction to link to: `npm run keeper -w client -- verify <snapshot tx>`.
 
 ## Bridge dashboard
 

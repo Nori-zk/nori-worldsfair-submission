@@ -13,6 +13,7 @@ npm run keeper -- create-guards        # the keeper key is each guard's admin
 npm run keeper -- run                  # or one step: snapshot | checkpoint | submit | status
 npm run keeper -- unlatch              # admin, testing and demos only: clear a trip once a read shows the backing restored
 npm run keeper -- assert               # each guard's assert_healthy, as a lender calls it: allowed, or blocked: <error> (--send lands it)
+npm run keeper -- verify <snapshot tx> # nori-read-example verifies each result in a real transaction; prints the signature
 ```
 
 The default config, `keeper.demo.json`, takes its `${VARS}` from the repo's `.env`

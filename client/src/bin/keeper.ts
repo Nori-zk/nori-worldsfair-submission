@@ -2,7 +2,7 @@
 import { loadConfig, loadEnv } from '../keeper/config.js';
 import { Keeper } from '../keeper/keeper.js';
 
-const USAGE = `Usage: keeper <command> [--send] [config.json]
+const USAGE = `Usage: keeper <command> [--send] [<tx>] [config.json]
 
   create-guards   create each configured guard (the keeper key is admin)
   snapshot        one NoriSnapshot transaction for every configured query
@@ -12,6 +12,8 @@ const USAGE = `Usage: keeper <command> [--send] [config.json]
   assert          simulate each guard's assert_healthy, the call a lender
                   makes: allowed, or blocked with the error; --send lands it
                   even when it fails and prints the transaction
+  verify <tx>     verify each result of a proven snapshot transaction on
+                  Solana with nori-read-example, in real transactions
   unlatch         clear a tripped guard's latch (the keeper key is admin);
                   testing and demos only
   run             all of the above on the configured intervals; snapshots
@@ -22,9 +24,9 @@ and the deploy outputs in ethereum/. ETH_PRIVATE_KEY signs Ethereum transactions
 
 const args = process.argv.slice(2);
 const send = args.includes('--send');
-const [command, configPath = 'keeper.demo.json'] = args.filter(
-    (arg) => arg !== '--send'
-);
+const [command, ...rest] = args.filter((arg) => arg !== '--send');
+const txHash = command === 'verify' ? rest.shift() : undefined;
+const [configPath = 'keeper.demo.json'] = rest;
 const commands = [
     'create-guards',
     'snapshot',
@@ -32,10 +34,16 @@ const commands = [
     'submit',
     'status',
     'assert',
+    'verify',
     'unlatch',
     'run',
 ];
-if (!command || !commands.includes(command) || (send && command !== 'assert')) {
+if (
+    !command ||
+    !commands.includes(command) ||
+    (send && command !== 'assert') ||
+    (command === 'verify' && !/^0x[0-9a-fA-F]{64}$/.test(txHash ?? ''))
+) {
     console.log(USAGE);
     process.exit(command ? 1 : 0);
 }
@@ -57,6 +65,9 @@ switch (command) {
         break;
     case 'status':
         await keeper.status();
+        break;
+    case 'verify':
+        await keeper.verify(txHash ?? '');
         break;
     case 'assert':
         await keeper.assertHealthy(send);

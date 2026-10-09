@@ -27,6 +27,7 @@ import {
     fetchProvenSnapshot,
     type ProvenSnapshot,
 } from '../fetchProvenSnapshot.js';
+import { readSnapshotResultInstruction } from '../noriRead.js';
 import {
     guardConfigOf,
     queryOf,
@@ -360,7 +361,9 @@ export class Keeper {
             });
             if (send) {
                 const { err, signature } = await this.solana.land(instruction);
-                this.log(`${guard.name}: ${verdictOf(err)} | tx ${signature}`);
+                this.log(
+                    `${guard.name}: ${verdictOf(err)} | tx ${signature}${this.explorer(signature)}`
+                );
             } else {
                 const { err, unitsConsumed } =
                     await this.solana.simulate(instruction);
@@ -369,6 +372,53 @@ export class Keeper {
                 );
             }
         }
+    }
+
+    /**
+     * Verifies each result of a proven snapshot on Solana with
+     * nori-read-example, in real transactions: the on-chain record of what
+     * Prove balance only simulates.
+     */
+    async verify(snapshotTxHash: string) {
+        const snapshot = await withTimeout(
+            fetchProvenSnapshot({
+                connections: this.connections,
+                noriSnapshot: this.config.ethereum.noriSnapshot,
+                proofQueue: this.config.ethereum.proofQueue,
+                snapshotTxHash,
+                noriProgram: this.config.solana.noriProgram,
+            }),
+            PROVEN_SNAPSHOT_TIMEOUT_MS,
+            'reading the proof request'
+        );
+        if (!snapshot.proven) {
+            this.log(`snapshot ${snapshotTxHash}: not proven yet`);
+            return;
+        }
+        const { event, proofQueueBatch } = snapshot;
+        this.log(
+            `snapshot ${snapshotTxHash}: Ethereum block ${event.blockNumber}, batch ${proofQueueBatch}`
+        );
+        for (const [i, queryId] of event.queryIds.entries()) {
+            const signature = await this.solana.send(
+                readSnapshotResultInstruction({
+                    proofQueueBatch,
+                    noriSnapshot: this.config.ethereum.noriSnapshot,
+                    queryId,
+                    witness: snapshot.witnessFor(queryId),
+                })
+            );
+            this.log(
+                `query ${queryId}: ${BigInt(event.results[i] ?? 0)} verified | tx ${signature}${this.explorer(signature)}`
+            );
+        }
+    }
+
+    /** A Solana Explorer link when the RPC is devnet's; never prints the RPC URL. */
+    private explorer(signature: string) {
+        return this.config.solana.rpcUrl.includes('devnet')
+            ? ` https://explorer.solana.com/tx/${signature}?cluster=devnet`
+            : '';
     }
 
     /** Prints Nori's progress through the proof queue, then each guard's status. */

@@ -74,6 +74,7 @@ npm run keeper -w client -- create-guards
 npm run keeper -w client -- status   # Nori's progress through the queue, then each guard
 npm run keeper -w client -- run      # snapshots on the heartbeat and as soon as a watched result changes
 npm run keeper -w client -- assert   # each guard's assert_healthy, as a lender calls it (--send lands it)
+npm run keeper -w client -- verify <snapshot tx>   # nori-read-example verifies each result, on-chain
 ```
 
 bridge-head proves `NORI_ETH_PROOF_QUEUE_ADDRESS` and updates `NORI_SOL_TOKEN_PROGRAM_ID`.
