@@ -1,0 +1,29 @@
+:host {
+    /* In rem, not ch: the header's smaller font would otherwise narrow its columns. */
+    --guard-columns: 6.5rem 4.5rem 6.5rem 6.5rem 4rem 7.5rem 1fr;
+    display: block;
+    margin-top: 2rem;
+    overflow-x: auto;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+    font-size: 0.9rem;
+}
+.title {
+    margin: 0 0 1rem;
+    color: var(--nori-text);
+}
+.head {
+    display: grid;
+    grid-template-columns: var(--guard-columns);
+    gap: 1rem;
+    padding-bottom: 0.5rem;
+    color: var(--nori-muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+}
+.status {
+    margin: 0.5rem 0 0;
+    color: var(--nori-muted);
+}
+.status:empty {
+    display: none;
+}

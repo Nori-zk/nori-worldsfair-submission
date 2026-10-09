@@ -33,6 +33,24 @@ export const transactionUrl = (txHash: string): string => `${EXPLORER}/tx/${txHa
 export const addressUrl = (address: string): string => `${EXPLORER}/address/${address}`;
 
 /**
+ * A block on the explorer.
+ *
+ * @param block The block number.
+ * @returns Its explorer URL.
+ */
+export const blockUrl = (block: bigint): string => `${EXPLORER}/block/${block.toString()}`;
+
+/**
+ * An account on the Solana explorer, for the cluster this build reads.
+ *
+ * @param address The account.
+ * @returns Its explorer URL.
+ */
+export const solanaAccountUrl = (address: string): string =>
+    `https://explorer.solana.com/address/${address}` +
+    (NORI_WEB_ENV.solana.cluster === 'mainnet' ? '' : `?cluster=${NORI_WEB_ENV.solana.cluster}`);
+
+/**
  * A block number with thousands separators.
  *
  * @param block The block number.
