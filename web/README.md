@@ -29,8 +29,10 @@ reads the balance with the same view call the snapshot will make (ETH through Mu
 
 "Prove on Solana" sends one `NoriSnapshot` transaction, which enqueues a proof request. The
 app then follows it: found on Ethereum, waiting for finality, waiting for the batch ahead,
-being proven, and settled in a batch on Solana. A declined signature, a failed read or a
-dropped connection is shown, and you carry on from there.
+being proven, and settled in a batch on Solana, on a bar with a quarter per stage. A declined
+signature, a failed read or a dropped connection is shown, and you carry on from there. The
+page's URL holds the snapshot transaction (`?tx=<hash>`) while it is proven, so a reload or the
+link picks the same proof up again once the wallet is connected.
 
 Once the batch lands, the app verifies the balance on Solana: it builds the result's witness
 (`verifySnapshotResult` in [`client/`](../client/README.md)) and simulates
