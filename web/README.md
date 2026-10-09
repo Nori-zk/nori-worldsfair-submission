@@ -4,12 +4,12 @@ Two apps on Sepolia + Solana devnet, built with [yaw](https://yaw-rx.github.io/)
 [ystate](https://ystate.github.io/) on the Nori SDK. Each app's flow is a ystate graph,
 drawn next to it (`ProveBalanceGraph.svg`, `BridgeBatchesGraph.svg`).
 
-| Package              | What                                                                                                                                                                                |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/prove-balance` | Prove on Solana what an Ethereum address holds: one `NoriSnapshot` transaction from your wallet, proven and verified on Solana                                                      |
-| `dashboards/bridge`  | The whole proof queue: every batch Nori has settled on Solana, the requests still waiting, and the stage Nori's prover is in                                                        |
-| `libs/ui`            | Shared: wallet and connection buttons, the connection status bar, following a proof request, Nori's page layout and look                                                            |
-| `.env`, `env.ts`     | Public build constants: chain id, Ethereum RPC, proof queue and its deploy block, `NoriSnapshot`, Solana cluster, Nori program, the verify simulation's fee payer, Nori's websocket |
+| Package              | What                                                                                                                                                                                     |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/prove-balance` | Prove on Solana what an Ethereum address holds: one `NoriSnapshot` transaction from your wallet, proven and verified on Solana                                                           |
+| `dashboards/bridge`  | Backstop's guards (proven backing against live supply), and the whole proof queue: every batch Nori has settled on Solana, the requests still waiting, and the stage Nori's prover is in |
+| `libs/ui`            | Shared: wallet and connection buttons, the connection status bar, following a proof request, Nori's page layout and look                                                                 |
+| `.env`, `env.ts`     | Public build constants: chain id, Ethereum RPC, proof queue and its deploy block, `NoriSnapshot`, Solana cluster, Nori program, the verify simulation's fee payer, Nori's websocket      |
 
 ```sh
 npm run dev -w web/apps/prove-balance   # http://localhost:5180
@@ -43,7 +43,12 @@ transaction to link to: `npm run keeper -w client -- verify <snapshot tx>`.
 
 ## Bridge dashboard
 
-Batches Nori has settled on Solana, newest first. Above them, the requests no batch covers
+At the top, every Backstop guard on the cluster: its mint, the Ethereum backing Nori last
+proved, the mint's live supply, their ratio, the Ethereum block the backing was proven at
+and how long ago, and the status a lender's `assert_healthy` would get (HEALTHY, WARN,
+STALE, PAUSED, TRIPPED). Read from Solana every 30 seconds; no keeper running means STALE.
+
+Below, batches Nori has settled on Solana, newest first. Above them, the requests no batch covers
 yet, in three rows: waiting for Ethereum finality, scheduled for processing, and processing
 in Nori's current job, each with a countdown. Open a batch or a row to see its requests,
 each with the submitting contract and the enqueuing transaction, linked to Etherscan.
