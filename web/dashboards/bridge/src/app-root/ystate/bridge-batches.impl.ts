@@ -9,6 +9,7 @@ import {
     of,
     ReplaySubject,
     share,
+    skip,
     Subject,
     switchMap,
     timer,
@@ -291,7 +292,9 @@ export function createBridgeBatchesMachine(
         refreshDue: {
             $: () =>
                 dataOnEntry$(state$, 'watching').pipe(
-                    switchMap(() => merge(timer(REFRESH_MS), stageChanged$)),
+                    // The stage stream replays its latest to each subscriber: skip it, or every
+                    // entry into `watching` would refresh at once
+                    switchMap(() => merge(timer(REFRESH_MS), stageChanged$.pipe(skip(1)))),
                 ),
             next: (_due, _dest, { view }) => ({ target, view, failedReads: 0 }),
         },
