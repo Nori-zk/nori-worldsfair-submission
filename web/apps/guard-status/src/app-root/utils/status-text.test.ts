@@ -1,0 +1,101 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import {
+    coverageText,
+    lenderSentence,
+    statusSentence,
+    statusWord,
+    type StatusFacts,
+} from './status-text.js';
+import { mintName, ordered, shortAddress } from './guards.js';
+
+const facts = (status: StatusFacts['status'], more: Partial<StatusFacts> = {}): StatusFacts => ({
+    status,
+    above: '',
+    tolerance: '1',
+    staleFor: '',
+    tripDeficit: '',
+    tripBlock: '',
+    ...more,
+});
+
+void test('a status reads as one word, PAUSED for PAUSED_AT_SOURCE', () => {
+    assert.equal(statusWord('PAUSED_AT_SOURCE'), 'PAUSED');
+    assert.equal(statusWord('HEALTHY'), 'HEALTHY');
+});
+
+void test('each status is one plain sentence', () => {
+    assert.deepEqual(statusSentence(facts('HEALTHY')), {
+        text: 'Supply is within the proven backing.',
+        link: '',
+        end: '',
+    });
+    assert.equal(
+        statusSentence(facts('WARN', { above: '1,234' })).text,
+        'Supply is 1,234 above the proven backing (tolerance 1); the next proven read decides.',
+    );
+    assert.equal(
+        statusSentence(facts('STALE', { staleFor: '23 h' })).text,
+        'No proven backing for 23 h; the keeper is not running, so deposits are blocked.',
+    );
+    assert.equal(
+        statusSentence(facts('STALE')).text,
+        'No backing has been proven yet, so deposits are blocked.',
+    );
+    assert.equal(
+        statusSentence(facts('PAUSED_AT_SOURCE')).text,
+        'The Ethereum lockbox is paused; deposits are blocked.',
+    );
+});
+
+void test('a trip names its deficit and links its block', () => {
+    assert.deepEqual(
+        statusSentence(facts('TRIPPED', { tripDeficit: '116,475.48', tripBlock: '11,880,162' })),
+        {
+            text: 'Supply exceeded the proven backing by 116,475.48 at block',
+            link: '11,880,162',
+            end: '; latched until the admin unlatches.',
+        },
+    );
+    assert.equal(
+        statusSentence(facts('TRIPPED', { tripDeficit: '5' })).text,
+        'Supply exceeded the proven backing by 5; latched until the admin unlatches.',
+    );
+});
+
+void test("a lender's deposit is allowed only when HEALTHY", () => {
+    assert.equal(lenderSentence('HEALTHY'), "A lender's deposit would be allowed right now.");
+    for (const status of ['WARN', 'STALE', 'PAUSED_AT_SOURCE', 'TRIPPED'] as const)
+        assert.equal(lenderSentence(status), "A lender's deposit would be blocked right now.");
+});
+
+void test('coverage is the backing over the supply, rounded down, or the shortfall', () => {
+    assert.equal(
+        coverageText(116_723_520_000_000n, 116_700_000_000_000n, ''),
+        'The backing covers 100.02% of the supply.',
+    );
+    assert.equal(coverageText(5n, 5n, ''), 'The backing covers 100.00% of the supply.');
+    assert.equal(coverageText(4n, 5n, '1'), 'The backing is 1 short of the supply.');
+    assert.equal(coverageText(1n, 0n, ''), 'Nothing is minted yet.');
+});
+
+void test('mints are named from the devnet deployment, else Mint', () => {
+    assert.equal(mintName('Fhw5m3W34LuGNNuTWxHu8wVbre7wUE445hxir3Xwcbhi'), 'Demo mint');
+    assert.equal(mintName('Dnt2Mjnvj38E59bnUBkw8EEoW1sy6HzMavbDSQkXTuoX'), 'Shadow mint');
+    assert.equal(mintName('3Q9xNZr7iSkUZBEbLHkvap8Ece6aBSVskPCUPLWhtkTo'), 'Mint');
+    assert.equal(shortAddress('Fhw5m3W34LuGNNuTWxHu8wVbre7wUE445hxir3Xwcbhi'), 'Fhw5…cbhi');
+});
+
+void test('guards sort HEALTHY and WARN, then TRIPPED and PAUSED, then STALE, then by address', () => {
+    const guards = [
+        { address: 'd', status: 'STALE' },
+        { address: 'c', status: 'TRIPPED' },
+        { address: 'b', status: 'HEALTHY' },
+        { address: 'e', status: 'PAUSED_AT_SOURCE' },
+        { address: 'a', status: 'WARN' },
+    ] as const;
+    assert.deepEqual(
+        ordered(guards).map((g) => g.address),
+        ['a', 'b', 'c', 'e', 'd'],
+    );
+});

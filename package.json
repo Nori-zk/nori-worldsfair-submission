@@ -8,6 +8,7 @@
         "client",
         "web/libs/ui",
         "web/apps/prove-balance",
+        "web/apps/guard-status",
         "web/dashboards/bridge"
     ],
     "devDependencies": {
