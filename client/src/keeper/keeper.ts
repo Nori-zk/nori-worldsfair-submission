@@ -319,8 +319,9 @@ export class Keeper {
 
     /**
      * Clears each tripped guard's latch (the keeper key must be its admin).
-     * Unlatch after a proven read shows the backing restored, or the next
-     * read trips it again.
+     * Testing and demos only: one key reopens the guard, so a production
+     * guard needs a timelock or governance instead. Unlatch after a proven
+     * read shows the backing restored, or the next read trips it again.
      */
     async unlatch() {
         for (const guard of this.config.guards) {

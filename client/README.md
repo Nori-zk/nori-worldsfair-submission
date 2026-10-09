@@ -11,7 +11,7 @@ Sample client and keeper CLI, in Node. The browser apps are in [web/](../web/REA
 ```sh
 npm run keeper -- create-guards        # the keeper key is each guard's admin
 npm run keeper -- run                  # or one step: snapshot | checkpoint | submit | status
-npm run keeper -- unlatch              # admin: clear a trip, after a read shows the backing restored
+npm run keeper -- unlatch              # admin, testing and demos only: clear a trip once a read shows the backing restored
 npm run keeper -- assert               # each guard's assert_healthy, as a lender calls it: allowed, or blocked: <error> (--send lands it)
 ```
 

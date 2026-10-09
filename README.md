@@ -11,7 +11,8 @@ Read Ethereum state from any Solana program, proven instead of relayed.
   18 min after its Ethereum block (15–22), almost all of it Ethereum finality. An untouched
   guard stayed HEALTHY all night.
 - **Drain demo:** draining the lockbox trips the guard; a refill doesn't reset it; the
-  admin's `unlatch` does, once the backing is back.
+  admin's `unlatch` does, once the backing is back (a testing and demo shortcut: one key;
+  production needs a timelock or governance, on the roadmap).
 - **Apps:** a live bridge dashboard and a prove-balance app in the browser ([web/](web/README.md)).
 - **Next:** Ethereum + Solana mainnet, once Nori proves mainnet.
 

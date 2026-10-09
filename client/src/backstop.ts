@@ -66,7 +66,7 @@ export function checkpointInstruction(accounts: {
     };
 }
 
-/** `unlatch()`: clears a trip. Only the guard's admin may sign it. */
+/** `unlatch()`: clears a trip. Only the guard's admin may sign it; for testing and demos only. */
 export function unlatchInstruction(accounts: {
     admin: Address;
     guard: Address;

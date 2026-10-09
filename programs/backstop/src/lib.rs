@@ -2,9 +2,9 @@
 //! asset's Ethereum backing, proven through Nori, with its Solana supply.
 //!
 //! - `checkpoint` (anyone, about once a minute) records the mint's supply.
-//! - `submit_read` (anyone) applies a proven backing or pause flag. If supply
-//!   checkpointed before the backing's Ethereum time exceeds it, the guard
-//!   trips and stays tripped until the admin calls `unlatch`.
+//! - `submit_read` (anyone) applies a proven backing or pause flag. If the lowest
+//!   supply checkpointed around its Ethereum time exceeds it, the guard trips and
+//!   stays tripped until the admin calls `unlatch` (for testing and demos only).
 //! - Consumers CPI `assert_healthy` (fails unless HEALTHY) or `status`.
 
 use anchor_lang::prelude::*;
@@ -146,7 +146,7 @@ pub mod backstop {
         }
     }
 
-    /// Clears a trip. Admin only.
+    /// Clears a trip. Admin only; for testing and demos (production: a timelock or governance).
     pub fn unlatch(ctx: Context<Unlatch>) -> Result<()> {
         let guard = &mut ctx.accounts.guard;
         guard.tripped = false;

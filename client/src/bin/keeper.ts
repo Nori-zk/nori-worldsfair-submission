@@ -12,7 +12,8 @@ const USAGE = `Usage: keeper <command> [--send] [config.json]
   assert          simulate each guard's assert_healthy, the call a lender
                   makes: allowed, or blocked with the error; --send lands it
                   even when it fails and prints the transaction
-  unlatch         clear a tripped guard's latch (the keeper key is admin)
+  unlatch         clear a tripped guard's latch (the keeper key is admin);
+                  testing and demos only
   run             all of the above on the configured intervals; snapshots
                   on the heartbeat and as soon as a watched result changes
 
