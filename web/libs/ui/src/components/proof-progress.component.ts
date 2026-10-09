@@ -33,9 +33,18 @@ const requestStatus = (request: ProofRequestStateNodeUnion): string => {
     }
 };
 
+/** The unprocessed machine's nodes in order: a quarter of the bar each, labelled under it. */
+const STAGES: UnprocessedProofRequestStateNodeUnion['node'][] = [
+    'WaitingForEthFinality',
+    'WaitingForPreviousJobCompletion',
+    'WaitingForCurrentJobCompletion',
+    'FinishedWaiting',
+];
+
 /**
- * The fill of the progress bar for a node of the unprocessed machine: the
- * time spent in it over the time it is expected to take.
+ * The fill of the progress bar: the stages before this node's, full, then
+ * the time spent in this node over the time it is expected to take. The
+ * node comes from the machine, so a reload keeps the earlier stages full.
  *
  * @param progress The unprocessed machine's state.
  * @returns The fill, from 0 to 1.
@@ -44,7 +53,8 @@ const progressFill = (progress: UnprocessedProofRequestStateNodeUnion): number =
     if (progress.node === 'FinishedWaiting') return 1;
     const { elapsed_sec, time_remaining_sec } = progress.data;
     const total = elapsed_sec + time_remaining_sec;
-    return Number.isFinite(total) && total > 0 ? Math.min(1, elapsed_sec / total) : 0;
+    const within = Number.isFinite(total) && total > 0 ? Math.min(1, elapsed_sec / total) : 0;
+    return (STAGES.indexOf(progress.node) + within) / STAGES.length;
 };
 
 /**
