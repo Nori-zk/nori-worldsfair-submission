@@ -5,7 +5,7 @@ Sample client and keeper CLI, in Node. The browser apps are in [web/](../web/REA
 - `fetchProvenSnapshot`: snapshot transaction -> the witness for any of its results, once Nori has proven its batch. Reads through the sdk's `createConnections`.
 - `verifySnapshotResult`: verifies one result on Solana by simulating `nori-read-example`'s `read_snapshot_result` (no signature, no fee; the fee payer must be an existing funded account). `@nori-zk/backstop-client/read` exports it without the Backstop encoders, for browsers.
 - `createGuardInstruction`, `submitReadInstruction`, `checkpointInstruction`, `assertHealthyInstruction`, `decodeGuard`: bytes pinned to the Rust program (`test-vectors/backstop`). `BackstopError`: its error codes.
-- `guardStatus`, `mintSupply`, `mintDecimals`: a guard's status against its mint's live supply. `@nori-zk/backstop-client/guard` exports them with `decodeGuard`, for browsers.
+- `guardStatus`, `mintSupply`, `mintDecimals`: a guard's status against its mint's live supply. `@nori-zk/backstop-client/guard` exports them with `decodeGuard`, `assertHealthyInstruction`, `BackstopError`, `BACKSTOP_ERROR_MESSAGE` and the transaction error helpers (`customErrorOf`, `transactionErrorText`), for browsers.
 
 ## Keeper
 

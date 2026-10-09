@@ -79,50 +79,6 @@ export function unlatchInstruction(accounts: {
     };
 }
 
-/**
- * `assert_healthy()`: fails unless the guard is HEALTHY. The call a lender
- * makes (by CPI) before acting on the mint; read-only.
- */
-export function assertHealthyInstruction(accounts: {
-    guard: Address;
-    mint: Address;
-}): Instruction {
-    return {
-        programAddress: BACKSTOP_PROGRAM,
-        accounts: [
-            { address: accounts.guard, role: AccountRole.READONLY },
-            { address: accounts.mint, role: AccountRole.READONLY },
-        ],
-        data: discriminator('assert_healthy'),
-    };
-}
-
-/**
- * Backstop's custom error codes (Rust `BackstopError`), pinned by
- * programs/backstop/tests/instruction_fixture.rs.
- */
-export const BackstopError = {
-    InvalidConfig: 6000,
-    InvalidNoriState: 6001,
-    InvalidProofQueueBatch: 6002,
-    InvalidSnapshotResult: 6003,
-    NoPauseQuery: 6004,
-    ReadNotNewer: 6005,
-    CheckpointTooSoon: 6006,
-    SupplyAboveBacking: 6007,
-    Stale: 6008,
-    PausedAtSource: 6009,
-    Tripped: 6010,
-    PauseResultNotBool: 6011,
-} as const;
-
-/** The `BackstopError` name of a custom error code, if it is one. */
-export function backstopErrorName(code: number): string | undefined {
-    return Object.entries(BackstopError).find(
-        ([, value]) => value === code
-    )?.[0];
-}
-
 const addressBytes = (value: Address) =>
     new Uint8Array(getAddressEncoder().encode(value));
 

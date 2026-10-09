@@ -18,6 +18,7 @@ import {
     type Signature,
     type TransactionError,
 } from '@solana/kit';
+import { transactionErrorText } from '../guard.js';
 
 /** Any RPC call gives up after this, so a hung connection can't stall the keeper. */
 export const RPC_TIMEOUT_MS = 30_000;
@@ -184,21 +185,4 @@ export function customErrorCode(error: unknown): number | undefined {
     if (hex?.[1]) return parseInt(hex[1], 16);
     const custom = /"Custom":\s*(\d+)/.exec(text);
     return custom?.[1] ? Number(custom[1]) : undefined;
-}
-
-/** A transaction error as JSON (its numbers may be bigints). */
-export function transactionErrorText(err: TransactionError): string {
-    return JSON.stringify(err, (_, v: unknown) =>
-        typeof v === 'bigint' ? Number(v) : v
-    );
-}
-
-/** The custom program error code in a transaction error, if it has one. */
-export function customErrorOf(err: TransactionError): number | undefined {
-    if (typeof err !== 'object' || !('InstructionError' in err))
-        return undefined;
-    const [, error] = err.InstructionError;
-    return typeof error === 'object' && 'Custom' in error
-        ? Number(error.Custom)
-        : undefined;
 }

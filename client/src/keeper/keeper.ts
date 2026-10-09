@@ -38,11 +38,10 @@ import {
 import {
     connectSolana,
     customErrorCode,
-    customErrorOf,
     RPC_TIMEOUT_MS,
     type Solana,
-    transactionErrorText,
 } from './solana.js';
+import { customErrorOf, transactionErrorText } from '../guard.js';
 import type { TransactionError } from '@solana/kit';
 
 /** How long `snapshot` waits for its transaction to be mined. */

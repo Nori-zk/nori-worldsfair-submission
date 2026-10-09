@@ -1,16 +1,19 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { address } from '@solana/kit';
+import { address, type TransactionError } from '@solana/kit';
 import { getBytes } from 'ethers';
 import {
     assertHealthyInstruction,
+    BACKSTOP_ERROR_MESSAGE,
     BackstopError,
     backstopErrorName,
     checkpointInstruction,
+    customErrorOf,
     decodeGuard,
     encodeCreateGuard,
     guardStatus,
+    transactionErrorText,
     unlatchInstruction,
     type GuardConfig,
 } from './backstop.js';
@@ -64,6 +67,28 @@ test('names Backstop error codes', () => {
     assert.equal(backstopErrorName(6010), 'Tripped');
     assert.equal(backstopErrorName(BackstopError.Stale), 'Stale');
     assert.equal(backstopErrorName(3012), undefined);
+    assert.equal(
+        BACKSTOP_ERROR_MESSAGE[BackstopError.Tripped],
+        'Tripped: supply exceeded proven backing'
+    );
+});
+
+test('reads the custom error of a failed transaction, bigints included', () => {
+    // @solana/kit types them as numbers but returns them as bigints.
+    const asError = (value: unknown) => value as TransactionError;
+    const err = asError({ InstructionError: [0n, { Custom: 6010n }] });
+    assert.equal(customErrorOf(err), 6010);
+    assert.equal(
+        transactionErrorText(err),
+        '{"InstructionError":[0,{"Custom":6010}]}'
+    );
+    assert.equal(customErrorOf('AccountNotFound'), undefined);
+    assert.equal(
+        customErrorOf(
+            asError({ InstructionError: [0n, 'InvalidAccountData'] })
+        ),
+        undefined
+    );
 });
 
 test('decodes a Guard account written by the Rust program', () => {

@@ -1,7 +1,15 @@
 // Reading Backstop guards: browser-safe, as nothing here loads the sdk's
 // generated program client (`@nori-zk/nori-bridge-solana-sdk/program`).
-import { address, getAddressDecoder, type Address } from '@solana/kit';
+import {
+    AccountRole,
+    address,
+    getAddressDecoder,
+    type Address,
+    type Instruction,
+    type TransactionError,
+} from '@solana/kit';
 import { hexlify } from 'ethers';
+import { discriminator } from './anchor.js';
 
 export const BACKSTOP_PROGRAM = address(
     'JAZNGzLyN1TKhjnDDKrSsaQveAhUZUjiG8usM9Du5UD9'
@@ -102,3 +110,72 @@ export function mintSupply(data: Uint8Array): bigint {
 
 /** An SPL mint's decimals (u8 at byte 44). */
 export const mintDecimals = (data: Uint8Array): number => data[44] ?? 0;
+
+/**
+ * `assert_healthy()`: fails unless the guard is HEALTHY. The call a lender
+ * makes (by CPI) before acting on the mint; read-only.
+ */
+export function assertHealthyInstruction(accounts: {
+    guard: Address;
+    mint: Address;
+}): Instruction {
+    return {
+        programAddress: BACKSTOP_PROGRAM,
+        accounts: [
+            { address: accounts.guard, role: AccountRole.READONLY },
+            { address: accounts.mint, role: AccountRole.READONLY },
+        ],
+        data: discriminator('assert_healthy'),
+    };
+}
+
+/**
+ * Backstop's custom error codes (Rust `BackstopError`), pinned by
+ * programs/backstop/tests/instruction_fixture.rs.
+ */
+export const BackstopError = {
+    InvalidConfig: 6000,
+    InvalidNoriState: 6001,
+    InvalidProofQueueBatch: 6002,
+    InvalidSnapshotResult: 6003,
+    NoPauseQuery: 6004,
+    ReadNotNewer: 6005,
+    CheckpointTooSoon: 6006,
+    SupplyAboveBacking: 6007,
+    Stale: 6008,
+    PausedAtSource: 6009,
+    Tripped: 6010,
+    PauseResultNotBool: 6011,
+} as const;
+
+/** The `BackstopError` name of a custom error code, if it is one. */
+export function backstopErrorName(code: number): string | undefined {
+    return Object.entries(BackstopError).find(
+        ([, value]) => value === code
+    )?.[0];
+}
+
+/** The program's message for each error `assert_healthy` can fail with (its `#[msg]`). */
+export const BACKSTOP_ERROR_MESSAGE: Record<number, string> = {
+    [BackstopError.SupplyAboveBacking]: 'Supply is above proven backing',
+    [BackstopError.Stale]: 'No recent proven backing',
+    [BackstopError.PausedAtSource]: 'Paused on Ethereum',
+    [BackstopError.Tripped]: 'Tripped: supply exceeded proven backing',
+};
+
+/** A transaction error as JSON (its numbers may be bigints). */
+export function transactionErrorText(err: TransactionError): string {
+    return JSON.stringify(err, (_, v: unknown) =>
+        typeof v === 'bigint' ? Number(v) : v
+    );
+}
+
+/** The custom program error code in a transaction error, if it has one. */
+export function customErrorOf(err: TransactionError): number | undefined {
+    if (typeof err !== 'object' || !('InstructionError' in err))
+        return undefined;
+    const [, error] = err.InstructionError;
+    return typeof error === 'object' && 'Custom' in error
+        ? Number(error.Custom)
+        : undefined;
+}
