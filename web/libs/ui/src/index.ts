@@ -10,7 +10,6 @@ export {
     NoriBridgeInfraService,
     type NoriBridgeInfraFinality,
     type NoriBridgeInfraState,
-    type NoriBridgeInfraStateWithTimings,
 } from './services/nori-bridge-infra.service.js';
 export { ConnectionPins } from './components/connection-pins.component.js';
 export { ProofProgress } from './components/proof-progress.component.js';
@@ -21,7 +20,6 @@ export {
     NORI_BRIDGE_INFRA_STAGE_ORDER,
     NORI_BRIDGE_INFRA_STAGE_TEXT,
     noriBridgeInfraStageIndex,
-    noriBridgeInfraStagesAround,
     type NoriBridgeInfraStage,
 } from './text/noriBridgeInfraStages.js';
 export { LaserFlow } from './components/laser-flow.component.js';

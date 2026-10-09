@@ -11,7 +11,6 @@ import {
 import {
     getNoriBridgeInfraEthState$,
     getNoriBridgeInfraState$,
-    getNoriBridgeInfraStateWithTimings$,
     getNoriBridgeInfraTimings$,
     startNoriBridgeInfraTransitions,
 } from '@nori-zk/nori-bridge-solana-sdk';
@@ -27,11 +26,6 @@ export type NoriBridgeInfraState = ObservedValueOf<ReturnType<typeof getNoriBrid
 /** Ethereum's finality as Nori reports it: the finalized block and its slot. */
 export type NoriBridgeInfraFinality = ObservedValueOf<
     ReturnType<typeof getNoriBridgeInfraEthState$>
->;
-
-/** The bridge's state with the time left in its stage. */
-export type NoriBridgeInfraStateWithTimings = ObservedValueOf<
-    ReturnType<typeof getNoriBridgeInfraStateWithTimings$>
 >;
 
 /**
@@ -54,8 +48,6 @@ export class NoriBridgeInfraService {
     readonly open$: Observable<boolean>;
     /** The bridge's state; replays the latest. */
     readonly state$: Observable<NoriBridgeInfraState>;
-    /** The bridge's state with the time left in its stage, counting down each second. */
-    readonly stateWithTimings$: Observable<NoriBridgeInfraStateWithTimings>;
     /**
      * The node the bridge is at: its stage from `state.bridge` as soon as the
      * websocket opens, then each transition notice, the failures and
@@ -78,9 +70,6 @@ export class NoriBridgeInfraService {
             map((message): Partial<Record<string, number>> => message.extension),
         );
         this.finality$ = getNoriBridgeInfraEthState$(nori);
-        this.stateWithTimings$ = getNoriBridgeInfraStateWithTimings$(nori).pipe(
-            shareReplay({ bufferSize: 1, refCount: true }),
-        );
         this.stage$ = merge(
             this.state$.pipe(map((state) => state.stage_name)),
             startNoriBridgeInfraTransitions(nori).noriBridgeInfraTransitions.state$.pipe(

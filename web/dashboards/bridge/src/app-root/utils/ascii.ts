@@ -18,18 +18,6 @@ export function asciiBar(fraction: number): string {
 export const UNKNOWN_BAR = '·'.repeat(BAR_CELLS);
 
 /**
- * The part of a stage done, from the time spent in it and the time left.
- *
- * @param elapsedSec The time spent in the stage.
- * @param remainingSec The time it is expected to take still.
- * @returns The part done, from 0 to 1.
- */
-export function stageFraction(elapsedSec: number, remainingSec: number): number {
-    const total = elapsedSec + Math.max(0, remainingSec);
-    return total > 0 ? elapsedSec / total : 0;
-}
-
-/**
  * The time left in a stage, as a few words.
  *
  * @param remainingSec The time it is expected to take still.

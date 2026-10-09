@@ -24,7 +24,7 @@
         "build": "npm run build --workspaces --if-present",
         "vscode:install": "ln -sfn \"$(pwd)/node_modules/@yaw-rx/vscode\" \"$HOME/.vscode/extensions/yaw-rx.yaw-vscode\"",
         "typecheck": "npm run typecheck --workspaces --if-present",
-        "lint": "npm run lint --workspaces --if-present",
+        "lint": "npm run typecheck -w ethereum && npm run lint --workspaces --if-present",
         "format": "prettier --check .",
         "format:fix": "prettier --write .",
         "test": "npm run test -w ethereum && npm run test -w client",

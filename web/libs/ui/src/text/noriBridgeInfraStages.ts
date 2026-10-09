@@ -50,23 +50,3 @@ const FAILED_STEP: Partial<Record<NoriBridgeInfraStage, NoriBridgeInfraStage>> =
 export function noriBridgeInfraStageIndex(stage: NoriBridgeInfraStage): number {
     return NORI_BRIDGE_INFRA_STAGE_ORDER.indexOf(FAILED_STEP[stage] ?? stage);
 }
-
-/**
- * The previous, current and next stage's text around a node, along the loop.
- *
- * @param stage The current node.
- * @returns The three texts.
- */
-export function noriBridgeInfraStagesAround(stage: NoriBridgeInfraStage): [string, string, string] {
-    const order = NORI_BRIDGE_INFRA_STAGE_ORDER;
-    const index = noriBridgeInfraStageIndex(stage);
-    // The start (-1) comes after the last step and before the first.
-    const previous =
-        order[index < 0 ? order.length - 1 : (index - 1 + order.length) % order.length]!;
-    const next = order[(index + 1) % order.length]!;
-    return [
-        NORI_BRIDGE_INFRA_STAGE_TEXT[previous],
-        NORI_BRIDGE_INFRA_STAGE_TEXT[stage],
-        NORI_BRIDGE_INFRA_STAGE_TEXT[next],
-    ];
-}
