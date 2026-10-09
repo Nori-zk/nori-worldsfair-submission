@@ -1,18 +1,20 @@
 # web: browser apps
 
-Two apps on Sepolia + Solana devnet, built with [yaw](https://yaw-rx.github.io/) and
-[ystate](https://ystate.github.io/) on the Nori SDK. Each app's flow is a ystate graph,
+Three apps on Sepolia + Solana devnet, built with [yaw](https://yaw-rx.github.io/) and
+[ystate](https://ystate.github.io/) on the Nori SDK. Each app with a flow has it as a ystate graph,
 drawn next to it (`ProveBalanceGraph.svg`, `BridgeBatchesGraph.svg`).
 
 | Package              | What                                                                                                                                                                                                              |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `apps/prove-balance` | Prove on Solana what an Ethereum address holds: one `NoriSnapshot` transaction from your wallet, proven and verified on Solana                                                                                    |
+| `apps/proven-facts`  | Every `NoriSnapshot` read, told in sentences, whether Nori has proven it on Solana, a one-click verify, and how fast reads land                                                                                   |
 | `dashboards/bridge`  | Backstop's guards (proven backing against live supply), and the whole proof queue: every batch Nori has settled on Solana, the requests still waiting, and the stage Nori's prover is in                          |
 | `libs/ui`            | Shared: wallet and connection buttons, the connection status bar, following a proof request, Nori's page layout and look                                                                                          |
 | `.env`, `env.ts`     | Public build constants: chain id, Ethereum RPC, proof queue and its deploy block, `NoriSnapshot`, Solana cluster and an optional dedicated RPC, Nori program, the verify simulation's fee payer, Nori's websocket |
 
 ```sh
 npm run dev -w web/apps/prove-balance   # http://localhost:5180
+npm run dev -w web/apps/proven-facts    # http://localhost:5182
 npm run dev -w web/dashboards/bridge    # http://localhost:7400
 ```
 
@@ -29,6 +31,7 @@ subdomain (the build's asset paths are absolute). The apps import the client, so
 npm ci && npm run build -w client
 npm run build -w web/dashboards/bridge    # → web/dashboards/bridge/dist
 npm run build -w web/apps/prove-balance   # → web/apps/prove-balance/dist
+npm run build -w web/apps/proven-facts    # → web/apps/proven-facts/dist
 ```
 
 For dedicated RPCs, set `NORI_WEB_ETH_RPC_URL` (the dashboard's Ethereum reads without a wallet;
@@ -59,6 +62,30 @@ and the compute units (~2.5k). A simulation needs no wallet and no fee; it names
 `NORI_WEB_SOLANA_FEE_PAYER` as fee payer, which signs and pays nothing. Any Solana program can
 make the same check with [`nori-read`](../nori-read/README.md). To record it on-chain, with a
 transaction to link to: `npm run keeper -w client -- verify <snapshot tx>`.
+
+## Proven facts
+
+```sh
+npm run dev -w web/apps/proven-facts   # http://localhost:5182
+```
+
+What `NoriSnapshot` read on Ethereum, proven on Solana, for someone seeing Nori for the first
+time. No wallet needed: Ethereum reads fall back to `NORI_WEB_ETH_RPC_URL`.
+
+At the top, one line: how long a read takes from its Ethereum block to the Solana transaction
+that lands its batch, as the median over the reads in the 30 newest batches, with p90, fastest
+and slowest under it. These are the numbers the dashboard's Latency tab shows; the tab, linked
+from the line, lists every read. The link is the dev dashboard's, `http://localhost:7400`
+(`DASHBOARD_LATENCY_URL` in `latency-headline.component.ts`): change it when hosting.
+
+Below it, the 25 newest snapshots, newest first. Each says when and at which Ethereum block its
+view calls ran, whether Nori has proven it on Solana yet, and what they returned, as sentences:
+"The demo lockbox held 116,723.52 and was not paused." A query no guard names reads as
+"Query 0x1234…abcd returned 42."
+
+On a proven snapshot, `[ Verify on Solana ]` checks one result (the backing, else the first)
+by simulating `nori-read-example` against the proven batch, as Prove balance does: no wallet,
+no fee, one simulation per click. `[ Read again ]` reads the line and the snapshots again.
 
 ## Bridge dashboard
 

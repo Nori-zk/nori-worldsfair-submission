@@ -53,6 +53,7 @@ Browser apps on Sepolia + Solana devnet ([web/README.md](web/README.md)):
 
 ```sh
 npm run dev -w web/apps/prove-balance   # prove an address's ETH or token balance on Solana: http://localhost:5180
+npm run dev -w web/apps/proven-facts    # what NoriSnapshot read on Ethereum, proven on Solana: http://localhost:5182
 npm run dev -w web/dashboards/bridge    # every proof request from Ethereum to Solana, live: http://localhost:7400
 ```
 
