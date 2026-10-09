@@ -118,54 +118,57 @@ type Verified = Extract<ProveBalanceState, { node: 'verified' }>['data'];
         </div>
         <div rx-if="proving">
             <proof-progress [txHash]="txHash"></proof-progress>
-            <section class="verify" rx-if="verifyShown">
-                <p class="verify-status">
-                    <span rx-if="verifying"><span class="spinner"></span></span>{{ verifyStatus }}
-                </p>
-                <div rx-if="verified">
-                    <dl class="facts">
-                        <div class="fact wide">
-                            <dt>Balance verified by nori-read</dt>
-                            <dd class="balance">{{ provenBalance }}</dd>
-                        </div>
-                        <div class="fact">
-                            <dt>Ethereum block</dt>
-                            <dd>
-                                <a [href]="ethBlockUrl" target="_blank" rel="noopener"
-                                    >{{ ethBlock }} ↗</a
-                                >
-                            </dd>
-                        </div>
-                        <div class="fact">
-                            <dt>Block time</dt>
-                            <dd>{{ ethTime }}</dd>
-                        </div>
-                        <div class="fact">
-                            <dt>Nori batch</dt>
-                            <dd>
-                                <a [href]="batchUrl" target="_blank" rel="noopener"
-                                    >{{ batch }} ↗</a
-                                >
-                            </dd>
-                        </div>
-                        <div class="fact">
-                            <dt>Compute units</dt>
-                            <dd>{{ computeUnits }}</dd>
-                        </div>
-                    </dl>
-                    <p class="note">
-                        Checked by
-                        <a [href]="readProgramUrl" target="_blank" rel="noopener"
-                            >nori-read-example ↗</a
-                        >
-                        in a simulated Solana transaction: no wallet, no fee. Any Solana program can
-                        make the same check with nori-read.
+            <div rx-if="verifyShown">
+                <section class="verify">
+                    <p class="verify-status">
+                        <span rx-if="verifying"><span class="spinner"></span></span
+                        >{{ verifyStatus }}
                     </p>
-                </div>
-                <div class="actions" rx-if="verifyFailed">
-                    <button onclick="retry">Verify again</button>
-                </div>
-            </section>
+                    <div rx-if="verified">
+                        <dl class="facts">
+                            <div class="fact wide">
+                                <dt>Balance verified by nori-read</dt>
+                                <dd class="balance">{{ provenBalance }}</dd>
+                            </div>
+                            <div class="fact">
+                                <dt>Ethereum block</dt>
+                                <dd>
+                                    <a [href]="ethBlockUrl" target="_blank" rel="noopener"
+                                        >{{ ethBlock }} ↗</a
+                                    >
+                                </dd>
+                            </div>
+                            <div class="fact">
+                                <dt>Block time</dt>
+                                <dd>{{ ethTime }}</dd>
+                            </div>
+                            <div class="fact">
+                                <dt>Nori batch</dt>
+                                <dd>
+                                    <a [href]="batchUrl" target="_blank" rel="noopener"
+                                        >{{ batch }} ↗</a
+                                    >
+                                </dd>
+                            </div>
+                            <div class="fact">
+                                <dt>Compute units</dt>
+                                <dd>{{ computeUnits }}</dd>
+                            </div>
+                        </dl>
+                        <p class="note">
+                            Checked by
+                            <a [href]="readProgramUrl" target="_blank" rel="noopener"
+                                >nori-read-example ↗</a
+                            >
+                            in a simulated Solana transaction: no wallet, no fee. Any Solana program
+                            can make the same check with nori-read.
+                        </p>
+                    </div>
+                    <div class="actions" rx-if="verifyFailed">
+                        <button onclick="retry">Verify again</button>
+                    </div>
+                </section>
+            </div>
             <div class="actions">
                 <button class="secondary" onclick="another">Prove another</button>
             </div>
