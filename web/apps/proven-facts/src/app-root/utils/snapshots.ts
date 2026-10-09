@@ -8,7 +8,7 @@ import {
     labelOf,
     valueOf,
 } from '@nori-zk/solana-web-ui';
-import { mintOf, sentencesOf, type LabelledLine } from './sentences.js';
+import { mintOf, sentencesOf, verifyTargetOf, type LabelledLine } from './sentences.js';
 
 /** One snapshot as its block on the page shows it. */
 export interface SnapshotView {
@@ -24,6 +24,12 @@ export interface SnapshotView {
     status: string;
     /** What the snapshot recorded, in sentences. */
     sentence: string;
+    /** The snapshot transaction, for building a result's witness. */
+    txHash: string;
+    /** The result `[ Verify on Solana ]` checks (`verifyTargetOf`): its query id, `''` when none. */
+    verifyQueryId: string;
+    /** That result as the `Snapshot` event recorded it, 0x-hex. */
+    verifyWord: string;
 }
 
 /**
@@ -57,6 +63,8 @@ export function snapshotViewOf(
 ): SnapshotView {
     const proven = snapshot.requestId < queueCursor;
     const secs = Number(snapshot.timestamp);
+    const lines = linesOf(snapshot, guards);
+    const target = verifyTargetOf(lines);
     return {
         key: snapshot.index.toString(),
         when: `${clock(secs)} UTC · ${ago(Math.max(0, nowSecs - secs))}`,
@@ -64,6 +72,9 @@ export function snapshotViewOf(
         blockUrl: blockUrl(snapshot.blockNumber),
         proven,
         status: proven ? 'Proven on Solana' : 'Waiting for proof',
-        sentence: sentencesOf(linesOf(snapshot, guards)).join(' '),
+        sentence: sentencesOf(lines).join(' '),
+        txHash: snapshot.txHash,
+        verifyQueryId: target?.queryId ?? '',
+        verifyWord: target?.word ?? '',
     };
 }
