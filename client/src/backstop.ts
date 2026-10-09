@@ -93,6 +93,45 @@ export function checkpointInstruction(accounts: {
     };
 }
 
+/** The `Status` enum's variants, in Borsh order (the program's return data). */
+export const STATUS_NAMES = [
+    'HEALTHY',
+    'WARN',
+    'STALE',
+    'PAUSED_AT_SOURCE',
+    'TRIPPED',
+] as const;
+
+/** `status()`: returns the guard's status in the transaction's return data. */
+export function statusInstruction(accounts: {
+    guard: Address;
+    mint: Address;
+}): Instruction {
+    return {
+        programAddress: BACKSTOP_PROGRAM,
+        accounts: [
+            { address: accounts.guard, role: AccountRole.READONLY },
+            { address: accounts.mint, role: AccountRole.READONLY },
+        ],
+        data: discriminator('status'),
+    };
+}
+
+/** `assert_healthy()`: fails unless the guard is HEALTHY (what a lender CPIs). */
+export function assertHealthyInstruction(accounts: {
+    guard: Address;
+    mint: Address;
+}): Instruction {
+    return {
+        programAddress: BACKSTOP_PROGRAM,
+        accounts: [
+            { address: accounts.guard, role: AccountRole.READONLY },
+            { address: accounts.mint, role: AccountRole.READONLY },
+        ],
+        data: discriminator('assert_healthy'),
+    };
+}
+
 /** `unlatch()`: clears a trip. Only the guard's admin may sign it. */
 export function unlatchInstruction(accounts: {
     admin: Address;

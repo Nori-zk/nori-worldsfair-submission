@@ -4,6 +4,7 @@ import { NoriSnapshot__factory } from '@nori-zk/ethereum-snapshot';
 import { NoriProofRequestQueue__factory } from '@nori-zk/ethereum-solana-bridge';
 import { fetchBridgeState } from '@nori-zk/nori-bridge-solana-sdk';
 import { findStatePda } from '@nori-zk/nori-bridge-solana-sdk/program';
+import type { Address } from '@solana/kit';
 import {
     checkpointInstruction,
     createGuardInstruction,
@@ -13,6 +14,7 @@ import {
     ReadKind,
     submitReadInstruction,
     unlatchInstruction,
+    type GuardState,
 } from '../backstop.js';
 import {
     fetchProvenSnapshot,
@@ -45,11 +47,44 @@ interface KeeperState {
     pending: string[];
 }
 
+/** What the keeper did, for a runner that records it (bin/scenarios.ts). */
+export type KeeperEvent =
+    | { type: 'snapshot'; txHash: string; queries: number; block?: number }
+    | { type: 'checkpoint'; guard: string; signature: string }
+    | {
+          type: 'read';
+          guard: string;
+          txHash: string;
+          kind: ReadKind;
+          signature: string;
+      }
+    | { type: 'applied'; txHash: string }
+    | { type: 'error'; job: string; message: string };
+
+/** One guard's state and status, as `status` shows it. */
+export interface GuardReport {
+    name: string;
+    address: Address;
+    state: GuardState;
+    supply: bigint;
+    status: ReturnType<typeof guardStatus>;
+}
+
+export interface StatusReport {
+    nori: { latestHead: bigint; queueCursor: bigint; batches: bigint } | null;
+    queueHead: bigint;
+    pending: number;
+    guards: GuardReport[];
+}
+
 export class Keeper {
+    /** Called for each event; the default keeps the plain log. */
+    onEvent: (event: KeeperEvent) => void = () => {};
+
     private constructor(
-        private readonly config: KeeperConfig,
-        private readonly solana: Solana,
-        private readonly provider: JsonRpcProvider
+        readonly config: KeeperConfig,
+        readonly solana: Solana,
+        readonly provider: JsonRpcProvider
     ) {}
 
     static async connect(config: KeeperConfig): Promise<Keeper> {
@@ -139,6 +174,12 @@ export class Keeper {
             this.log(
                 `snapshot ${tx.hash}: ${queries.size} queries, block ${receipt?.blockNumber}`
             );
+            this.onEvent({
+                type: 'snapshot',
+                txHash: tx.hash,
+                queries: queries.size,
+                block: receipt?.blockNumber,
+            });
         } catch (error) {
             if (isError(error, 'CALL_EXCEPTION')) {
                 // Reverted (e.g. the queue fee changed): it has no reads
@@ -152,6 +193,11 @@ export class Keeper {
             this.log(
                 `snapshot ${tx.hash}: not mined after ${SNAPSHOT_WAIT_MS / 60_000} min; its reads go in once it is`
             );
+            this.onEvent({
+                type: 'snapshot',
+                txHash: tx.hash,
+                queries: queries.size,
+            });
         }
     }
 
@@ -159,13 +205,18 @@ export class Keeper {
     async checkpoint() {
         for (const guard of this.config.guards) {
             try {
-                await this.solana.send(
+                const signature = await this.solana.send(
                     checkpointInstruction({
                         guard: await this.guardAddress(guard),
                         mint: guard.mint,
                     })
                 );
                 this.log(`${guard.name}: checkpoint`);
+                this.onEvent({
+                    type: 'checkpoint',
+                    guard: guard.name,
+                    signature,
+                });
             } catch (error) {
                 if (customErrorCode(error) !== ERR_CHECKPOINT_TOO_SOON)
                     this.log(
@@ -192,8 +243,10 @@ export class Keeper {
                     `snapshot ${snapshotTxHash}: failed: ${errorMessage(error)}`
                 );
             }
-            if (done) this.log(`snapshot ${snapshotTxHash}: reads submitted`);
-            else stillPending.push(snapshotTxHash);
+            if (done) {
+                this.log(`snapshot ${snapshotTxHash}: reads submitted`);
+                this.onEvent({ type: 'applied', txHash: snapshotTxHash });
+            } else stillPending.push(snapshotTxHash);
         }
         // Keep what another keeper process (a CLI `snapshot`) added meanwhile
         const added = this.loadState().pending.filter(
@@ -220,7 +273,7 @@ export class Keeper {
         let done = true;
         for (const guard of this.config.guards) {
             try {
-                await this.submitGuardReads(guard, snapshot);
+                await this.submitGuardReads(guard, snapshot, snapshotTxHash);
             } catch (error) {
                 this.log(
                     `${guard.name}: snapshot ${snapshotTxHash} failed: ${errorMessage(error)}`
@@ -234,7 +287,8 @@ export class Keeper {
     /** Applies the guard's backing and pause results (an already-applied read is skipped). */
     private async submitGuardReads(
         guard: GuardEntry,
-        snapshot: Extract<ProvenSnapshot, { proven: true }>
+        snapshot: Extract<ProvenSnapshot, { proven: true }>,
+        txHash: string
     ) {
         const reads = [
             [ReadKind.Backing, guard.backing],
@@ -243,7 +297,7 @@ export class Keeper {
         for (const [kind, query] of reads) {
             if (!query) continue;
             try {
-                await this.solana.send(
+                const signature = await this.solana.send(
                     submitReadInstruction({
                         guard: await this.guardAddress(guard),
                         mint: guard.mint,
@@ -252,6 +306,13 @@ export class Keeper {
                         witness: snapshot.witnessFor(queryOf(query).queryId),
                     })
                 );
+                this.onEvent({
+                    type: 'read',
+                    guard: guard.name,
+                    txHash,
+                    kind,
+                    signature,
+                });
             } catch (error) {
                 const code = customErrorCode(error);
                 // A program error is final for this read; only transport errors retry
@@ -296,52 +357,89 @@ export class Keeper {
 
     /** Prints Nori's progress through the proof queue, then each guard's status. */
     async status() {
-        for (const line of await this.statusLines()) this.log(line);
+        for (const line of statusLines(await this.statusReport()))
+            this.log(line);
     }
 
-    private async statusLines(): Promise<string[]> {
-        const lines: string[] = [];
+    /** Nori's progress through the proof queue, and each guard's state. */
+    async statusReport(): Promise<StatusReport> {
         const now = BigInt(Math.floor(Date.now() / 1000));
         const { noriProgram } = this.config.solana;
         const queue = NoriProofRequestQueue__factory.connect(
             this.config.ethereum.proofQueue,
             this.provider
         );
-        const [nori, requests] = await Promise.all([
+        const [nori, queueHead] = await Promise.all([
             fetchBridgeState(this.solana.rpc, noriProgram).catch(
                 (): null => null
             ),
             queue.head(),
         ]);
-        if (nori) {
-            lines.push(
-                `nori: beacon slot ${nori.latestHead} | ${nori.queueCursor} of ${requests} queue requests proven` +
-                    ` | ${nori.proofQueueBatchCount} batches | ${this.loadState().pending.length} snapshot(s) waiting`
-            );
-        } else {
-            lines.push(`nori: no state for ${noriProgram}`);
-        }
+        const guards: GuardReport[] = [];
         for (const guard of this.config.guards) {
             const address = await this.guardAddress(guard);
             const [guardData, mintData] = await Promise.all([
                 this.solana.accountData(address),
                 this.solana.accountData(guard.mint),
             ]);
-            if (!guardData || !mintData) {
-                lines.push(`${guard.name}: no guard at ${address}`);
-                continue;
-            }
+            if (!guardData || !mintData) continue;
             const state = decodeGuard(guardData);
             const supply = mintSupply(mintData);
-            lines.push(
-                `${guard.name}: ${guardStatus(state, supply, now)} | backing ${state.backing} | supply ${supply}` +
-                    ` | Ethereum block ${state.backingEthBlock} | paused ${state.paused}` +
-                    (state.tripped
-                        ? ` | tripped at block ${state.tripEthBlock}, deficit ${state.tripDeficit}`
-                        : '')
-            );
+            guards.push({
+                name: guard.name,
+                address,
+                state,
+                supply,
+                status: guardStatus(state, supply, now),
+            });
         }
-        return lines;
+        return {
+            nori: nori && {
+                latestHead: nori.latestHead,
+                queueCursor: nori.queueCursor,
+                batches: nori.proofQueueBatchCount,
+            },
+            queueHead,
+            pending: this.loadState().pending.length,
+            guards,
+        };
+    }
+
+    /** When `tick` last ran each job (epoch seconds); reset one to force it. */
+    readonly last = { checkpoint: 0, snapshot: 0 };
+
+    /**
+     * One round: a checkpoint and a snapshot when due, then submit. Errors are
+     * logged, never thrown. `run` calls this every `pollSecs`.
+     */
+    async tick() {
+        const { snapshotSecs, checkpointSecs } = this.config.intervals;
+        const now = Date.now() / 1000;
+        const jobs: Array<[string, () => Promise<void>]> = [];
+        if (now - this.last.checkpoint >= checkpointSecs) {
+            this.last.checkpoint = now;
+            jobs.push(['checkpoint', () => this.checkpoint()]);
+        }
+        if (now - this.last.snapshot >= snapshotSecs) {
+            // Only once sent: a failed snapshot retries next round
+            jobs.push([
+                'snapshot',
+                async () => {
+                    await this.snapshot();
+                    this.last.snapshot = now;
+                },
+            ]);
+        }
+        jobs.push(['submit', () => this.submit(true)]);
+        for (const [name, job] of jobs) {
+            try {
+                await job();
+            } catch (error) {
+                const message = errorMessage(error);
+                this.log(`${name} failed: ${message}`);
+                this.onEvent({ type: 'error', job: name, message });
+            }
+        }
     }
 
     /**
@@ -350,37 +448,11 @@ export class Keeper {
      * never race on the state file.
      */
     async run() {
-        const { snapshotSecs, checkpointSecs, pollSecs } =
-            this.config.intervals;
-        const last = { checkpoint: 0, snapshot: 0 };
         const shown = new Set<string>();
         for (;;) {
-            const now = Date.now() / 1000;
-            const jobs: Array<[string, () => Promise<void>]> = [];
-            if (now - last.checkpoint >= checkpointSecs) {
-                last.checkpoint = now;
-                jobs.push(['checkpoint', () => this.checkpoint()]);
-            }
-            if (now - last.snapshot >= snapshotSecs) {
-                // Only once sent: a failed snapshot retries next round
-                jobs.push([
-                    'snapshot',
-                    async () => {
-                        await this.snapshot();
-                        last.snapshot = now;
-                    },
-                ]);
-            }
-            jobs.push(['submit', () => this.submit(true)]);
-            for (const [name, job] of jobs) {
-                try {
-                    await job();
-                } catch (error) {
-                    this.log(`${name} failed: ${errorMessage(error)}`);
-                }
-            }
+            await this.tick();
             try {
-                const lines = await this.statusLines();
+                const lines = statusLines(await this.statusReport());
                 for (const line of lines) if (!shown.has(line)) this.log(line);
                 shown.clear();
                 for (const line of lines) shown.add(line);
@@ -388,10 +460,30 @@ export class Keeper {
                 this.log(`status failed: ${errorMessage(error)}`);
             }
             await new Promise((resolve) =>
-                setTimeout(resolve, pollSecs * 1000)
+                setTimeout(resolve, this.config.intervals.pollSecs * 1000)
             );
         }
     }
+}
+
+/** The status report as `keeper status` prints it (one line per guard). */
+export function statusLines(report: StatusReport): string[] {
+    const lines = [
+        report.nori
+            ? `nori: beacon slot ${report.nori.latestHead} | ${report.nori.queueCursor} of ${report.queueHead} queue requests proven` +
+              ` | ${report.nori.batches} batches | ${report.pending} snapshot(s) waiting`
+            : 'nori: no state',
+    ];
+    for (const { name, state, supply, status } of report.guards) {
+        lines.push(
+            `${name}: ${status} | backing ${state.backing} | supply ${supply}` +
+                ` | Ethereum block ${state.backingEthBlock} | paused ${state.paused}` +
+                (state.tripped
+                    ? ` | tripped at block ${state.tripEthBlock}, deficit ${state.tripDeficit}`
+                    : '')
+        );
+    }
+    return lines;
 }
 
 function errorMessage(error: unknown): string {
