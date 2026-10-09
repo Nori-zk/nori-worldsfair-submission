@@ -20,8 +20,10 @@ export interface WebEnv {
         snapshotAddress: string;
     };
     solana: {
-        /** The public cluster read through its public endpoint. */
+        /** The cluster; its genesis is checked against `rpcUrl`'s. */
         cluster: SolanaCluster;
+        /** A dedicated RPC for the cluster, or `''` for its public endpoint. */
+        rpcUrl: string;
         /** The Nori program that commits proof queue batches. */
         programAddress: Address;
         /**
@@ -109,6 +111,9 @@ export function loadWebEnv(): WebEnv {
     const rpcUrl = read('NORI_WEB_ETH_RPC_URL');
     if (!/^https?:\/\//.test(rpcUrl))
         throw new WebEnvError('NORI_WEB_ETH_RPC_URL', 'is not an http:// or https:// URL');
+    const solanaRpcUrl = process.env.NORI_WEB_SOLANA_RPC_URL || file.NORI_WEB_SOLANA_RPC_URL || '';
+    if (solanaRpcUrl !== '' && !/^https?:\/\//.test(solanaRpcUrl))
+        throw new WebEnvError('NORI_WEB_SOLANA_RPC_URL', 'is not an http:// or https:// URL');
     const wssUrl = read('NORI_WEB_BRIDGE_WSS_URL');
     if (!/^wss?:\/\//.test(wssUrl))
         throw new WebEnvError('NORI_WEB_BRIDGE_WSS_URL', 'is not a ws:// or wss:// URL');
@@ -123,6 +128,7 @@ export function loadWebEnv(): WebEnv {
         },
         solana: {
             cluster,
+            rpcUrl: solanaRpcUrl,
             programAddress: readSolanaAddress('NORI_SOL_TOKEN_PROGRAM_ID'),
             feePayer: readSolanaAddress('NORI_WEB_SOLANA_FEE_PAYER'),
         },

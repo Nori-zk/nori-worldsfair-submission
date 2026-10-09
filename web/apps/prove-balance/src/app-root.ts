@@ -13,7 +13,12 @@ import './app-root/components/prove-form.component.js';
 /** The chain, cluster, Nori websocket, queue and program this build reads, from `web/.env`. */
 const connectionsOptions: ConnectionsOptions = {
     ethereum: { expectedChainId: BigInt(NORI_WEB_ENV.ethereum.chainId), wallet: true },
-    solana: { cluster: NORI_WEB_ENV.solana.cluster },
+    solana: {
+        cluster: NORI_WEB_ENV.solana.cluster,
+        ...(NORI_WEB_ENV.solana.rpcUrl === ''
+            ? {}
+            : { http: { rpcUrls: [NORI_WEB_ENV.solana.rpcUrl] } }),
+    },
     nori: { websocket: { url: NORI_WEB_ENV.bridge.wssUrl } },
     proofRequests: {
         proofQueueAddress: NORI_WEB_ENV.ethereum.proofQueueAddress,

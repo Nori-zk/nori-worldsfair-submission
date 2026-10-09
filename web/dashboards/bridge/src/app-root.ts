@@ -17,7 +17,12 @@ const connectionsOptions: ConnectionsOptions = {
         // TEMPORARY: the wallet first; the public RPC first lets the dashboard read without one.
         order: { calls: ['wallet', 'http'], logs: ['wallet', 'http'] },
     },
-    solana: { cluster: NORI_WEB_ENV.solana.cluster },
+    solana: {
+        cluster: NORI_WEB_ENV.solana.cluster,
+        ...(NORI_WEB_ENV.solana.rpcUrl === ''
+            ? {}
+            : { http: { rpcUrls: [NORI_WEB_ENV.solana.rpcUrl] } }),
+    },
     nori: { websocket: { url: NORI_WEB_ENV.bridge.wssUrl } },
     proofRequests: {
         proofQueueAddress: NORI_WEB_ENV.ethereum.proofQueueAddress,
