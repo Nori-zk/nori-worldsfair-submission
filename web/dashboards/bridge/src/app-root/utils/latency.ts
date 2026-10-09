@@ -143,3 +143,36 @@ export function rowsOf(
                 : asciiBar(longest > 0 ? secs / longest : 0),
     }));
 }
+/**
+ * Each read's latency in minutes, for the summary.
+ *
+ * @param batches The batches.
+ * @param requests The NoriSnapshot requests over the batches' blocks.
+ * @param landings Each batch's landing by index.
+ * @returns The minutes of each read whose batch has a landing.
+ */
+export const latencyMinutes = (
+    batches: readonly ProofQueueBatchSummary[],
+    requests: readonly EnqueuedProofRequest[],
+    landings: ReadonlyMap<bigint, BatchLanding>,
+): number[] =>
+    readsOf(batches, requests).flatMap(({ batch, ethTime }) => {
+        const landing = landings.get(batch.proofQueueBatchIndex);
+        return landing ? [(landing.atSecs - ethTime) / 60] : [];
+    });
+
+/**
+ * The median and spread of some latencies, picked as the soak report does
+ * (`client/src/bin/soakReport.ts`): `sorted[min(n − 1, floor(q × n))]`.
+ *
+ * @param latencies Minutes, in any order.
+ * @returns `24 reads · median 18.1 min · p90 20.7 · min 15.2 · max 22.4`, or `''` when empty.
+ */
+export function summaryOf(latencies: readonly number[]): string {
+    const n = latencies.length;
+    if (n === 0) return '';
+    const sorted = [...latencies].sort((a, b) => a - b);
+    const pick = (q: number): string =>
+        (sorted[Math.min(n - 1, Math.floor(q * n))] ?? 0).toFixed(1);
+    return `${n.toString()} read${n === 1 ? '' : 's'} · median ${pick(0.5)} min · p90 ${pick(0.9)} · min ${pick(0)} · max ${pick(1)}`;
+}

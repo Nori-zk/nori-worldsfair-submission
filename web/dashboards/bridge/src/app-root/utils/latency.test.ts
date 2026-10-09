@@ -4,7 +4,7 @@ import {
     type EnqueuedProofRequest,
     type ProofQueueBatchSummary,
 } from '@nori-zk/nori-bridge-solana-sdk';
-import { ethTimeOf, rowsOf } from './latency.js';
+import { ethTimeOf, latencyMinutes, rowsOf, summaryOf } from './latency.js';
 
 const timeKey = (block: bigint, secs: bigint): string =>
     `0x${((block << 64n) | secs).toString(16).padStart(64, '0')}`;
@@ -92,4 +92,19 @@ void test('a batch without a landing shows —', () => {
     assert.equal(newest?.landed, '—');
     assert.equal(newest?.minutes, '');
     assert.equal(newest?.bar, '');
+});
+
+void test('the summary picks median and spread as the soak report does', () => {
+    assert.equal(summaryOf([]), '');
+    assert.equal(summaryOf([18.2]), '1 read · median 18.2 min · p90 18.2 · min 18.2 · max 18.2');
+    // Ten reads, out of order: median is sorted[5], p90 sorted[9].
+    assert.equal(
+        summaryOf([22.4, 15.2, 18.1, 16, 17, 19, 20.7, 18.5, 17.5, 16.5]),
+        '10 reads · median 18.1 min · p90 22.4 · min 15.2 · max 22.4',
+    );
+});
+
+void test('only reads whose batch landed count toward the summary', () => {
+    const landings = new Map([[86n, { atSecs: Number(T96) + 1092, signature: 'sig86' }]]);
+    assert.deepEqual(latencyMinutes(batches, requests, landings), [18.2]);
 });

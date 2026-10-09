@@ -2,7 +2,7 @@ import { Component, Inject, RxElement } from '@yaw-rx/core';
 import { RxFor } from '@yaw-rx/core/directives/rx-for';
 import { map, type Observable } from 'rxjs';
 import { LatencyService } from '../services/latency.service.js';
-import { rowsOf, type LatencyRowView } from '../utils/latency.js';
+import { latencyMinutes, rowsOf, summaryOf, type LatencyRowView } from '../utils/latency.js';
 import './latency-table/latency-row.component.js';
 import styles from './latency-table.component.css';
 
@@ -17,6 +17,7 @@ import styles from './latency-table.component.css';
     directives: [RxFor],
     template: `
         <p class="title">READ LATENCY: Ethereum block → landed on Solana</p>
+        <p class="summary">{{ summary }}</p>
         <div class="head">
             <span>REQUEST</span>
             <span>ETH TIME</span>
@@ -43,6 +44,21 @@ export class LatencyTable extends RxElement {
                 latency === undefined || typeof latency === 'string'
                     ? []
                     : rowsOf(latency.batches, latency.requests, latency.landings),
+            ),
+        );
+    }
+
+    /** How many reads landed, and the median and spread of their minutes. */
+    get summary$(): Observable<string> {
+        return this.latency.latency$.pipe(
+            map((latency) =>
+                latency === undefined ||
+                typeof latency === 'string' ||
+                latency.landings === undefined
+                    ? ''
+                    : summaryOf(
+                          latencyMinutes(latency.batches, latency.requests, latency.landings),
+                      ),
             ),
         );
     }
