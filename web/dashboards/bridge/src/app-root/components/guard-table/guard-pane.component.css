@@ -6,3 +6,38 @@
     font-size: 0.85rem;
     white-space: normal;
 }
+.lender {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    align-items: baseline;
+}
+.label {
+    color: var(--nori-muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+}
+button {
+    padding: 0.3rem 0.6rem;
+    border: 1px solid var(--nori-light-green);
+    border-radius: 0;
+    background: transparent;
+    color: var(--nori-light-green);
+    cursor: pointer;
+    font: inherit;
+}
+button:hover:enabled {
+    background: rgb(100 225 142 / 12%);
+}
+button:disabled {
+    cursor: default;
+    opacity: 0.6;
+}
+.result:empty {
+    display: none;
+}
+.note {
+    margin: 0.5rem 0 0;
+    color: var(--nori-muted);
+    line-height: 1.5;
+}
