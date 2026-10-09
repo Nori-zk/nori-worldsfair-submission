@@ -2,12 +2,6 @@ import { Component, Inject, RxElement } from '@yaw-rx/core';
 import { RxFor } from '@yaw-rx/core/directives/rx-for';
 import { RxIf } from '@yaw-rx/core/directives/rx-if';
 import { filter, map, type Observable } from 'rxjs';
-import {
-    NORI_BRIDGE_INFRA_STAGE_ORDER,
-    NORI_BRIDGE_INFRA_STAGE_TEXT,
-    NoriBridgeInfraService,
-    noriBridgeInfraStageIndex,
-} from '@nori-zk/solana-web-ui';
 import { BridgeDashboardService } from '../services/bridge-dashboard.service.js';
 import { type ShownBatch, type BridgeBatchesState } from '../ystate/bridge-batches.js';
 import { contractName } from '../utils/format.js';
@@ -15,9 +9,6 @@ import { type WaitingRow } from '../utils/waiting-rows.js';
 import './batch-table/batch-row.component.js';
 import './batch-table/now-row.component.js';
 import styles from './batch-table.component.css';
-
-/** How many blocks Nori's loop bar holds: more than the table's width shows. */
-const LOOP_CELLS = 300;
 
 /**
  * The status line under the table for each node of the batches machine.
@@ -79,16 +70,6 @@ const batchesStatus = (state: BridgeBatchesState | undefined): string => {
                 <batch-row></batch-row>
             </div>
         </div>
-        <div rx-if="noriOpen">
-            <div class="loop">
-                <p class="loop-title">INFRA BRIDGE STATE</p>
-                <p class="loop-stage">{{ infraLoop.text }}</p>
-                <div class="loop-bar">
-                    <span class="done" [style]="infraLoop.done">${'▓'.repeat(LOOP_CELLS)}</span>
-                    <span class="rest">${'░'.repeat(LOOP_CELLS)}</span>
-                </div>
-            </div>
-        </div>
         <p class="status">{{ status }}</p>
         <div rx-if="failed">
             <button type="button" class="retry" onclick="retry">[ Read again ]</button>
@@ -98,7 +79,6 @@ const batchesStatus = (state: BridgeBatchesState | undefined): string => {
 })
 export class BatchTable extends RxElement {
     @Inject(BridgeDashboardService) private readonly dashboard!: BridgeDashboardService;
-    @Inject(NoriBridgeInfraService) private readonly noriBridgeInfra!: NoriBridgeInfraService;
     targetInput!: HTMLInputElement;
 
     get targetText$(): Observable<string> {
@@ -166,24 +146,6 @@ export class BatchTable extends RxElement {
 
     get failed$(): Observable<boolean> {
         return this.dashboard.batches$.pipe(map((state) => state?.node === 'failed'));
-    }
-
-    get noriOpen$(): Observable<boolean> {
-        return this.noriBridgeInfra.open$;
-    }
-
-    /** Nori's stage: its text, and the loop's bar filled up to it. */
-    get infraLoop$(): Observable<{ text: string; done: string }> {
-        return this.noriBridgeInfra.stage$.pipe(
-            map((stage) => {
-                const steps = NORI_BRIDGE_INFRA_STAGE_ORDER.length;
-                const fill = (noriBridgeInfraStageIndex(stage) + 1) / steps;
-                return {
-                    text: NORI_BRIDGE_INFRA_STAGE_TEXT[stage],
-                    done: `width: ${(fill * 100).toFixed(1)}%`,
-                };
-            }),
-        );
     }
 
     applyFilter(event: SubmitEvent): void {

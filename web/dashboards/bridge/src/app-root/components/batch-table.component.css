@@ -76,38 +76,6 @@
 .rows::-webkit-scrollbar-thumb:hover {
     background: var(--nori-light-green);
 }
-/* Nori's loop under the table: the stage centred over a bar the table's full width. */
-.loop {
-    margin-top: 1rem;
-    color: var(--nori-light-green);
-}
-.loop-title {
-    margin: 0 0 0.5rem;
-    color: var(--nori-muted);
-    font-size: 0.75rem;
-    letter-spacing: 0.1em;
-    text-align: center;
-}
-.loop-stage {
-    margin: 0 0 0.5rem;
-    text-align: center;
-}
-.loop-bar {
-    display: flex;
-    overflow: hidden;
-    white-space: nowrap;
-    letter-spacing: 0.05em;
-}
-.loop-bar .done {
-    flex: none;
-    overflow: hidden;
-    transition: width 0.3s ease-out;
-}
-.loop-bar .rest {
-    flex: 1;
-    overflow: hidden;
-    opacity: 0.5;
-}
 :host > .status {
     margin: 1rem 0 0;
     color: var(--nori-light-green);

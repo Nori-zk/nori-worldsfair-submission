@@ -3,16 +3,18 @@ import { RxIf } from '@yaw-rx/core/directives/rx-if';
 import { map, type Observable } from 'rxjs';
 import './batch-table.component.js';
 import './guard-table.component.js';
+import './infra-state.component.js';
 import styles from './dashboard-views.component.css';
 
 /** The dashboard's views: the proof queue, or Backstop's guards (`?view=guards`). */
 type View = 'queue' | 'guards';
 
 /**
- * The proof queue or Backstop's guards, one at a time, picked with two tabs.
- * The queue is hidden rather than removed: it keeps its filter and open
- * batches, and a re-created batch table's rows no longer open. The guards
- * are removed, so they are read only while shown.
+ * The proof queue or Backstop's guards, one at a time, picked with two tabs,
+ * over Nori's loop. Both share one place, so the card keeps the queue's
+ * height on either tab. The queue is hidden rather than removed: it keeps
+ * its filter and open batches, and a re-created batch table's rows no
+ * longer open. The guards are removed, so they are read only while shown.
  */
 @Component({
     selector: 'dashboard-views',
@@ -22,8 +24,11 @@ type View = 'queue' | 'guards';
             <button [class.current]="queueShown" onclick="showQueue">[ Proof queue ]</button>
             <button [class.current]="guardsShown" onclick="showGuards">[ Backstop guards ]</button>
         </nav>
-        <div [class.hidden]="guardsShown"><batch-table></batch-table></div>
-        <div rx-if="guardsShown"><guard-table></guard-table></div>
+        <div class="panes">
+            <div [class.hidden]="guardsShown"><batch-table></batch-table></div>
+            <div rx-if="guardsShown"><guard-table></guard-table></div>
+        </div>
+        <infra-state></infra-state>
     `,
     styles,
 })
