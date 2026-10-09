@@ -1,18 +1,21 @@
 # web: browser apps
 
-Two apps on Sepolia + Solana devnet, built with [yaw](https://yaw-rx.github.io/) and
+Three apps on Sepolia + Solana devnet, built with [yaw](https://yaw-rx.github.io/) and
 [ystate](https://ystate.github.io/) on the Nori SDK. Each app's flow is a ystate graph,
-drawn next to it (`ProveBalanceGraph.svg`, `BridgeBatchesGraph.svg`).
+drawn next to it (`ProveBalanceGraph.svg`, `BridgeBatchesGraph.svg`); Guard status has no
+flow of its own and shows the shared guard reads.
 
 | Package              | What                                                                                                                                                                                                              |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `apps/prove-balance` | Prove on Solana what an Ethereum address holds: one `NoriSnapshot` transaction from your wallet, proven and verified on Solana                                                                                    |
+| `apps/guard-status`  | Each Backstop guard in plain words: is the bridged asset safe to accept now, and what would a lender's deposit get                                                                                                |
 | `dashboards/bridge`  | Backstop's guards (proven backing against live supply), and the whole proof queue: every batch Nori has settled on Solana, the requests still waiting, and the stage Nori's prover is in                          |
 | `libs/ui`            | Shared: wallet and connection buttons, the connection status bar, following a proof request, Nori's page layout and look                                                                                          |
 | `.env`, `env.ts`     | Public build constants: chain id, Ethereum RPC, proof queue and its deploy block, `NoriSnapshot`, Solana cluster and an optional dedicated RPC, Nori program, the verify simulation's fee payer, Nori's websocket |
 
 ```sh
 npm run dev -w web/apps/prove-balance   # http://localhost:5180
+npm run dev -w web/apps/guard-status    # http://localhost:5181
 npm run dev -w web/dashboards/bridge    # http://localhost:7400
 ```
 
@@ -29,6 +32,7 @@ subdomain (the build's asset paths are absolute). The apps import the client, so
 npm ci && npm run build -w client
 npm run build -w web/dashboards/bridge    # → web/dashboards/bridge/dist
 npm run build -w web/apps/prove-balance   # → web/apps/prove-balance/dist
+npm run build -w web/apps/guard-status    # → web/apps/guard-status/dist
 ```
 
 For dedicated RPCs, set `NORI_WEB_ETH_RPC_URL` (the dashboard's Ethereum reads without a wallet;
@@ -59,6 +63,30 @@ and the compute units (~2.5k). A simulation needs no wallet and no fee; it names
 `NORI_WEB_SOLANA_FEE_PAYER` as fee payer, which signs and pays nothing. Any Solana program can
 make the same check with [`nori-read`](../nori-read/README.md). To record it on-chain, with a
 transaction to link to: `npm run keeper -w client -- verify <snapshot tx>`.
+
+## Guard status
+
+One card per Backstop guard on the cluster, for a lender or integrator asking whether a bridged
+asset is safe to accept right now. Each card says the guard's status (HEALTHY, WARN, STALE,
+PAUSED, TRIPPED) and what it means in one sentence, the backing Nori last proved on Ethereum
+(with its block and age) against the mint's live supply on Solana, and whether a lender's
+deposit would go through. The guards a lender can use come first, then tripped and paused ones,
+then stale ones. Read from Solana every 30 seconds; no keeper running means STALE.
+
+`[ Check my deposit ]` simulates a lender's deposit against that guard: one `assert_healthy` by
+CPI, no wallet, no fee, one request. It reads `Your deposit would be allowed (N CU).` or
+`Your deposit would be blocked: <error>.`
+
+`▸ How this is checked` opens the guard's settings in a sentence (its backing and pause queries,
+window, tolerance, staleness and checkpoints), the trip rule re-run on the checkpoints it keeps,
+and links to the guard, its admin, NoriSnapshot and the Nori program. `?guard=<address>` opens
+it on load. The Demo and Shadow mints are named from the devnet deployment in
+[docs/README.md](../docs/README.md); other mints read `Mint <address>`.
+
+```sh
+npm run dev -w web/apps/guard-status # http://localhost:5181
+npm run test -w web/apps/guard-status # the cards' sentences
+```
 
 ## Bridge dashboard
 
