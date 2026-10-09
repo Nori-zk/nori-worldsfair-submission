@@ -4,20 +4,37 @@ Two apps on Sepolia + Solana devnet, built with [yaw](https://yaw-rx.github.io/)
 [ystate](https://ystate.github.io/) on the Nori SDK. Each app's flow is a ystate graph,
 drawn next to it (`ProveBalanceGraph.svg`, `BridgeBatchesGraph.svg`).
 
-| Package              | What                                                                                                                                                                                     |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/prove-balance` | Prove on Solana what an Ethereum address holds: one `NoriSnapshot` transaction from your wallet, proven and verified on Solana                                                           |
-| `dashboards/bridge`  | Backstop's guards (proven backing against live supply), and the whole proof queue: every batch Nori has settled on Solana, the requests still waiting, and the stage Nori's prover is in |
-| `libs/ui`            | Shared: wallet and connection buttons, the connection status bar, following a proof request, Nori's page layout and look                                                                 |
-| `.env`, `env.ts`     | Public build constants: chain id, Ethereum RPC, proof queue and its deploy block, `NoriSnapshot`, Solana cluster, Nori program, the verify simulation's fee payer, Nori's websocket      |
+| Package              | What                                                                                                                                                                                                              |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/prove-balance` | Prove on Solana what an Ethereum address holds: one `NoriSnapshot` transaction from your wallet, proven and verified on Solana                                                                                    |
+| `dashboards/bridge`  | Backstop's guards (proven backing against live supply), and the whole proof queue: every batch Nori has settled on Solana, the requests still waiting, and the stage Nori's prover is in                          |
+| `libs/ui`            | Shared: wallet and connection buttons, the connection status bar, following a proof request, Nori's page layout and look                                                                                          |
+| `.env`, `env.ts`     | Public build constants: chain id, Ethereum RPC, proof queue and its deploy block, `NoriSnapshot`, Solana cluster and an optional dedicated RPC, Nori program, the verify simulation's fee payer, Nori's websocket |
 
 ```sh
 npm run dev -w web/apps/prove-balance   # http://localhost:5180
 npm run dev -w web/dashboards/bridge    # http://localhost:7400
 ```
 
-`build`, `build:ssg` (static pages) and `preview` work the same way. After a redeploy, update
+`build`, `build:ssg` (pre-rendered pages: not needed to host, and the dashboard's fails on its
+live batch rows) and `preview` work the same way. After a redeploy, update
 the addresses in `web/.env` (committed: public values only; everything in it reaches the browser).
+
+### Hosting
+
+Each app is a static site: build it and serve its `dist/` at the root of its own domain or
+subdomain (the build's asset paths are absolute). The apps import the client, so build it first:
+
+```sh
+npm ci && npm run build -w client
+npm run build -w web/dashboards/bridge    # → web/dashboards/bridge/dist
+npm run build -w web/apps/prove-balance   # → web/apps/prove-balance/dist
+```
+
+For dedicated RPCs, set `NORI_WEB_ETH_RPC_URL` (the dashboard's Ethereum reads without a wallet;
+Prove balance reads through the wallet) and `NORI_WEB_SOLANA_RPC_URL` (both apps; checked
+against the cluster's genesis) in the host's build environment rather than `web/.env`. They are
+built into the page, so anyone can read them: restrict each key to your domains at the provider.
 
 ## Prove balance
 
