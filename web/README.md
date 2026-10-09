@@ -74,6 +74,11 @@ backing was proven at and how long ago, and the status a lender's `assert_health
 (HEALTHY, WARN, STALE, PAUSED, TRIPPED). Read from Solana every 30 seconds while the tab is
 open; no keeper running means STALE.
 
+A guard row opens (`▸`) to `[ Try deposit ]`, which simulates a lender's deposit against that
+guard: one `assert_healthy` by CPI, built in the browser and sent to `simulateTransaction`. No
+wallet, no fee, one request. The line reads `deposit allowed` or `deposit blocked: <error>`,
+with the compute units it took.
+
 Under both, Nori's loop: the stage it is in, over a bar that fills through each epoch until its
 next job.
 
