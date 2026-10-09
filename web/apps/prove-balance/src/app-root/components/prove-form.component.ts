@@ -100,7 +100,7 @@ type Verified = Extract<ProveBalanceState, { node: 'verified' }>['data'];
         <div rx-if="editable">
             <div class="summary">
                 <div class="stat">
-                    <span class="stat-label">Balance</span>
+                    <span class="stat-label">Balance now (latest block)</span>
                     <span class="stat-value"
                         ><span rx-if="reading"><span class="spinner"></span></span
                         >{{ balance }}</span
