@@ -4,7 +4,7 @@ import {
     concat,
     defer,
     map,
-    type Observable,
+    Observable,
     of,
     shareReplay,
     startWith,
@@ -92,13 +92,32 @@ export class LatencyService {
             );
             return { batches, requests, landings: undefined };
         };
+        // Closing the tab stops the landing reads still to come.
+        const landingsOf = (
+            batches: ProofQueueBatchSummary[],
+        ): Observable<Map<bigint, BatchLanding>> =>
+            new Observable((subscriber) => {
+                const abort = new AbortController();
+                batchTimes.landings(batches, abort.signal).then(
+                    (landings) => {
+                        subscriber.next(landings);
+                        subscriber.complete();
+                    },
+                    (error: unknown) => {
+                        subscriber.error(error);
+                    },
+                );
+                return () => {
+                    abort.abort();
+                };
+            });
         // The rows first, then again once the landings are read.
         const readWithLandings = (): Observable<Latency> =>
             defer(read).pipe(
                 switchMap((latency) =>
                     concat(
                         of(latency),
-                        defer(async () => batchTimes.landings(latency.batches)).pipe(
+                        landingsOf(latency.batches).pipe(
                             map((landings) => ({ ...latency, landings })),
                         ),
                     ),
