@@ -12,6 +12,9 @@
         },
         "./read": {
             "import": "./build/read.js"
+        },
+        "./guard": {
+            "import": "./build/guard.js"
         }
     },
     "scripts": {

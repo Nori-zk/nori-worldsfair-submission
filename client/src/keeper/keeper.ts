@@ -27,6 +27,7 @@ import {
     fetchProvenSnapshot,
     type ProvenSnapshot,
 } from '../fetchProvenSnapshot.js';
+import { mintSupply } from '../guard.js';
 import { readSnapshotResultInstruction } from '../noriRead.js';
 import {
     guardConfigOf,
@@ -38,7 +39,6 @@ import {
     connectSolana,
     customErrorCode,
     customErrorOf,
-    mintSupply,
     RPC_TIMEOUT_MS,
     type Solana,
     transactionErrorText,

@@ -168,15 +168,6 @@ export async function connectSolana(
     };
 }
 
-/** An SPL mint's supply (u64 at byte 36). */
-export function mintSupply(data: Uint8Array): bigint {
-    return new DataView(
-        data.buffer,
-        data.byteOffset,
-        data.byteLength
-    ).getBigUint64(36, true);
-}
-
 /**
  * The custom program error code of a failed send: from @solana/kit's error
  * context, the logs, or a failed transaction's status.
