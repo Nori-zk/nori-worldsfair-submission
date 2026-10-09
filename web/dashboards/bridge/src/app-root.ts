@@ -5,8 +5,6 @@ import {
     PROOF_REQUEST_CONNECTIONS_OPTIONS,
     type ConnectionsOptions,
     BatchTimesService,
-    FactsService,
-    GuardBoardService,
     LatencyService,
 } from '@nori-zk/solana-web-ui';
 import { BridgeDashboardService } from './app-root/services/bridge-dashboard.service.js';
@@ -41,8 +39,6 @@ const connectionsOptions: ConnectionsOptions = {
         ConnectionsService,
         NoriBridgeInfraService,
         BridgeDashboardService,
-        GuardBoardService,
-        FactsService,
         BatchTimesService,
         LatencyService,
     ],

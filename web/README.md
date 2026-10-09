@@ -7,7 +7,7 @@ drawn next to it (`ProveBalanceGraph.svg`, `BridgeBatchesGraph.svg`).
 | Package              | What                                                                                                                                                                                                              |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `apps/prove-balance` | Prove on Solana what an Ethereum address holds: one `NoriSnapshot` transaction from your wallet, proven and verified on Solana                                                                                    |
-| `dashboards/bridge`  | Backstop's guards (proven backing against live supply), and the whole proof queue: every batch Nori has settled on Solana, the requests still waiting, and the stage Nori's prover is in                          |
+| `dashboards/bridge`  | The whole proof queue: every batch Nori has settled on Solana, the requests still waiting, the stage Nori's prover is in, and how long reads take                                                                 |
 | `libs/ui`            | Shared: wallet and connection buttons, the connection status bar, following a proof request, Nori's page layout and look                                                                                          |
 | `.env`, `env.ts`     | Public build constants: chain id, Ethereum RPC, proof queue and its deploy block, `NoriSnapshot`, Solana cluster and an optional dedicated RPC, Nori program, the verify simulation's fee payer, Nori's websocket |
 
@@ -62,41 +62,18 @@ transaction to link to: `npm run keeper -w client -- verify <snapshot tx>`.
 
 ## Bridge dashboard
 
-Four tabs. **Proof queue**: batches Nori has settled on Solana, newest first. Above them, the
+Two tabs. **Proof queue**: batches Nori has settled on Solana, newest first. Above them, the
 requests no batch covers yet, in three rows: waiting for Ethereum finality, scheduled for
 processing, and processing in Nori's current job, each with a countdown. Open a batch or a row
 to see its requests, each with the submitting contract and the enqueuing transaction, linked
 to Etherscan.
-
-**Backstop guards** (`?view=guards`): every Backstop guard on the cluster: its mint, the
-Ethereum backing Nori last proved, the mint's live supply, their ratio, the Ethereum block the
-backing was proven at and how long ago, and the status a lender's `assert_healthy` would get
-(HEALTHY, WARN, STALE, PAUSED, TRIPPED). Read from Solana every 30 seconds while the tab is
-open; no keeper running means STALE.
-
-A guard row opens (`▸`) to `[ Try deposit ]`, which simulates a lender's deposit against that
-guard: one `assert_healthy` by CPI, built in the browser and sent to `simulateTransaction`. No
-wallet, no fee, one request. The line reads `deposit allowed` or `deposit blocked: <error>`,
-with the compute units it took.
-
-The opened row also shows the guard itself: its settings, the backing with its Ethereum block
-and time, and the trip rule re-run on the supply checkpoints the guard keeps (the last 64,
-about 2 hours): the window around the backing's Ethereum time, the lowest supply in it against
-backing + tolerance, and those checkpoints. Nothing more is read for it. `?view=guards&guard=<address>`
-links to a guard with its row open.
-
-**Facts** (`?view=facts`): the 25 newest `NoriSnapshot` transactions, newest first, with their
-Ethereum block and time, and whether Nori has proven them. Open one to see what it recorded:
-each query and its result, named when it is a guard's backing or pause query. On a proven
-snapshot, `[ Verify ]` simulates `nori-read-example` against the proven batch (~2.5k CU), as
-Prove balance does: no wallet, no fee. Read when the tab opens and on `[ Read again ]`.
 
 **Latency** (`?view=latency`): every `NoriSnapshot` read in the 30 newest batches, newest
 first, each from its Ethereum block time to the Solana transaction that landed its batch, in
 minutes, with the median, p90, min and max. A batch landed in the newest successful Nori
 `update` on its account. Read when the tab opens and on `[ Read again ]`.
 
-Under every tab, Nori's loop: the stage it is in, over a bar that fills through each epoch
+Under both, Nori's loop: the stage it is in, over a bar that fills through each epoch
 until its next job.
 
 Filter by contract in the box, or share a filtered view as `?target=<address>`.
