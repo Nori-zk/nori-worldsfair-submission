@@ -3,6 +3,7 @@
 }
 .views {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.5rem;
     margin-top: 2rem;
     font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
@@ -24,7 +25,7 @@
     background: var(--nori-light-green);
     color: var(--nori-very-dark-green);
 }
-/* Both views in one cell: the card is as tall as the taller, whichever shows. */
+/* Every view in one cell: the card is as tall as the tallest, whichever shows. */
 .panes {
     display: grid;
 }

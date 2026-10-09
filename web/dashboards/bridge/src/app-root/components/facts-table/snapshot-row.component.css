@@ -1,0 +1,21 @@
+:host {
+    display: block;
+    border-top: 1px solid rgb(255 255 255 / 8%);
+}
+.row {
+    display: grid;
+    grid-template-columns: var(--facts-columns);
+    gap: var(--facts-gap);
+    align-items: baseline;
+    padding: 0.45rem 0;
+    color: var(--nori-text);
+    white-space: nowrap;
+}
+.row > * {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.row a {
+    color: var(--nori-light-green);
+    text-decoration: none;
+}

@@ -6,6 +6,7 @@ import {
     type ConnectionsOptions,
 } from '@nori-zk/solana-web-ui';
 import { BridgeDashboardService } from './app-root/services/bridge-dashboard.service.js';
+import { FactsService } from './app-root/services/facts.service.js';
 import { GuardBoardService } from './app-root/services/guard-board.service.js';
 import './app-root/components/dashboard-views.component.js';
 
@@ -39,6 +40,7 @@ const connectionsOptions: ConnectionsOptions = {
         NoriBridgeInfraService,
         BridgeDashboardService,
         GuardBoardService,
+        FactsService,
     ],
     template: `
         <nori-page
