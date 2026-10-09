@@ -17,3 +17,6 @@ keeper-state.json
 keeper-soak-state.json
 soak-*/
 *.log
+campaign-*/
+keeper-campaign-state.json
+NOTES.local.md

@@ -15,8 +15,9 @@ Status: live on real proofs, Sepolia → Solana devnet (results and addresses in
 | `nori-read/`                  | Rust: `verify_snapshot_result` and account loaders                                                                                                                                                                            |
 | `programs/nori-read-example/` | Smallest consumer + surfpool test                                                                                                                                                                                             |
 | `programs/backstop/`          | Guards: proven backing vs Solana supply ([diagram](docs/backstop-guard.drawio.png))                                                                                                                                           |
-| `scripts/`                    | `dry-run.sh` (local loop, fake prover), `deploy-devnet.sh` (Backstop + demo mint), `soak.sh` (keeper for hours, then `report.md`)                                                                                             |
+| `scripts/`                    | `dry-run.sh` (local loop, fake prover), `deploy-devnet.sh` (Backstop + demo mint), `soak.sh` (keeper for hours, then `report.md`), `campaign.sh` (keeper + scenarios on two test guards, report + dashboard)                  |
 | `client/`                     | Sample TS client and keeper CLI (`npm run keeper`). Encoders are pinned to Rust bytes. `fake-prover` is for local dry runs only. Tests run with `node --test` on the build, since the wasm hasher breaks jest                 |
+| `client/src/scenarios/`       | The campaign: `engine.ts` (tracks: act, wait for the read, check), `scenarios.ts` (S0–S6), `attacks.ts` (simulated attacks, program `status` vs TS), `chains.ts` (lockbox set, mint/burn, simulate, CU), `report.ts`          |
 | `test-harness/`               | Test context for the program tests (validator, client, payer, Anchor events) over the sdk's `test-utils` (deploy, plant accounts, time travel, send)                                                                          |
 | (no submodules)               | The Nori SDK is the npm packages `@nori-zk/nori-bridge-solana-sdk`, `@nori-zk/ethereum-solana-bridge`, `@nori-zk/ethereum-solana-proof-queue-utils-glam` and, for Rust, `token` and `test-utils` from the sdk repo by git rev |
 
@@ -47,6 +48,9 @@ cargo fmt --all --check
 - A Hardhat fork's clock lags real time. Align it (`evm_setNextBlockTimestamp`) before testing guards, or no supply checkpoint falls in the window.
 - Config: one root `.env` (`.env.example`) for Hardhat, the ethereum scripts and the keeper; deploy outputs land in `ethereum/.env.nori-eth-*` and `.env.nori-sol-demo` (`scripts/deploy-devnet.sh`). The shell environment wins over both; `dry-run.sh` blanks the queue settings so it never uses yours.
 - Dry run of the whole loop without a prover: `scripts/dry-run.sh [--eth-rpc URL] [--solana-rpc URL] [--yes]`. It uses ports 18545/18899 and a temp dir. Deploy outputs go to `NORI_ETH_ENV_DIR` when set.
+- `scripts/campaign.sh` and `soak.sh` must not run at the same time as each other or as a CLI `snapshot`: the keeper's snapshots and `DemoLockbox.set` sign with the same Ethereum key, and two processes race on the nonce. The campaign is one process for that reason (`bin/scenarios.ts` calls `Keeper.tick()`).
+- The payer must be the mint authority of the test mints and hold their supply in its associated token account (`deploy-devnet.sh` does both): the scenarios mint and burn through it.
+- `simulateTransaction` with `sigVerify: false` lets an attack pose as any signer (`attacks.ts`); the program's `status` return data is one Borsh byte, the `Status` variant index.
 
 ## Rules that bite
 

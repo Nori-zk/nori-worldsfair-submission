@@ -1,0 +1,80 @@
+{
+    "ethereum": {
+        "rpcUrl": "${ETH_RPC_URL}",
+        "noriSnapshot": "${NORI_ETH_SNAPSHOT_ADDRESS}",
+        "proofQueue": "${NORI_ETH_PROOF_QUEUE_ADDRESS}"
+    },
+    "solana": {
+        "rpcUrl": "${SOLANA_RPC_NETWORK_URL}",
+        "keypair": "${SOLANA_PAYER_KEYPAIR_PATH}",
+        "noriProgram": "${NORI_SOL_TOKEN_PROGRAM_ID}"
+    },
+    "intervals": {
+        "snapshotSecs": 900,
+        "checkpointSecs": 120,
+        "pollSecs": 30
+    },
+    "stateFile": "keeper-campaign-state.json",
+    "guards": [
+        {
+            "name": "shadow-lockbox",
+            "mint": "${BACKSTOP_SHADOW_MINT}",
+            "backing": {
+                "target": "${NORI_ETH_SHADOW_LOCKBOX_ADDRESS}",
+                "signature": "locked()",
+                "args": []
+            },
+            "pause": {
+                "target": "${NORI_ETH_SHADOW_LOCKBOX_ADDRESS}",
+                "signature": "paused()",
+                "args": []
+            },
+            "backingDecimals": 18,
+            "tolerance": "1000000000",
+            "windowSecs": 600,
+            "skewSecs": 60,
+            "checkpointIntervalSecs": 120,
+            "maxStalenessSecs": 7200
+        },
+        {
+            "name": "test-a",
+            "mint": "${BACKSTOP_TEST_A_MINT}",
+            "backing": {
+                "target": "${NORI_ETH_TEST_A_LOCKBOX_ADDRESS}",
+                "signature": "locked()",
+                "args": []
+            },
+            "pause": {
+                "target": "${NORI_ETH_TEST_A_LOCKBOX_ADDRESS}",
+                "signature": "paused()",
+                "args": []
+            },
+            "backingDecimals": 18,
+            "tolerance": "1000000000",
+            "windowSecs": 600,
+            "skewSecs": 60,
+            "checkpointIntervalSecs": 120,
+            "maxStalenessSecs": 7200
+        },
+        {
+            "name": "test-b",
+            "mint": "${BACKSTOP_TEST_B_MINT}",
+            "backing": {
+                "target": "${NORI_ETH_TEST_B_LOCKBOX_ADDRESS}",
+                "signature": "locked()",
+                "args": []
+            },
+            "pause": {
+                "target": "${NORI_ETH_TEST_B_LOCKBOX_ADDRESS}",
+                "signature": "paused()",
+                "args": []
+            },
+            "backingDecimals": 18,
+            "tolerance": "1000000000",
+            "windowSecs": 600,
+            "skewSecs": 60,
+            "checkpointIntervalSecs": 120,
+            "maxStalenessSecs": 7200
+        }
+    ]
+}
