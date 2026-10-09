@@ -1,0 +1,19 @@
+.anchor
+.DS_Store
+target
+node_modules
+dist
+build
+test-ledger
+coverage
+.husky
+.vscode
+LICENSE
+
+# Generated files and keypairs
+test-vectors
+ethereum/types
+ethereum/artifacts
+*-keypair.json
+*.sol
+ethereum/cache

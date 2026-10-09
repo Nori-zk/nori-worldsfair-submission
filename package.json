@@ -1,0 +1,36 @@
+{
+    "name": "@nori-zk/nori-worldsfair-submission",
+    "private": true,
+    "version": "0.0.1",
+    "type": "module",
+    "workspaces": [
+        "ethereum",
+        "client",
+        "web/libs/ui",
+        "web/apps/prove-balance",
+        "web/dashboards/bridge"
+    ],
+    "devDependencies": {
+        "@eslint/js": "^9.39.2",
+        "eslint": "^9.39.2",
+        "npm-workspaces-publish-tool": "0.0.18",
+        "prettier": "^3.8.1",
+        "rimraf": "^6.1.2",
+        "typescript": "^5.1.0",
+        "typescript-eslint": "^8.55.0",
+        "@yaw-rx/vscode": "^0.1.2"
+    },
+    "scripts": {
+        "build": "npm run build --workspaces --if-present",
+        "vscode:install": "ln -sfn \"$(pwd)/node_modules/@yaw-rx/vscode\" \"$HOME/.vscode/extensions/yaw-rx.yaw-vscode\"",
+        "typecheck": "npm run typecheck --workspaces --if-present",
+        "lint": "npm run lint --workspaces --if-present",
+        "format": "prettier --check .",
+        "format:fix": "prettier --write .",
+        "test": "npm run test -w ethereum && npm run test -w client",
+        "test-ci": "npm run test-ci -w ethereum && npm run test-ci -w client",
+        "clean:modules": "rm -rf node_modules */node_modules */*/node_modules */*/*/node_modules",
+        "reinstall": "npm run clean:modules && rm -f package-lock.json && npm install",
+        "reinstall:ci": "npm run clean:modules && npm ci"
+    }
+}

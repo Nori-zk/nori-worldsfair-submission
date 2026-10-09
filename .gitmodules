@@ -1,8 +1,0 @@
-[submodule "sdk"]
-	path = sdk
-	url = https://github.com/Nori-zk/nori-solana-sdk
-	branch = FEAT/ts-sdk-rust-codegen
-[submodule "bridge-head"]
-	path = bridge-head
-	url = https://github.com/Nori-zk/nori-bridge-head
-	branch = FEAT/solana-bridge

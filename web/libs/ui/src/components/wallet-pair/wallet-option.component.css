@@ -1,0 +1,19 @@
+button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 0.5rem;
+    background: #fff;
+    color: #000;
+    cursor: pointer;
+    font: inherit;
+}
+button:hover {
+    background: var(--nori-light-green);
+}
+img {
+    width: 20px;
+    height: 20px;
+}

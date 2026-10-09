@@ -1,0 +1,203 @@
+{
+    "description": "NoriSnapshot read vectors: batch [1, 5) on a local network with fixed block times",
+    "chainId": 31337,
+    "noriSnapshot": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+    "proofQueue": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    "batch": {
+        "root": "0x4462bb1b8f3462651f5ef4f689b35f60b07a9636b48a99c5bc44651c61932980",
+        "inputQueueCursor": 1,
+        "outputQueueCursor": 5,
+        "outputBlockNumber": 10
+    },
+    "requests": [
+        {
+            "requestId": 1,
+            "target": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+            "collectionKeysCount": 0,
+            "collectionKeys": [
+                "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "0x0000000000000000000000000000000000000000000000000000000000000000"
+            ],
+            "value": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "index": 0,
+            "leaf": "0x17c85ef5c4542d08da3720ddcb76b6b9b9fd7d8d539892ceba8ff3e3d623ec10",
+            "path": [
+                "0x26d8396867f13f196d9a80234c22ef2be6780bb48f247bcd65d2399fbeeb34ae",
+                "0x25b4225d9593e46512508b83d9d431d90e2e9e1a5266577bd16b6645a75db6ea"
+            ]
+        },
+        {
+            "requestId": 2,
+            "target": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+            "collectionKeysCount": 2,
+            "collectionKeys": [
+                "0x0000000000000000000000000000000000000000000000000000000000000002",
+                "0x000000000000000000000000000000000000000000000007000000006ac4e308"
+            ],
+            "value": "0x83f6b30adb355fdc982ed600d90ccd1e35455ca644baa4234460144a5883808e",
+            "index": 1,
+            "leaf": "0x26d8396867f13f196d9a80234c22ef2be6780bb48f247bcd65d2399fbeeb34ae",
+            "path": [
+                "0x17c85ef5c4542d08da3720ddcb76b6b9b9fd7d8d539892ceba8ff3e3d623ec10",
+                "0x25b4225d9593e46512508b83d9d431d90e2e9e1a5266577bd16b6645a75db6ea"
+            ]
+        },
+        {
+            "requestId": 3,
+            "target": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+            "collectionKeysCount": 2,
+            "collectionKeys": [
+                "0x0000000000000000000000000000000000000000000000000000000000000003",
+                "0x000000000000000000000000000000000000000000000009000000006ac4e320"
+            ],
+            "value": "0xf0e4493fd4b2aaf4606af8fd4c36c23bfc76af5ad6289092c8d57ec948a8be4b",
+            "index": 2,
+            "leaf": "0x7add5bf0afb617177b993184f0b7bf2bbf75260016784814785fadf1111ec6b1",
+            "path": [
+                "0x2714737e23819050b74192080512f58eabe7c0f8175e5b5d178ba8fbefc69059",
+                "0xa309bec89098b1daa2a635ba0d9d4cb4fdc6f23a3fb9e4fdbdd6f271820247a9"
+            ]
+        },
+        {
+            "requestId": 4,
+            "target": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+            "collectionKeysCount": 2,
+            "collectionKeys": [
+                "0x0000000000000000000000000000000000000000000000000000000000000004",
+                "0x00000000000000000000000000000000000000000000000a000000006ac4e32c"
+            ],
+            "value": "0x826298262f3bac89b4b053eb87ea21090115a9ca1be2da16266bd5d248b7af6f",
+            "index": 3,
+            "leaf": "0x2714737e23819050b74192080512f58eabe7c0f8175e5b5d178ba8fbefc69059",
+            "path": [
+                "0x7add5bf0afb617177b993184f0b7bf2bbf75260016784814785fadf1111ec6b1",
+                "0xa309bec89098b1daa2a635ba0d9d4cb4fdc6f23a3fb9e4fdbdd6f271820247a9"
+            ]
+        }
+    ],
+    "snapshots": [
+        {
+            "snapshotIndex": 2,
+            "requestId": 2,
+            "blockNumber": 7,
+            "timestamp": 1791288072,
+            "resultsRoot": "0x03f6b30adb355fdc982ed600d90ccd1e35455ca644baa4234460144a5883808e",
+            "results": [
+                {
+                    "name": "value",
+                    "target": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+                    "data": "0x3fa4f245",
+                    "queryId": "0x93dd510964b15f8695b1bb23d71ecbbe03a5dc4310cd06bd652c48e363c8ad08",
+                    "result": "0x000000000000000000000000000000000000000000000000000000000000002a",
+                    "index": 0,
+                    "path": [
+                        "0x20c68b92962ef1ac5d9a1e9c120499ee3f4790d6bffb495491b8bccc598d1e21"
+                    ]
+                },
+                {
+                    "name": "isPaused",
+                    "target": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+                    "data": "0xb187bd26",
+                    "queryId": "0x767b4800153d74d7ee8ebd6867e9fa013dc4108f56ac8165a0462b80be0d6a0d",
+                    "result": "0x0000000000000000000000000000000000000000000000000000000000000001",
+                    "index": 1,
+                    "path": [
+                        "0xc9cda243404f3b5e17472d3ec6e04cff18f3d27659370140e152c916cc4e88d2"
+                    ]
+                }
+            ]
+        },
+        {
+            "snapshotIndex": 3,
+            "requestId": 3,
+            "blockNumber": 9,
+            "timestamp": 1791288096,
+            "resultsRoot": "0x70e4493fd4b2aaf4606af8fd4c36c23bfc76af5ad6289092c8d57ec948a8be4b",
+            "results": [
+                {
+                    "name": "value",
+                    "target": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+                    "data": "0x3fa4f245",
+                    "queryId": "0x93dd510964b15f8695b1bb23d71ecbbe03a5dc4310cd06bd652c48e363c8ad08",
+                    "result": "0x0000000000000000000000000000000000000000000000000000000000000007",
+                    "index": 0,
+                    "path": [
+                        "0x20c68b92962ef1ac5d9a1e9c120499ee3f4790d6bffb495491b8bccc598d1e21",
+                        "0x02a50b88f03a3ac6cf522d16ec70ffa17532c765faf8f4bfbdf3cfe1d0ccf0bc",
+                        "0x611e9f4851e0848d8a12362e89795cbf2a00bf71282463e382ee6a21f1204fb3"
+                    ]
+                },
+                {
+                    "name": "isPaused",
+                    "target": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+                    "data": "0xb187bd26",
+                    "queryId": "0x767b4800153d74d7ee8ebd6867e9fa013dc4108f56ac8165a0462b80be0d6a0d",
+                    "result": "0x0000000000000000000000000000000000000000000000000000000000000001",
+                    "index": 1,
+                    "path": [
+                        "0x0205435f24f9a991dc901100142db762ee0711527520c34f1d24f1417c0c574f",
+                        "0x02a50b88f03a3ac6cf522d16ec70ffa17532c765faf8f4bfbdf3cfe1d0ccf0bc",
+                        "0x611e9f4851e0848d8a12362e89795cbf2a00bf71282463e382ee6a21f1204fb3"
+                    ]
+                },
+                {
+                    "name": "value-00",
+                    "target": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+                    "data": "0x3fa4f24500",
+                    "queryId": "0x3f89f818838194d80fb33377c2a4ec104d1eab0573e41ea20504246be3da5d7e",
+                    "result": "0x0000000000000000000000000000000000000000000000000000000000000007",
+                    "index": 2,
+                    "path": [
+                        "0xf3d769856a46d95160a50bd9320dff1749ec12acfd24e2dd02317a80353343a2",
+                        "0x6e34b04edbe2c9503ca3e0ef9b9625889a3bf19627790671b8be9433dec3d188",
+                        "0x611e9f4851e0848d8a12362e89795cbf2a00bf71282463e382ee6a21f1204fb3"
+                    ]
+                },
+                {
+                    "name": "value-01",
+                    "target": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+                    "data": "0x3fa4f24501",
+                    "queryId": "0xd990fe803cd3682e9cf9baf605aa03607aa589829e42b4351fc46e174328160a",
+                    "result": "0x0000000000000000000000000000000000000000000000000000000000000007",
+                    "index": 3,
+                    "path": [
+                        "0x3c55a570d49a6e8b84f80ecaa42fca411ae70f4809e644dea91b41c51874162e",
+                        "0x6e34b04edbe2c9503ca3e0ef9b9625889a3bf19627790671b8be9433dec3d188",
+                        "0x611e9f4851e0848d8a12362e89795cbf2a00bf71282463e382ee6a21f1204fb3"
+                    ]
+                },
+                {
+                    "name": "value-02",
+                    "target": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+                    "data": "0x3fa4f24502",
+                    "queryId": "0x1657e7c09b5b5879dcc13ff23508a911a7b75ae65abb373db7b2cb661dd04a5d",
+                    "result": "0x0000000000000000000000000000000000000000000000000000000000000007",
+                    "index": 4,
+                    "path": [
+                        "0x0000000000000000000000000000000000000000000000000000000000000000",
+                        "0xf5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b",
+                        "0xedb3dd43bb27dcc5d5a8c1dd65184a6341714a0c37de831cacd689336a31410a"
+                    ]
+                }
+            ]
+        },
+        {
+            "snapshotIndex": 4,
+            "requestId": 4,
+            "blockNumber": 10,
+            "timestamp": 1791288108,
+            "resultsRoot": "0x826298262f3bac89b4b053eb87ea21090115a9ca1be2da16266bd5d248b7af6f",
+            "results": [
+                {
+                    "name": "identity-forgery",
+                    "target": "0x0000000000000000000000000000000000000004",
+                    "data": "0x6f6e325e3d1ff49189e3be0da7282d6b7fb79a5f9a613aa290015bbd1343ecbf",
+                    "queryId": "0xa7fcd5d99da3c9ab6a1cb89714a8f5018b77fd5468bc9a58330e5bf9fbccbe22",
+                    "result": "0x6f6e325e3d1ff49189e3be0da7282d6b7fb79a5f9a613aa290015bbd1343ecbf",
+                    "index": 0,
+                    "path": []
+                }
+            ]
+        }
+    ]
+}

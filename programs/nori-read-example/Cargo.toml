@@ -1,0 +1,32 @@
+[package]
+name = "nori-read-example"
+version = "0.1.0"
+description = "Minimal Solana program that reads a NoriSnapshot result with nori-read"
+edition.workspace = true
+rust-version.workspace = true
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "nori_read_example"
+
+[features]
+default = []
+cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build", "nori-read/idl-build"]
+anchor-debug = []
+custom-heap = []
+custom-panic = []
+
+[dependencies]
+anchor-lang = "1.1.2"
+nori-read = { path = "../../nori-read" }
+
+[dev-dependencies]
+nori-read = { path = "../../nori-read", features = ["test-vectors"] }
+test-harness = { path = "../../test-harness" }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_os, values("solana"))'] }

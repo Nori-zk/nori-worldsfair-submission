@@ -1,0 +1,28 @@
+:host {
+    display: block;
+}
+button {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.6rem 1rem;
+    border: none;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+}
+button:hover {
+    background: var(--nori-connected-green);
+}
+img {
+    width: 1.4rem;
+    height: 1.4rem;
+    border-radius: 50%;
+}
+.name {
+    color: var(--nori-muted);
+    font-size: 0.85rem;
+}

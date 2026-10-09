@@ -1,0 +1,204 @@
+{
+    "description": "Kelp replay: lockbox 116,723.52 -> 223.52 -> 40,300 rsETH, then paused; times from 2030-01-01",
+    "chainId": 31337,
+    "noriSnapshot": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+    "proofQueue": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    "batch": {
+        "root": "0xb1e6cc0710fa00f3344a3329612ad7c6fb8b8c3ed055a7ffc2f89700ced4bc58",
+        "inputQueueCursor": 0,
+        "outputQueueCursor": 4,
+        "outputBlockNumber": 12
+    },
+    "requests": [
+        {
+            "requestId": 0,
+            "target": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+            "collectionKeysCount": 2,
+            "collectionKeys": [
+                "0x0000000000000000000000000000000000000000000000000000000000000001",
+                "0x0000000000000000000000000000000000000000000000060000000070dbd8bc"
+            ],
+            "value": "0xceb7d5bb3b2d0f23cea9444f94df0bb1f35655dba64e34ca71c32eaf6db965e5",
+            "index": 0,
+            "leaf": "0x2b416dddcdca983b295b1bdc6e7e7873f7ef979ff26b8ca7357ff0d6517e7ff4",
+            "path": [
+                "0xd03c6fd48dd715afd528a295c677661e457b4776d771b86340b755234a37378a",
+                "0x6427c00556633aaeaaeca9057a17c990aaa34637cfaa640256f44603199fbaf1"
+            ]
+        },
+        {
+            "requestId": 1,
+            "target": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+            "collectionKeysCount": 2,
+            "collectionKeys": [
+                "0x0000000000000000000000000000000000000000000000000000000000000002",
+                "0x0000000000000000000000000000000000000000000000080000000070dbdad8"
+            ],
+            "value": "0x8c63ecff1f02f107192cbd78563dc01afa0831254a26f597214f174cdb834cbf",
+            "index": 1,
+            "leaf": "0xd03c6fd48dd715afd528a295c677661e457b4776d771b86340b755234a37378a",
+            "path": [
+                "0x2b416dddcdca983b295b1bdc6e7e7873f7ef979ff26b8ca7357ff0d6517e7ff4",
+                "0x6427c00556633aaeaaeca9057a17c990aaa34637cfaa640256f44603199fbaf1"
+            ]
+        },
+        {
+            "requestId": 2,
+            "target": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+            "collectionKeysCount": 2,
+            "collectionKeys": [
+                "0x0000000000000000000000000000000000000000000000000000000000000003",
+                "0x00000000000000000000000000000000000000000000000a0000000070dbdf88"
+            ],
+            "value": "0xab8127500854a1ad7116b11fd580d245f17fca60b9798d6838e2e0f10354ce1a",
+            "index": 2,
+            "leaf": "0x60d9e9341ba80704eaa540f0aa4d246447aaec054f50d8e94cfbbdba61b23746",
+            "path": [
+                "0xb8d9c56efe815009761d3636d590139c5f28bf4aca0e24c884cfc5289cac1ecb",
+                "0xffee6a144bff6b32821b2a96e0298d52c1db7bef20171947d306badf3e62c088"
+            ]
+        },
+        {
+            "requestId": 3,
+            "target": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+            "collectionKeysCount": 2,
+            "collectionKeys": [
+                "0x0000000000000000000000000000000000000000000000000000000000000004",
+                "0x00000000000000000000000000000000000000000000000c0000000070dbe438"
+            ],
+            "value": "0xfd0c137ae01adb3ee77803e7364e91afc9fb40c0a201e4eca0c5c3c9af2131b9",
+            "index": 3,
+            "leaf": "0xb8d9c56efe815009761d3636d590139c5f28bf4aca0e24c884cfc5289cac1ecb",
+            "path": [
+                "0x60d9e9341ba80704eaa540f0aa4d246447aaec054f50d8e94cfbbdba61b23746",
+                "0xffee6a144bff6b32821b2a96e0298d52c1db7bef20171947d306badf3e62c088"
+            ]
+        }
+    ],
+    "snapshots": [
+        {
+            "snapshotIndex": 1,
+            "requestId": 0,
+            "blockNumber": 6,
+            "timestamp": 1893456060,
+            "resultsRoot": "0x4eb7d5bb3b2d0f23cea9444f94df0bb1f35655dba64e34ca71c32eaf6db965e5",
+            "results": [
+                {
+                    "name": "lockbox-balance",
+                    "target": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+                    "data": "0x70a08231000000000000000000000000cf7ed3acca5a467e9e704c703e8d87f634fb0fc9",
+                    "queryId": "0x2eec5a85cfd6c8b55872031a94c10a8dd83183b55be611ff92d8a0960dfb2785",
+                    "result": "0x0000000000000000000000000000000000000000000018b7983e244953200000",
+                    "index": 0,
+                    "path": [
+                        "0xe5a470f64f17ef8875faa83b8c22cda40250805afbdb689967b974859f39beff"
+                    ]
+                },
+                {
+                    "name": "lockbox-paused",
+                    "target": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+                    "data": "0xb187bd26",
+                    "queryId": "0x258569dbf8ed89dc257b07607fb9f72479e0250a28c9e0867f6014bc8065a07b",
+                    "result": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                    "index": 1,
+                    "path": [
+                        "0x0dae69e9a4d69ae55ee3119dc50dc115afb4e09b4cfece5a56d2e38f2fb4282a"
+                    ]
+                }
+            ]
+        },
+        {
+            "snapshotIndex": 2,
+            "requestId": 1,
+            "blockNumber": 8,
+            "timestamp": 1893456600,
+            "resultsRoot": "0x0c63ecff1f02f107192cbd78563dc01afa0831254a26f597214f174cdb834cbf",
+            "results": [
+                {
+                    "name": "lockbox-balance",
+                    "target": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+                    "data": "0x70a08231000000000000000000000000cf7ed3acca5a467e9e704c703e8d87f634fb0fc9",
+                    "queryId": "0x2eec5a85cfd6c8b55872031a94c10a8dd83183b55be611ff92d8a0960dfb2785",
+                    "result": "0x00000000000000000000000000000000000000000000000c1df68fbd83500000",
+                    "index": 0,
+                    "path": [
+                        "0xe5a470f64f17ef8875faa83b8c22cda40250805afbdb689967b974859f39beff"
+                    ]
+                },
+                {
+                    "name": "lockbox-paused",
+                    "target": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+                    "data": "0xb187bd26",
+                    "queryId": "0x258569dbf8ed89dc257b07607fb9f72479e0250a28c9e0867f6014bc8065a07b",
+                    "result": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                    "index": 1,
+                    "path": [
+                        "0x6f95b0c7d45e1d5798ed29461dae9cc14b43f4f170ef4f158dd057b84b7b9fe5"
+                    ]
+                }
+            ]
+        },
+        {
+            "snapshotIndex": 3,
+            "requestId": 2,
+            "blockNumber": 10,
+            "timestamp": 1893457800,
+            "resultsRoot": "0x2b8127500854a1ad7116b11fd580d245f17fca60b9798d6838e2e0f10354ce1a",
+            "results": [
+                {
+                    "name": "lockbox-balance",
+                    "target": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+                    "data": "0x70a08231000000000000000000000000cf7ed3acca5a467e9e704c703e8d87f634fb0fc9",
+                    "queryId": "0x2eec5a85cfd6c8b55872031a94c10a8dd83183b55be611ff92d8a0960dfb2785",
+                    "result": "0x000000000000000000000000000000000000000000000888aad94172f2300000",
+                    "index": 0,
+                    "path": [
+                        "0xe5a470f64f17ef8875faa83b8c22cda40250805afbdb689967b974859f39beff"
+                    ]
+                },
+                {
+                    "name": "lockbox-paused",
+                    "target": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+                    "data": "0xb187bd26",
+                    "queryId": "0x258569dbf8ed89dc257b07607fb9f72479e0250a28c9e0867f6014bc8065a07b",
+                    "result": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                    "index": 1,
+                    "path": [
+                        "0x3a8d718d821485ffe1ad3dcc6d00a1e73f982e3ceb1cb2ad92c77c24ecafc289"
+                    ]
+                }
+            ]
+        },
+        {
+            "snapshotIndex": 4,
+            "requestId": 3,
+            "blockNumber": 12,
+            "timestamp": 1893459000,
+            "resultsRoot": "0xfd0c137ae01adb3ee77803e7364e91afc9fb40c0a201e4eca0c5c3c9af2131b9",
+            "results": [
+                {
+                    "name": "lockbox-balance",
+                    "target": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+                    "data": "0x70a08231000000000000000000000000cf7ed3acca5a467e9e704c703e8d87f634fb0fc9",
+                    "queryId": "0x2eec5a85cfd6c8b55872031a94c10a8dd83183b55be611ff92d8a0960dfb2785",
+                    "result": "0x000000000000000000000000000000000000000000000888aad94172f2300000",
+                    "index": 0,
+                    "path": [
+                        "0xdffb4d6d97a5db1cdf6b2a9ed73e5d249f956156b30589f15bc9626ff6910994"
+                    ]
+                },
+                {
+                    "name": "lockbox-paused",
+                    "target": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+                    "data": "0xb187bd26",
+                    "queryId": "0x258569dbf8ed89dc257b07607fb9f72479e0250a28c9e0867f6014bc8065a07b",
+                    "result": "0x0000000000000000000000000000000000000000000000000000000000000001",
+                    "index": 1,
+                    "path": [
+                        "0x3a8d718d821485ffe1ad3dcc6d00a1e73f982e3ceb1cb2ad92c77c24ecafc289"
+                    ]
+                }
+            ]
+        }
+    ]
+}

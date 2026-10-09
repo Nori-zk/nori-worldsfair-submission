@@ -1,0 +1,49 @@
+:host {
+    display: block;
+    text-align: center;
+}
+.status {
+    margin: 0;
+    color: var(--nori-light-green);
+}
+.retry {
+    margin-top: 0.75rem;
+    padding: 0.5rem 1.25rem;
+    border: none;
+    border-radius: 0.5rem;
+    background: #fff;
+    color: #000;
+    cursor: pointer;
+    font: inherit;
+}
+.bar {
+    position: relative;
+    height: 0.75rem;
+    margin-top: 1.25rem;
+    overflow: hidden;
+    border: 1px solid rgb(255 255 255 / 20%);
+    border-radius: 0.5rem;
+}
+.fill {
+    height: 100%;
+    background: linear-gradient(to bottom, #55c374, #82fca5, #55c374);
+    transition: width 0.3s ease-out;
+}
+.stages {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin: 0.5rem 0 0;
+    padding: 0;
+    color: var(--nori-muted);
+    font-size: 0.85rem;
+    list-style: none;
+}
+.stages .current {
+    color: var(--nori-light-green);
+}
+.detail {
+    margin: 0.75rem 0 0;
+    color: var(--nori-muted);
+    font-size: 0.9rem;
+}

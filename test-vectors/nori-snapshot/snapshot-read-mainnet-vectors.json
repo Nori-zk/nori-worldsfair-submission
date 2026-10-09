@@ -1,0 +1,178 @@
+{
+    "description": "NoriSnapshot read vectors: every mainnet query, on a mainnet fork at block 26134859",
+    "chainId": 31337,
+    "noriSnapshot": "0x5C1e3B42d490c108cDca1c404a7A13F9879469a0",
+    "proofQueue": "0x17d9d652E2FD969cDfdb4eC7a71137BDd9aada95",
+    "batch": {
+        "root": "0x614848fb52922bb4558483772cceb583109d53cacca5afcd9fee49b0a59724a6",
+        "inputQueueCursor": 0,
+        "outputQueueCursor": 1,
+        "outputBlockNumber": 26134859
+    },
+    "requests": [
+        {
+            "requestId": 0,
+            "target": "0x5C1e3B42d490c108cDca1c404a7A13F9879469a0",
+            "collectionKeysCount": 2,
+            "collectionKeys": [
+                "0x0000000000000000000000000000000000000000000000000000000000000001",
+                "0x0000000000000000000000000000000000000000018ec94b000000006ac53123"
+            ],
+            "value": "0xb257ac8a2b0526077b304da7f7c00e653f67b73b37add885b422f1d927d88059",
+            "index": 0,
+            "leaf": "0x614848fb52922bb4558483772cceb583109d53cacca5afcd9fee49b0a59724a6",
+            "path": []
+        }
+    ],
+    "snapshots": [
+        {
+            "snapshotIndex": 1,
+            "requestId": 0,
+            "blockNumber": 26134859,
+            "timestamp": 1791308067,
+            "resultsRoot": "0xb257ac8a2b0526077b304da7f7c00e653f67b73b37add885b422f1d927d88059",
+            "results": [
+                {
+                    "name": "wormhole-weth-outstanding",
+                    "target": "0x3ee18B2214AFF97000D974cf647E7C347E8fa585",
+                    "data": "0xb96c7e4d000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+                    "queryId": "0x9ca65b1b07366ef0f37b30ffc6c9af1b282ce453420a66ae4dcf6bb71f91cf64",
+                    "result": "0x0000000000000000000000000000000000000000000000000000044629cba86d",
+                    "index": 0,
+                    "path": [
+                        "0x81b31b5eb10f595d35958317611556591c77971e4b284ce6306238bf0976b5b7",
+                        "0xbbce9b082c9fff41717f2107e52431837423f84f072f4e175372423b78200975",
+                        "0x3b6bd79e705d0aaba60bc9cc11fe4fcbb81ef390c69ce9262e8ea8bbc384d47a",
+                        "0x80b978c330624d43cd4d5e6480ee25e9282786a664d223a9ebb3067e8726f57d"
+                    ]
+                },
+                {
+                    "name": "wormhole-weth-custody",
+                    "target": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+                    "data": "0x70a082310000000000000000000000003ee18b2214aff97000d974cf647e7c347e8fa585",
+                    "queryId": "0x083db9187d17158ed7635698391f64784a9a50e97aed69717f520c930af2b0bf",
+                    "result": "0x0000000000000000000000000000000000000000000009f38c206d68e0504000",
+                    "index": 1,
+                    "path": [
+                        "0x58db21909a4c22fffdbc222ccf4fb82573780579fc642f716d43836d80072c66",
+                        "0xbbce9b082c9fff41717f2107e52431837423f84f072f4e175372423b78200975",
+                        "0x3b6bd79e705d0aaba60bc9cc11fe4fcbb81ef390c69ce9262e8ea8bbc384d47a",
+                        "0x80b978c330624d43cd4d5e6480ee25e9282786a664d223a9ebb3067e8726f57d"
+                    ]
+                },
+                {
+                    "name": "wormhole-wbtc-outstanding",
+                    "target": "0x3ee18B2214AFF97000D974cf647E7C347E8fa585",
+                    "data": "0xb96c7e4d0000000000000000000000002260fac5e5542a773aa44fbcfedf7c193bc2c599",
+                    "queryId": "0x260c566122e736649cb2dccbd63c4c572b0b281441ae86953f9c622027c5cbec",
+                    "result": "0x0000000000000000000000000000000000000000000000000000003af19c8e60",
+                    "index": 2,
+                    "path": [
+                        "0x3c318fe856fe667fa6e3a62e3052942dac369e90c7bc5609c88865f94bdd5b5b",
+                        "0xedefc95546e0058e71df457604ad2b45036125dfe3d5dac232a8f785775e8682",
+                        "0x3b6bd79e705d0aaba60bc9cc11fe4fcbb81ef390c69ce9262e8ea8bbc384d47a",
+                        "0x80b978c330624d43cd4d5e6480ee25e9282786a664d223a9ebb3067e8726f57d"
+                    ]
+                },
+                {
+                    "name": "wormhole-wbtc-custody",
+                    "target": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+                    "data": "0x70a082310000000000000000000000003ee18b2214aff97000d974cf647e7c347e8fa585",
+                    "queryId": "0xc4b7b770d38e839ae9538bc4e954803cdfe1e439f026e14e0e50382dbd275200",
+                    "result": "0x0000000000000000000000000000000000000000000000000000003af19c8e69",
+                    "index": 3,
+                    "path": [
+                        "0x523b84fdcb557ce8ef275644a7a942615ea514a402fd30c01b4e958cc3fec15a",
+                        "0xedefc95546e0058e71df457604ad2b45036125dfe3d5dac232a8f785775e8682",
+                        "0x3b6bd79e705d0aaba60bc9cc11fe4fcbb81ef390c69ce9262e8ea8bbc384d47a",
+                        "0x80b978c330624d43cd4d5e6480ee25e9282786a664d223a9ebb3067e8726f57d"
+                    ]
+                },
+                {
+                    "name": "usds-lockbox",
+                    "target": "0xdC035D45d973E3EC169d2276DDab16f1e407384F",
+                    "data": "0x70a082310000000000000000000000001e1d42781fc170ef9da004fb735f56f0276d01b8",
+                    "queryId": "0xf1a7b331454a3f5ac7695c6fae2e98c14a3cd993ee0dcd19e014fe5f1de73df1",
+                    "result": "0x000000000000000000000000000000000000000000049bd58360d288de6a2d9e",
+                    "index": 4,
+                    "path": [
+                        "0xa5412143b5f82140400b0b42c4f1e9862057a8c3fe526a24ba1c4c997ec80e57",
+                        "0x8622ad81f5cfad6e60540d78e96a81eb9b97f75849573d16eb0452acd89e1ef3",
+                        "0x6c45763b73b9ea79eacb05ea9be432e187ce256acf3b0ba9a6e99a5d1704f8c4",
+                        "0x80b978c330624d43cd4d5e6480ee25e9282786a664d223a9ebb3067e8726f57d"
+                    ]
+                },
+                {
+                    "name": "usds-lockbox-paused",
+                    "target": "0x1e1d42781fc170ef9da004fb735f56f0276d01b8",
+                    "data": "0x5c975abb",
+                    "queryId": "0x5838282d41bcf40af44bcc7efdafa7600bc8689f7d6e0df77133732fc97f923d",
+                    "result": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                    "index": 5,
+                    "path": [
+                        "0xe62995ef43d9136c37a3baad348821334c3c528ce2b51b56fae18bc0e78b6813",
+                        "0x8622ad81f5cfad6e60540d78e96a81eb9b97f75849573d16eb0452acd89e1ef3",
+                        "0x6c45763b73b9ea79eacb05ea9be432e187ce256acf3b0ba9a6e99a5d1704f8c4",
+                        "0x80b978c330624d43cd4d5e6480ee25e9282786a664d223a9ebb3067e8726f57d"
+                    ]
+                },
+                {
+                    "name": "aave-ntt-hub",
+                    "target": "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9",
+                    "data": "0x70a08231000000000000000000000000197a0364267e48b9d46c5ff0e14d0a89c2d9fc1b",
+                    "queryId": "0x75d33699aa0d1bc4327ca9ba0bc3e1628bfb3f49812728bec869e74691cdea41",
+                    "result": "0x0000000000000000000000000000000000000000000000b1abe0ed1cd81ac400",
+                    "index": 6,
+                    "path": [
+                        "0xa4045109ce97a305a75436877d9bdda44a186981a59251593646a2835f67b466",
+                        "0x41b82a684451cf0db0fa5923d8f185692c6fd5e34ae74e64cfc25d55ef3f3e94",
+                        "0x6c45763b73b9ea79eacb05ea9be432e187ce256acf3b0ba9a6e99a5d1704f8c4",
+                        "0x80b978c330624d43cd4d5e6480ee25e9282786a664d223a9ebb3067e8726f57d"
+                    ]
+                },
+                {
+                    "name": "aave-ntt-hub-paused",
+                    "target": "0x197a0364267e48b9d46c5ff0e14d0a89c2d9fc1b",
+                    "data": "0xb187bd26",
+                    "queryId": "0x2326d226518df26071e1e6cfff66b1c15d90e79150690017f298b6192b634a08",
+                    "result": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                    "index": 7,
+                    "path": [
+                        "0xb82acd02f78d81fde1c0f602d360d7e8f191b695009f9aaec678d5b1e5253a47",
+                        "0x41b82a684451cf0db0fa5923d8f185692c6fd5e34ae74e64cfc25d55ef3f3e94",
+                        "0x6c45763b73b9ea79eacb05ea9be432e187ce256acf3b0ba9a6e99a5d1704f8c4",
+                        "0x80b978c330624d43cd4d5e6480ee25e9282786a664d223a9ebb3067e8726f57d"
+                    ]
+                },
+                {
+                    "name": "uni-ntt-hub",
+                    "target": "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
+                    "data": "0x70a08231000000000000000000000000755d0e80b038d10a2e44f128276f3f0a8428c4ee",
+                    "queryId": "0x508b8cc8336cf9621470444b476517d63780e7a7d48e03db8767ac6ef3b61869",
+                    "result": "0x000000000000000000000000000000000000000000000dda3b4b73f49cbe2800",
+                    "index": 8,
+                    "path": [
+                        "0x73b5b6a47e4f2a9db1a241776956c45a3be8c2946dd0311db8461082d2ce996d",
+                        "0xf5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b",
+                        "0xdb56114e00fdd4c1f85c892bf35ac9a89289aaecb1ebd0a96cde606a748b5d71",
+                        "0x899a11c3a2c1470b0ba14229797c6ebd0588426bb66db8d11c5438033474c266"
+                    ]
+                },
+                {
+                    "name": "uni-ntt-hub-paused",
+                    "target": "0x755d0e80b038d10a2e44f128276f3f0a8428c4ee",
+                    "data": "0xb187bd26",
+                    "queryId": "0xeea24d3b5bd7a22c0d021fee8f4f4fa9ab528066da30fe311f474dd40ce4c97e",
+                    "result": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                    "index": 9,
+                    "path": [
+                        "0xb7edba21a6b005a522e64bd1699c8ca8ccda22229e51bc18d2647a63b09f35c1",
+                        "0xf5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b",
+                        "0xdb56114e00fdd4c1f85c892bf35ac9a89289aaecb1ebd0a96cde606a748b5d71",
+                        "0x899a11c3a2c1470b0ba14229797c6ebd0588426bb66db8d11c5438033474c266"
+                    ]
+                }
+            ]
+        }
+    ]
+}

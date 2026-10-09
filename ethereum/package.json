@@ -1,0 +1,59 @@
+{
+    "name": "@nori-zk/ethereum-snapshot",
+    "version": "0.0.1",
+    "description": "NoriSnapshot: make any Ethereum view call provable on Solana through the Nori proof request queue",
+    "main": "build/index.js",
+    "types": "build/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./build/index.js"
+        }
+    },
+    "publishConfig": {
+        "registry": "https://registry.npmjs.org/",
+        "access": "public"
+    },
+    "type": "module",
+    "scripts": {
+        "build": "ETH_NETWORK=hardhat npm run clean && ETH_NETWORK=hardhat hardhat compile && node stabilize-types.mjs . && tsc -p tsconfig.package.json",
+        "test": "ETH_NETWORK=hardhat NODE_OPTIONS=--experimental-wasm-modules hardhat test mocha test/NoriSnapshot.ts test/SnapshotReadVectors.ts test/DemoLockbox.ts; code=$?; node stabilize-types.mjs . && exit $code",
+        "test-ci": "ETH_NETWORK=hardhat NODE_OPTIONS=--experimental-wasm-modules hardhat test mocha test/NoriSnapshot.ts test/SnapshotReadVectors.ts test/DemoLockbox.ts; code=$?; node stabilize-types.mjs . && exit $code",
+        "test:fork": "ETH_NETWORK=hardhat NODE_OPTIONS=--experimental-wasm-modules hardhat test mocha test/fork/NoriSnapshot.mainnet.ts; code=$?; node stabilize-types.mjs . && exit $code",
+        "vectors": "ETH_NETWORK=hardhat NODE_OPTIONS=--experimental-wasm-modules hardhat run scripts/generateSnapshotReadVectors.ts; code=$?; node stabilize-types.mjs . && exit $code",
+        "vectors:mainnet": "VECTORS_NETWORK=mainnetFork ETH_NETWORK=hardhat NODE_OPTIONS=--experimental-wasm-modules hardhat run scripts/generateSnapshotReadVectors.ts; code=$?; node stabilize-types.mjs . && exit $code",
+        "typecheck": "tsc --noEmit",
+        "lint": "npx eslint *.ts tasks test vectors scripts",
+        "lint:fix": "npx eslint *.ts tasks test vectors scripts --fix",
+        "clean": "hardhat clean",
+        "deploy": "dotenv -e ../.env -- sh -c 'npx hardhat --network $ETH_NETWORK deploy'",
+        "snapshot": "dotenv -e ../.env -e .env.nori-eth-snapshot -- sh -c 'npx hardhat --network $ETH_NETWORK snapshot \"$@\"' --",
+        "preview-snapshot": "dotenv -e ../.env -e .env.nori-eth-snapshot -- sh -c 'npx hardhat --network $ETH_NETWORK previewSnapshot \"$@\"' --",
+        "deploy-demo": "dotenv -e ../.env -- sh -c 'npx hardhat --network $ETH_NETWORK deployDemo \"$@\"' --",
+        "demo-set": "dotenv -e ../.env -e .env.nori-eth-demo -- sh -c 'npx hardhat --network $ETH_NETWORK demoSet \"$@\"' --"
+    },
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+        "@nori-zk/ethereum-solana-bridge": "0.0.1",
+        "esm-iso-logger": "1.0.2",
+        "ethers": "^6.16.0"
+    },
+    "devDependencies": {
+        "@nomicfoundation/hardhat-ethers": "^4.0.1",
+        "@nomicfoundation/hardhat-ethers-chai-matchers": "^3.0.0",
+        "@nomicfoundation/hardhat-mocha": "^3.0.17",
+        "@nomicfoundation/hardhat-network-helpers": "^3.0.6",
+        "@nomicfoundation/hardhat-typechain": "^3.0.0",
+        "@nori-zk/ethereum-solana-proof-queue-utils-glam": "0.0.1",
+        "@types/mocha": "^10.0.0",
+        "@types/node": "^25.2.3",
+        "chai": "^5.1.2",
+        "dotenv": "^17.2.4",
+        "dotenv-cli": "^8.0.0",
+        "hardhat": "^3.1.11",
+        "typechain": "^8.3.2"
+    },
+    "files": [
+        "build/"
+    ]
+}
