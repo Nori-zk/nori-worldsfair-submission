@@ -18,7 +18,15 @@ import {
     timeout,
     timer,
 } from 'rxjs';
-import { Contract, dataLength, isAddress, isError, type TransactionReceipt } from 'ethers';
+import {
+    Contract,
+    dataLength,
+    dataSlice,
+    getAddress,
+    isAddress,
+    isError,
+    type TransactionReceipt,
+} from 'ethers';
 import type { Address } from '@solana/kit';
 import {
     bothReady$,
@@ -169,6 +177,48 @@ async function readPreview(
         token.getFunction('decimals')() as Promise<bigint>,
     ]);
     return { symbol, decimals: Number(decimals), balance: BigInt(word), fee };
+}
+
+/** The request as `proving` holds it: read, and sent as `txHash`. */
+export type ProvingRequest = Extract<ProveBalanceState, { node: 'proving' }>['data'];
+
+/**
+ * The request a snapshot transaction sent, read back from Ethereum, so a
+ * page opened at `?tx=` follows that proof again. Only a snapshot of one
+ * balance query, as this app sends, resumes; its symbol and decimals are
+ * read again, the balance at the latest block.
+ *
+ * @param ethereum The Ethereum chain.
+ * @param snapshotAddress The `NoriSnapshot` address.
+ * @param txHash The snapshot transaction.
+ * @returns The request with `txHash`, or `undefined` when the transaction is not one this app sends.
+ */
+export async function resumeRequest(
+    ethereum: Connections['ethereum'],
+    snapshotAddress: string,
+    txHash: string,
+): Promise<ProvingRequest | undefined> {
+    const tx = await forCalls(ethereum, async (provider) => provider.getTransaction(txHash));
+    if (tx?.to?.toLowerCase() !== snapshotAddress.toLowerCase()) return undefined;
+    const call = NoriSnapshot__factory.createInterface().parseTransaction(tx);
+    const queries = (call?.name === 'snapshot' ? call.args[0] : []) as {
+        target: string;
+        data: string;
+    }[];
+    const [query] = queries;
+    if (queries.length !== 1 || query === undefined || dataLength(query.data) !== 36)
+        return undefined;
+    const { target, data } = query;
+    // The call's one argument, an address: the last 20 bytes of its word
+    const holder = getAddress(dataSlice(data, 16));
+    const request = {
+        asset: getAddress(target) === MULTICALL3_ADDRESS ? 'eth' : getAddress(target),
+        holder,
+    };
+    // The selector too: only the exact query this app builds for the request
+    if (balanceQuery(request).data.toLowerCase() !== data.toLowerCase()) return undefined;
+    const preview = await forCalls(ethereum, readPreview, snapshotAddress, request);
+    return { ...request, ...preview, fee: tx.value, txHash };
 }
 
 /**
@@ -404,6 +454,7 @@ function sentWith<TOutcome extends SendOutcome['outcome']>(
  * @param addresses The snapshot, queue and programs, and the simulation's fee payer.
  * @param followProof The proof request a snapshot transaction enqueued, followed by the sdk.
  * @param initial The asset and holder the form starts with.
+ * @param resumed A sent request to follow instead, from `resumeRequest`: the machine starts at `proving`.
  * @returns
  *   - `proveBalance`: the running machine.
  *   - `edit(request)`: replaces the asset and holder; a complete request is read once edits settle.
@@ -416,6 +467,7 @@ export function createProveBalanceMachine(
     addresses: ProveBalanceAddresses,
     followProof: FollowProof,
     initial: BalanceRequest,
+    resumed?: ProvingRequest,
 ): {
     proveBalance: StartedMachine<ProveBalanceState> & { stop: () => void };
     edit: (request: BalanceRequest) => void;
@@ -602,7 +654,10 @@ export function createProveBalanceMachine(
         },
     });
 
-    const proveBalance = machine.close().start('editing', undefined, { editing: initial });
+    const proveBalance =
+        resumed === undefined
+            ? machine.close().start('editing', undefined, { editing: initial })
+            : machine.close().start('proving', undefined, { proving: resumed });
     started$.next(proveBalance);
 
     return {
