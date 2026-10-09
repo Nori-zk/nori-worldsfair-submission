@@ -9,16 +9,15 @@ drawn next to it (`ProveBalanceGraph.svg`, `BridgeBatchesGraph.svg`).
 | `apps/prove-balance`     | Prove on Solana what an Ethereum address holds: one `NoriSnapshot` transaction from your wallet, followed until a batch on Solana covers it      |
 | `dashboards/bridge`      | The whole proof queue: every batch Nori has settled on Solana, the requests still waiting, and the stage Nori's prover is in                     |
 | `libs/ui`                | Shared: wallet and connection buttons, the connection status bar, following a proof request, Nori's page layout and look                         |
-| `.env.example`, `env.ts` | Public build constants: chain id, Ethereum RPC, proof queue and its deploy block, `NoriSnapshot`, Solana cluster, Nori program, Nori's websocket |
+| `.env`, `env.ts`         | Public build constants: chain id, Ethereum RPC, proof queue and its deploy block, `NoriSnapshot`, Solana cluster, Nori program, Nori's websocket |
 
 ```sh
-cp web/.env.example web/.env            # once; gitignored
 npm run dev -w web/apps/prove-balance   # http://localhost:5180
 npm run dev -w web/dashboards/bridge    # http://localhost:7400
 ```
 
 `build`, `build:ssg` (static pages) and `preview` work the same way. After a redeploy, update
-the addresses in `.env.example` (and your `.env`); everything in them reaches the browser.
+the addresses in `web/.env` (committed: public values only; everything in it reaches the browser).
 
 ## Prove balance
 

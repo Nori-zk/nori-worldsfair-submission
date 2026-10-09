@@ -35,7 +35,6 @@ Addresses and numbers: [docs/README.md](docs/README.md).
 
 ```sh
 git clone https://github.com/Nori-zk/nori-worldsfair-submission
-cp web/.env.example web/.env   # public build settings for the browser apps
 npm install && npm run build
 npm test                 # ethereum contracts, then the client
 npm run lint             # every workspace

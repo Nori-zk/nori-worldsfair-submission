@@ -10,6 +10,7 @@ test-ledger
 .env.*
 !.env.example
 !.env.*.example
+!web/.env
 build
 dist
 web/*/*/public

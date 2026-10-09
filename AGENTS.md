@@ -59,7 +59,7 @@ cargo fmt --all --check
 - The keeper signs through its own Ethereum and Solana clients and reads proof requests and Nori's state through the sdk's `createConnections`. The sdk's requests have no timeout, so the keeper caps each read.
 - surfpool must be 1.5 or later (1.0 breaks `solana program deploy`).
 - A Hardhat fork's clock lags real time. Align it (`evm_setNextBlockTimestamp`) before testing guards, or no supply checkpoint falls in the window.
-- Config: one root `.env` (`.env.example`) for Hardhat, the ethereum scripts and the keeper; deploy outputs land in `ethereum/.env.nori-eth-*` and `.env.nori-sol-demo` (`scripts/deploy-devnet.sh`). The shell environment wins over both; `dry-run.sh` blanks the queue settings so it never uses yours.
+- Config: one root `.env` (`.env.example`) for Hardhat, the ethereum scripts and the keeper; deploy outputs land in `ethereum/.env.nori-eth-*` and `.env.nori-sol-demo` (`scripts/deploy-devnet.sh`). The shell environment wins over both; `dry-run.sh` blanks the queue settings so it never uses yours. `web/.env` is different: it holds public build constants only, is committed, and must never be gitignored, deleted or replaced with a `.env.example`.
 - Dry run of the whole loop without a prover: `scripts/dry-run.sh [--eth-rpc URL] [--solana-rpc URL] [--yes]`. It uses ports 18545/18899 and a temp dir. Deploy outputs go to `NORI_ETH_ENV_DIR` when set.
 
 ## Rules that bite
