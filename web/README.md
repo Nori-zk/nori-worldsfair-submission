@@ -43,15 +43,17 @@ transaction to link to: `npm run keeper -w client -- verify <snapshot tx>`.
 
 ## Bridge dashboard
 
-At the top, every Backstop guard on the cluster: its mint, the Ethereum backing Nori last
-proved, the mint's live supply, their ratio, the Ethereum block the backing was proven at
-and how long ago, and the status a lender's `assert_healthy` would get (HEALTHY, WARN,
-STALE, PAUSED, TRIPPED). Read from Solana every 30 seconds; no keeper running means STALE.
+Two tabs. **Proof queue**: batches Nori has settled on Solana, newest first. Above them, the
+requests no batch covers yet, in three rows: waiting for Ethereum finality, scheduled for
+processing, and processing in Nori's current job, each with a countdown. Open a batch or a row
+to see its requests, each with the submitting contract and the enqueuing transaction, linked
+to Etherscan.
 
-Below, batches Nori has settled on Solana, newest first. Above them, the requests no batch covers
-yet, in three rows: waiting for Ethereum finality, scheduled for processing, and processing
-in Nori's current job, each with a countdown. Open a batch or a row to see its requests,
-each with the submitting contract and the enqueuing transaction, linked to Etherscan.
+**Backstop guards** (`?view=guards`): every Backstop guard on the cluster: its mint, the
+Ethereum backing Nori last proved, the mint's live supply, their ratio, the Ethereum block the
+backing was proven at and how long ago, and the status a lender's `assert_healthy` would get
+(HEALTHY, WARN, STALE, PAUSED, TRIPPED). Read from Solana every 30 seconds while the tab is
+open; no keeper running means STALE.
 
 Filter by contract in the box, or share a filtered view as `?target=<address>`.
 `?synthetic` fills the waiting rows with made-up requests, to preview the layout.
