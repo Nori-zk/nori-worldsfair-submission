@@ -62,7 +62,7 @@ transaction to link to: `npm run keeper -w client -- verify <snapshot tx>`.
 
 ## Bridge dashboard
 
-Two tabs. **Proof queue**: batches Nori has settled on Solana, newest first. Above them, the
+Three tabs. **Proof queue**: batches Nori has settled on Solana, newest first. Above them, the
 requests no batch covers yet, in three rows: waiting for Ethereum finality, scheduled for
 processing, and processing in Nori's current job, each with a countdown. Open a batch or a row
 to see its requests, each with the submitting contract and the enqueuing transaction, linked
@@ -79,8 +79,14 @@ guard: one `assert_healthy` by CPI, built in the browser and sent to `simulateTr
 wallet, no fee, one request. The line reads `deposit allowed` or `deposit blocked: <error>`,
 with the compute units it took.
 
-Under both, Nori's loop: the stage it is in, over a bar that fills through each epoch until its
-next job.
+**Facts** (`?view=facts`): the 25 newest `NoriSnapshot` transactions, newest first, with their
+Ethereum block and time, and whether Nori has proven them. Open one to see what it recorded:
+each query and its result, named when it is a guard's backing or pause query. On a proven
+snapshot, `[ Verify ]` simulates `nori-read-example` against the proven batch (~2.5k CU), as
+Prove balance does: no wallet, no fee. Read when the tab opens and on `[ Read again ]`.
+
+Under every tab, Nori's loop: the stage it is in, over a bar that fills through each epoch
+until its next job.
 
 Filter by contract in the box, or share a filtered view as `?target=<address>`.
 `?synthetic` fills the waiting rows with made-up requests, to preview the layout.
