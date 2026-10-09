@@ -79,6 +79,12 @@ guard: one `assert_healthy` by CPI, built in the browser and sent to `simulateTr
 wallet, no fee, one request. The line reads `deposit allowed` or `deposit blocked: <error>`,
 with the compute units it took.
 
+The opened row also shows the guard itself: its settings, the backing with its Ethereum block
+and time, and the trip rule re-run on the supply checkpoints the guard keeps (the last 64,
+about 2 hours): the window around the backing's Ethereum time, the lowest supply in it against
+backing + tolerance, and those checkpoints. Nothing more is read for it. `?view=guards&guard=<address>`
+links to a guard with its row open.
+
 **Facts** (`?view=facts`): the 25 newest `NoriSnapshot` transactions, newest first, with their
 Ethereum block and time, and whether Nori has proven them. Open one to see what it recorded:
 each query and its result, named when it is a guard's backing or pause query. On a proven
