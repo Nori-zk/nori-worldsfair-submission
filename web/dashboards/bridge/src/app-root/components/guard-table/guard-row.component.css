@@ -5,7 +5,7 @@
 .row {
     display: grid;
     grid-template-columns: var(--guard-columns);
-    gap: 1rem;
+    gap: var(--guard-gap);
     align-items: baseline;
     padding: 0.45rem 0;
     color: var(--nori-text);
@@ -18,6 +18,18 @@
 .row a {
     color: var(--nori-light-green);
     text-decoration: none;
+}
+.marker {
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--nori-muted);
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+}
+.marker:hover {
+    color: var(--nori-light-green);
 }
 .status {
     letter-spacing: 0.05em;

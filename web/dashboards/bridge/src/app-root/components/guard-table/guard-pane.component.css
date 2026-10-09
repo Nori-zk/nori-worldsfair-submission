@@ -1,0 +1,8 @@
+:host {
+    /* Under the row, indented past the marker column; its lines wrap instead of scrolling. */
+    display: block;
+    padding: 0.25rem 0 0.6rem 2rem;
+    color: var(--nori-text);
+    font-size: 0.85rem;
+    white-space: normal;
+}

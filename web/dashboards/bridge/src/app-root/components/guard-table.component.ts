@@ -46,12 +46,31 @@ const ago = (secs: number): string =>
  * @param read The guard and its mint's supply.
  * @returns The row's text and links.
  */
-const rowOf = ({ address, guard, supply, decimals, status }: GuardRead): GuardRowView => ({
-    key: address,
-    mint: `${guard.mint.slice(0, 4)}…${guard.mint.slice(-4)}`,
-    mintUrl: solanaAccountUrl(guard.mint),
-    status: status === 'PAUSED_AT_SOURCE' ? 'PAUSED' : status,
-    statusStyle: `color: ${STATUS_COLOUR[status]}`,
+const rowOf = (read: GuardRead): GuardRowView => ({
+    key: read.address,
+    read,
+    mint: `${read.guard.mint.slice(0, 4)}…${read.guard.mint.slice(-4)}`,
+    mintUrl: solanaAccountUrl(read.guard.mint),
+    status: read.status === 'PAUSED_AT_SOURCE' ? 'PAUSED' : read.status,
+    statusStyle: `color: ${STATUS_COLOUR[read.status]}`,
+    statusColour: STATUS_COLOUR[read.status],
+    ...amountsOf(read),
+});
+
+/**
+ * A guard's amounts and proven block, as its row shows them.
+ *
+ * @param read The guard and its mint's supply.
+ * @returns The backing, supply, ratio, block and age.
+ */
+const amountsOf = ({
+    guard,
+    supply,
+    decimals,
+}: GuardRead): Pick<
+    GuardRowView,
+    'backing' | 'supply' | 'ratio' | 'block' | 'blockUrl' | 'age'
+> => ({
     backing: amount(guard.backing, decimals),
     supply: amount(supply, decimals),
     ratio: supply === 0n ? '—' : `${(Number(guard.backing) / Number(supply)).toFixed(4)}x`,
@@ -66,7 +85,7 @@ const rowOf = ({ address, guard, supply, decimals, status }: GuardRead): GuardRo
 /**
  * Backstop's guards: each bridged asset's proven Ethereum backing against
  * its live Solana supply, and the status the program would return to a
- * lender's `assert_healthy`.
+ * lender's `assert_healthy`. A row opens (▸) onto its pane.
  */
 @Component({
     selector: 'guard-table',
@@ -74,6 +93,7 @@ const rowOf = ({ address, guard, supply, decimals, status }: GuardRead): GuardRo
     template: `
         <p class="title">BACKSTOP GUARDS: proven Ethereum backing vs Solana supply</p>
         <div class="head">
+            <span></span>
             <span>MINT</span>
             <span>STATUS</span>
             <span>BACKING</span>

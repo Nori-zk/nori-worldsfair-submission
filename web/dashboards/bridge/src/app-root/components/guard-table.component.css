@@ -1,6 +1,7 @@
 :host {
-    /* In rem, not ch: the header's smaller font would otherwise narrow its columns. */
-    --guard-columns: 6.5rem 4.5rem 6.5rem 6.5rem 4rem 7.5rem 1fr;
+    /* In rem, not ch: the header's smaller font would otherwise narrow its columns. The first is the row's ▸. */
+    --guard-columns: 1.25rem 6.5rem 4.5rem 6.5rem 6.5rem 4rem 7.5rem 1fr;
+    --guard-gap: 0.75rem;
     display: block;
     margin-top: 2rem;
     overflow-x: auto;
@@ -14,7 +15,7 @@
 .head {
     display: grid;
     grid-template-columns: var(--guard-columns);
-    gap: 1rem;
+    gap: var(--guard-gap);
     padding-bottom: 0.5rem;
     color: var(--nori-muted);
     font-size: 0.75rem;
