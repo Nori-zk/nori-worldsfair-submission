@@ -24,3 +24,6 @@
     background: var(--nori-light-green);
     color: var(--nori-very-dark-green);
 }
+.hidden {
+    display: none;
+}

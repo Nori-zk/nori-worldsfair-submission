@@ -8,7 +8,12 @@ import styles from './dashboard-views.component.css';
 /** The dashboard's views: the proof queue, or Backstop's guards (`?view=guards`). */
 type View = 'queue' | 'guards';
 
-/** The proof queue or Backstop's guards, one at a time, picked with two tabs. */
+/**
+ * The proof queue or Backstop's guards, one at a time, picked with two tabs.
+ * The queue is hidden rather than removed: it keeps its filter and open
+ * batches, and a re-created batch table's rows no longer open. The guards
+ * are removed, so they are read only while shown.
+ */
 @Component({
     selector: 'dashboard-views',
     directives: [RxIf],
@@ -17,7 +22,7 @@ type View = 'queue' | 'guards';
             <button [class.current]="queueShown" onclick="showQueue">[ Proof queue ]</button>
             <button [class.current]="guardsShown" onclick="showGuards">[ Backstop guards ]</button>
         </nav>
-        <div rx-if="queueShown"><batch-table></batch-table></div>
+        <div [class.hidden]="guardsShown"><batch-table></batch-table></div>
         <div rx-if="guardsShown"><guard-table></guard-table></div>
     `,
     styles,
