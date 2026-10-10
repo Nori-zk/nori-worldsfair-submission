@@ -1,7 +1,9 @@
 /**
  * LaserFlow's shaders, from React Bits (reactbits.dev), as the bridge zkapp
  * uses them: a full-screen triangle, and a beam with flowing wisps and
- * volumetric fog.
+ * volumetric fog. `uFragScale` maps the canvas's fixed buffer onto the
+ * element's box (`iResolution`), so the beam keeps its shape as CSS stretches
+ * the canvas.
  */
 export const LASER_FLOW_VERTEX_SHADER = `
 precision highp float;
@@ -20,6 +22,7 @@ precision mediump int;
 
 uniform float iTime;
 uniform vec3 iResolution;
+uniform vec2 uFragScale;
 uniform vec4 iMouse;
 uniform float uWispDensity;
 uniform float uTiltScale;
@@ -234,7 +237,7 @@ void mainImage(out vec4 fc,in vec2 frag){
 
 void main(){
   vec4 fc;
-  mainImage(fc, gl_FragCoord.xy);
+  mainImage(fc, gl_FragCoord.xy * uFragScale);
   gl_FragColor = fc;
 }
 `;

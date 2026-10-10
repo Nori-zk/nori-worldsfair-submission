@@ -16,6 +16,7 @@ interface NumberUniform {
 interface LaserFlowUniforms {
     iTime: NumberUniform;
     iResolution: { value: THREE.Vector3 };
+    uFragScale: { value: THREE.Vector2 };
     iMouse: { value: THREE.Vector4 };
     uWispDensity: NumberUniform;
     uTiltScale: NumberUniform;
@@ -44,16 +45,13 @@ const DPR_FLOOR = 0.6;
 const FPS_LOWER = 50;
 /** Average frames per second over which the pixel ratio recovers. */
 const FPS_UPPER = 58;
-/** Milliseconds a resize waits for the next one, so a burst resizes the canvas once. */
-const RESIZE_DEBOUNCE_MS = 250;
 /**
- * A change up to this fraction of the drawn size only stretches the canvas
- * until the size has held for `RESIZE_SETTLE_MS`: a card whose height changes
- * every second (a countdown, a status line) never re-sizes the beam.
+ * How far the element may outgrow or shrink from the canvas's buffer, on
+ * either axis, before the buffer is re-sized: CSS stretches the buffer up to
+ * that. A card's height changing (a countdown, a status line) stays well
+ * inside it; a window resize or the beam first showing does not.
  */
-const RESIZE_SMALL = 0.1;
-/** Milliseconds a small change must hold before the canvas is re-sized. */
-const RESIZE_SETTLE_MS = 2000;
+const RESIZE_RATIO = 1.25;
 
 /**
  * A colour as red, green and blue in 0..1.
@@ -78,6 +76,11 @@ const hexToRgb = (hex: string): { r: number; g: number; b: number } => {
  * its card: a WebGL beam with flowing wisps and fog that tilts towards the
  * pointer. It pauses while hidden or off screen and lowers its pixel ratio
  * when the frame rate drops. Each `@state` field drives one shader uniform.
+ *
+ * The canvas's buffer keeps the size it got at mount and CSS stretches it
+ * over the element: re-sizing a WebGL buffer clears and redraws it, which
+ * stalls the beam, and the element follows its card's height. Only the
+ * shader's resolution follows the element, so the beam keeps its shape.
  */
 @Component({
     selector: 'laser-flow',
@@ -135,6 +138,7 @@ export class LaserFlow extends RxElement {
         const uniforms: LaserFlowUniforms = {
             iTime: { value: 0 },
             iResolution: { value: new THREE.Vector3(1, 1, 1) },
+            uFragScale: { value: new THREE.Vector2(1, 1) },
             iMouse: { value: new THREE.Vector4(0, 0, 0, 0) },
             uWispDensity: { value: this.wispDensity },
             uTiltScale: { value: this.mouseTiltStrength },
@@ -182,36 +186,42 @@ export class LaserFlow extends RxElement {
         let paused = false;
         let inView = true;
 
-        // The size and pixel ratio the canvas was last drawn at.
-        let sizedW = 0;
-        let sizedH = 0;
-        let sizedDpr = 0;
-        const setSizeNow = (): void => {
+        // The element's size the buffer was last sized to, in CSS pixels.
+        let bufferW = 0;
+        let bufferH = 0;
+        const outgrown = (size: number, buffer: number): boolean =>
+            size > buffer * RESIZE_RATIO || size * RESIZE_RATIO < buffer;
+        /**
+         * Points the shader at the element's box, and re-sizes the buffer only
+         * when the element has outgrown it or the pixel ratio changed.
+         *
+         * @param resizeBuffer Re-size the buffer to the element even if it still fits.
+         */
+        const fit = (resizeBuffer: boolean): void => {
             const w = this.clientWidth || 1;
             const h = this.clientHeight || 1;
             rect = canvas.getBoundingClientRect();
-            if (w === sizedW && h === sizedH && currentDpr === sizedDpr) return;
-            sizedW = w;
-            sizedH = h;
-            sizedDpr = currentDpr;
-            renderer.setPixelRatio(currentDpr);
-            renderer.setSize(w, h, false);
+            let resized = false;
+            if (resizeBuffer || outgrown(w, bufferW) || outgrown(h, bufferH)) {
+                bufferW = w;
+                bufferH = h;
+                renderer.setPixelRatio(currentDpr);
+                renderer.setSize(w, h, false);
+                resized = true;
+            }
             uniforms.iResolution.value.set(w * currentDpr, h * currentDpr, currentDpr);
-            // Resizing clears the canvas: draw again at once, or a blank frame shows.
-            renderer.render(scene, camera);
+            uniforms.uFragScale.value.set(
+                (w * currentDpr) / canvas.width,
+                (h * currentDpr) / canvas.height,
+            );
+            // Re-sizing the buffer clears it: draw again at once, not on the next frame.
+            if (resized) renderer.render(scene, camera);
         };
-        let resizeTimer: ReturnType<typeof setTimeout> | undefined;
-        const scheduleResize = (): void => {
-            clearTimeout(resizeTimer);
-            const w = this.clientWidth || 1;
-            const h = this.clientHeight || 1;
-            const small =
-                Math.abs(w - sizedW) <= sizedW * RESIZE_SMALL &&
-                Math.abs(h - sizedH) <= sizedH * RESIZE_SMALL;
-            resizeTimer = setTimeout(setSizeNow, small ? RESIZE_SETTLE_MS : RESIZE_DEBOUNCE_MS);
+        const onResize = (): void => {
+            fit(false);
         };
-        setSizeNow();
-        const resizeObserver = new ResizeObserver(scheduleResize);
+        fit(true);
+        const resizeObserver = new ResizeObserver(onResize);
         resizeObserver.observe(this);
         const intersectionObserver = new IntersectionObserver(
             (entries) => {
@@ -244,7 +254,7 @@ export class LaserFlow extends RxElement {
         };
         const onContextRestored = (): void => {
             paused = false;
-            scheduleResize();
+            fit(true);
         };
         canvas.addEventListener('webglcontextlost', onContextLost, false);
         canvas.addEventListener('webglcontextrestored', onContextRestored, false);
@@ -263,7 +273,7 @@ export class LaserFlow extends RxElement {
                 next = clamp(currentDpr * 1.05, DPR_FLOOR, baseDpr);
             if (Math.abs(next - currentDpr) > 0.01) {
                 currentDpr = next;
-                setSizeNow();
+                fit(true);
             }
             fpsSamples = [];
             lastFpsCheck = now;
@@ -294,7 +304,6 @@ export class LaserFlow extends RxElement {
 
         this.teardown = () => {
             cancelAnimationFrame(raf);
-            clearTimeout(resizeTimer);
             resizeObserver.disconnect();
             intersectionObserver.disconnect();
             document.removeEventListener('visibilitychange', onVisibility);
