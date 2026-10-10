@@ -44,6 +44,16 @@ const DPR_FLOOR = 0.6;
 const FPS_LOWER = 50;
 /** Average frames per second over which the pixel ratio recovers. */
 const FPS_UPPER = 58;
+/** Milliseconds a resize waits for the next one, so a burst resizes the canvas once. */
+const RESIZE_DEBOUNCE_MS = 250;
+/**
+ * A change up to this fraction of the drawn size only stretches the canvas
+ * until the size has held for `RESIZE_SETTLE_MS`: a card whose height changes
+ * every second (a countdown, a status line) never re-sizes the beam.
+ */
+const RESIZE_SMALL = 0.1;
+/** Milliseconds a small change must hold before the canvas is re-sized. */
+const RESIZE_SETTLE_MS = 2000;
 
 /**
  * A colour as red, green and blue in 0..1.
@@ -172,18 +182,33 @@ export class LaserFlow extends RxElement {
         let paused = false;
         let inView = true;
 
+        // The size and pixel ratio the canvas was last drawn at.
+        let sizedW = 0;
+        let sizedH = 0;
+        let sizedDpr = 0;
         const setSizeNow = (): void => {
             const w = this.clientWidth || 1;
             const h = this.clientHeight || 1;
+            rect = canvas.getBoundingClientRect();
+            if (w === sizedW && h === sizedH && currentDpr === sizedDpr) return;
+            sizedW = w;
+            sizedH = h;
+            sizedDpr = currentDpr;
             renderer.setPixelRatio(currentDpr);
             renderer.setSize(w, h, false);
             uniforms.iResolution.value.set(w * currentDpr, h * currentDpr, currentDpr);
-            rect = canvas.getBoundingClientRect();
+            // Resizing clears the canvas: draw again at once, or a blank frame shows.
+            renderer.render(scene, camera);
         };
-        let resizeRaf = 0;
+        let resizeTimer: ReturnType<typeof setTimeout> | undefined;
         const scheduleResize = (): void => {
-            if (resizeRaf) cancelAnimationFrame(resizeRaf);
-            resizeRaf = requestAnimationFrame(setSizeNow);
+            clearTimeout(resizeTimer);
+            const w = this.clientWidth || 1;
+            const h = this.clientHeight || 1;
+            const small =
+                Math.abs(w - sizedW) <= sizedW * RESIZE_SMALL &&
+                Math.abs(h - sizedH) <= sizedH * RESIZE_SMALL;
+            resizeTimer = setTimeout(setSizeNow, small ? RESIZE_SETTLE_MS : RESIZE_DEBOUNCE_MS);
         };
         setSizeNow();
         const resizeObserver = new ResizeObserver(scheduleResize);
@@ -269,7 +294,7 @@ export class LaserFlow extends RxElement {
 
         this.teardown = () => {
             cancelAnimationFrame(raf);
-            cancelAnimationFrame(resizeRaf);
+            clearTimeout(resizeTimer);
             resizeObserver.disconnect();
             intersectionObserver.disconnect();
             document.removeEventListener('visibilitychange', onVisibility);
