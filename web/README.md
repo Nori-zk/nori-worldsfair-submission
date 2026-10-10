@@ -54,7 +54,9 @@ reads the balance with the same view call the snapshot will make (ETH through Mu
 "Prove on Solana" sends one `NoriSnapshot` transaction, which enqueues a proof request. The
 app then follows it: found on Ethereum, waiting for finality, waiting for the batch ahead,
 being proven, and settled in a batch on Solana, on one bar for the whole wait with the time left
-until Solana. The bar measures from the block that enqueued the request, so a reload keeps it.
+until Solana. The bar measures from the block that enqueued the request against one total, the
+first estimate, extended only if the bridge's estimate later runs past it, so it fills steadily;
+the tab keeps the total (`sessionStorage`), so a reload keeps the bar.
 A declined signature, a failed read or a dropped connection is shown, and you carry on from there. The
 page's URL holds the snapshot transaction (`?tx=<hash>`) while it is proven, so a reload or the
 link picks the same proof up again once the wallet is connected.
