@@ -15,6 +15,9 @@ Read Ethereum state from any Solana program, proven instead of relayed.
   production needs a timelock or governance, on the roadmap).
 - **Apps:** a live bridge dashboard and a prove-balance app in the browser ([web/](web/README.md)).
 - **Next:** Ethereum + Solana mainnet, once Nori proves mainnet.
+- **Also on Tempo:** the same Backstop guard in Solidity, and ERC-20 → TIP-20 migration with
+  the token's pause carried by proof (Tempo's bridge adapter path), built and tested on local
+  chains in [nori-worldsfair-submission-tempo](https://github.com/Nori-zk/nori-worldsfair-submission-tempo).
 
 Addresses and numbers: [docs/README.md](docs/README.md).
 
