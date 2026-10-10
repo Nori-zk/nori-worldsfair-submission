@@ -22,7 +22,6 @@ import {
 import { type BatchesView } from '../ystate/bridge-batches.js';
 import {
     blockAgeSec,
-    commitText,
     finalityEstimate,
     processingEstimate,
     scheduledEstimate,
@@ -151,15 +150,7 @@ export function waitingRows({
             status:
                 finalityLeft === undefined
                     ? 'Waiting for Ethereum finality'
-                    : [
-                          'Waiting for Ethereum finality',
-                          leftText(finalityLeft),
-                          finalityRow?.commit === undefined
-                              ? ''
-                              : `then ${commitText(finalityRow.commit)}`,
-                      ]
-                          .filter((part) => part !== '')
-                          .join(' · '),
+                    : `Waiting for Ethereum finality · ${leftText(finalityLeft)}`,
             lines: sorted.waitingForFinality.map(lineOf),
         },
     ];
@@ -171,7 +162,7 @@ export function waitingRows({
         block: '',
         bar: scheduledRow ? asciiBar(scheduledRow.fill) : UNKNOWN_BAR,
         status: scheduledRow
-            ? `Scheduled for ${commitText(1)} · ${leftText(scheduledRow.remainingSec)}`
+            ? `Scheduled for processing · ${leftText(scheduledRow.remainingSec)}`
             : `Scheduled for processing · within ~${Math.round((ETHEREUM_EPOCH_SEC + jobSec) / 60).toString()}m`,
         lines: sorted.scheduled.map(lineOf),
     });

@@ -123,9 +123,8 @@ no fee, one simulation per click. `[ Read again ]` reads the line and the snapsh
 
 Two tabs. **Proof queue**: batches Nori has settled on Solana, newest first. Above them, the
 requests no batch covers yet, in three rows: waiting for Ethereum finality, scheduled for
-processing, and processing in Nori's current job, each with a countdown and the commit it
-lands in. The waiting rows share one scale, from the request's Ethereum block to its commit on
-Solana. Open a batch or a row to see its requests, each with the submitting contract and the
+processing, and processing in Nori's current job, each with a countdown. The waiting rows'
+bars share one scale, from the request's Ethereum block to its commit on Solana. Open a batch or a row to see its requests, each with the submitting contract and the
 enqueuing transaction, linked to Etherscan.
 
 **Latency** (`?view=latency`): every `NoriSnapshot` read in the 30 newest batches, newest
