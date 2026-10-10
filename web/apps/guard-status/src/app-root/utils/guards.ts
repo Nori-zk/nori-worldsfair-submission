@@ -86,3 +86,53 @@ export const ordered = <T extends { address: string; status: GuardRead['status']
             statusRank(a.status) - statusRank(b.status) ||
             (a.address < b.address ? -1 : a.address > b.address ? 1 : 0),
     );
+
+/**
+ * The line the stale guards fold into.
+ *
+ * @param count How many guards are stale.
+ * @param expanded Whether their cards are shown.
+ * @returns `▸ 3 guards with no recent backing` (`▾` when shown), or empty when none are stale.
+ */
+export const staleLineOf = (count: number, expanded: boolean): string =>
+    count === 0
+        ? ''
+        : `${expanded ? '▾' : '▸'} ${count.toString()} ${count === 1 ? 'guard' : 'guards'} with no recent backing`;
+
+/** The cards split around the stale guards' line. */
+export interface CardSplit<T> {
+    /** Every card but the stale ones, in order. */
+    live: T[];
+    /** The stale cards while they are shown, else none. */
+    stale: T[];
+    /** The stale guards' line, or empty when none are stale. */
+    line: string;
+    /** Whether the stale cards are shown. */
+    expanded: boolean;
+}
+
+/**
+ * The cards with the stale ones folded under one line. Folded unless the
+ * reader chose otherwise, the page's link names a stale guard, or every
+ * guard is stale.
+ *
+ * @param cards The cards, in order.
+ * @param choice The reader's last click: shown, folded, or not yet clicked.
+ * @param linked The guard the page's link names (`?guard=`), or null.
+ * @returns The live cards, the stale cards shown, the line and whether it is open.
+ */
+export function splitCards<T extends { key: string; status: GuardRead['status'] }>(
+    cards: readonly T[],
+    choice: boolean | undefined,
+    linked: string | null,
+): CardSplit<T> {
+    const live = cards.filter((card) => card.status !== 'STALE');
+    const stale = cards.filter((card) => card.status === 'STALE');
+    const expanded = choice ?? (live.length === 0 || stale.some((card) => card.key === linked));
+    return {
+        live,
+        stale: expanded ? stale : [],
+        line: staleLineOf(stale.length, expanded),
+        expanded,
+    };
+}

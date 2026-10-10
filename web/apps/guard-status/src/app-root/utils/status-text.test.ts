@@ -11,7 +11,7 @@ import {
     statusWord,
     type StatusFacts,
 } from './status-text.js';
-import { mintName, ordered, shortAddress } from './guards.js';
+import { mintName, ordered, shortAddress, splitCards, staleLineOf } from './guards.js';
 
 const facts = (status: StatusFacts['status'], more: Partial<StatusFacts> = {}): StatusFacts => ({
     status,
@@ -102,6 +102,40 @@ void test('guards sort HEALTHY and WARN, then TRIPPED and PAUSED, then STALE, th
         ordered(guards).map((g) => g.address),
         ['a', 'b', 'c', 'e', 'd'],
     );
+});
+
+void test('stale guards fold into one line, singular for one', () => {
+    assert.equal(staleLineOf(3, false), '▸ 3 guards with no recent backing');
+    assert.equal(staleLineOf(1, false), '▸ 1 guard with no recent backing');
+    assert.equal(staleLineOf(3, true), '▾ 3 guards with no recent backing');
+    assert.equal(staleLineOf(0, false), '');
+});
+
+void test('stale cards are folded unless clicked open, linked, or all there is', () => {
+    const cards = [
+        { key: 'a', status: 'HEALTHY' },
+        { key: 'b', status: 'TRIPPED' },
+        { key: 'c', status: 'STALE' },
+        { key: 'd', status: 'STALE' },
+    ] as const;
+    const keys = (list: readonly { key: string }[]): string[] => list.map((card) => card.key);
+    const folded = splitCards(cards, undefined, null);
+    assert.deepEqual(keys(folded.live), ['a', 'b']);
+    assert.deepEqual(keys(folded.stale), []);
+    assert.equal(folded.line, '▸ 2 guards with no recent backing');
+    assert.equal(folded.expanded, false);
+    const open = splitCards(cards, true, null);
+    assert.deepEqual(keys(open.stale), ['c', 'd']);
+    assert.equal(open.line, '▾ 2 guards with no recent backing');
+    assert.equal(splitCards(cards, undefined, 'd').expanded, true);
+    assert.equal(splitCards(cards, undefined, 'a').expanded, false);
+    assert.equal(splitCards(cards, false, 'd').expanded, false);
+    const allStale = splitCards(cards.slice(2), undefined, null);
+    assert.deepEqual(keys(allStale.stale), ['c', 'd']);
+    assert.equal(allStale.line, '▾ 2 guards with no recent backing');
+    const none = splitCards(cards.slice(0, 2), undefined, null);
+    assert.equal(none.line, '');
+    assert.deepEqual(keys(none.live), ['a', 'b']);
 });
 
 /** @solana/kit types the numbers in `err` as numbers but returns bigints. */

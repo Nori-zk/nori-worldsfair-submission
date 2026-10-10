@@ -74,7 +74,9 @@ asset is safe to accept right now. Each card says the guard's status (HEALTHY, W
 PAUSED, TRIPPED) and what it means in one sentence, the backing Nori last proved on Ethereum
 (with its block and age) against the mint's live supply on Solana, and whether a lender's
 deposit would go through. The guards a lender can use come first, then tripped and paused ones,
-then stale ones. Read from Solana every 30 seconds; no keeper running means STALE.
+then stale ones. Read from Solana every 30 seconds; no keeper running means STALE. The stale
+guards fold into one line under the others, `▸ 3 guards with no recent backing`, which shows
+their cards on a click (shown from the start when `?guard=` names one, or every guard is stale).
 
 `[ Check my deposit ]` simulates a lender's deposit against that guard: one `assert_healthy` by
 CPI, no wallet, no fee, one request. It reads `Your deposit would be allowed (N CU).` or
