@@ -7,10 +7,10 @@ import styles from './latency-headline.component.css';
 /**
  * The bridge dashboard's latency tab, where every read is listed with its
  * batch and landing transaction. In dev the dashboard runs on :7400
- * (`web/README.md`); there is no build constant for it, so a hosted build
- * points at the same local URL until one is added.
+ * (`web/README.md`). The dashboard is served from the same host as this app,
+ * so the link follows the page's own hostname; there is no build constant for it.
  */
-const DASHBOARD_LATENCY_URL = 'http://localhost:7400/?view=latency';
+const DASHBOARD_LATENCY_URL = `${window.location.protocol}//${window.location.hostname}:7400/?view=latency`;
 
 /** One read of the latency headline: what it says while it reads, has read, or failed. */
 interface HeadlineView {
