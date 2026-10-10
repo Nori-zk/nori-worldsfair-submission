@@ -13,7 +13,7 @@ Read Ethereum state from any Solana program, proven instead of relayed.
 - **Drain demo:** draining the lockbox trips the guard; a refill doesn't reset it; the
   admin's `unlatch` does, once the backing is back (a testing and demo shortcut: one key;
   production needs a timelock or governance, on the roadmap).
-- **Apps:** a live bridge dashboard and a prove-balance app in the browser ([web/](web/README.md)).
+- **Apps:** in the browser ([web/](web/README.md)): guard status for lenders, proven facts for anyone, a prove-balance app, and the bridge dashboard for operators.
 - **Next:** Ethereum + Solana mainnet, once Nori proves mainnet.
 
 Addresses and numbers: [docs/README.md](docs/README.md).
@@ -26,7 +26,7 @@ Addresses and numbers: [docs/README.md](docs/README.md).
 | `nori-read/`    | Rust crate: verify a snapshot result on Solana in one call ([README](nori-read/README.md))                                                                                |
 | `programs/`     | Solana programs: `nori-read-example`, [`backstop`](programs/backstop) (circuit breaker)                                                                                   |
 | `client/`       | Sample TS client and keeper CLI: create-guards, snapshot, checkpoint, submit, status, assert, unlatch, run                                                                |
-| `web/`          | Browser apps: prove an Ethereum balance on Solana, and a live dashboard of the proof queue and read latency ([README](web/README.md))                                     |
+| `web/`          | Browser apps: guard status, proven facts, prove a balance, and the bridge dashboard (proof queue and read latency) ([README](web/README.md))                              |
 | `test-vectors/` | Test data shared by the TS and Rust tests                                                                                                                                 |
 | `test-harness/` | Surfpool helpers for the program tests                                                                                                                                    |
 | `scripts/`      | `dry-run.sh` (the whole loop locally), `deploy-devnet.sh` (programs + demo mint), `soak.sh` (keeper for hours, then a report), `replay-wormhole.sh` (Wormhole 2022, live) |
