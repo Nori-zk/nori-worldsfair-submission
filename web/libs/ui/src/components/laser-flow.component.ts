@@ -39,12 +39,20 @@ interface LaserFlowUniforms {
     uFade: NumberUniform;
 }
 
-/** The lowest pixel ratio the frame rate may push the canvas down to. */
-const DPR_FLOOR = 0.6;
-/** Average frames per second under which the pixel ratio drops. */
-const FPS_LOWER = 50;
-/** Average frames per second over which the pixel ratio recovers. */
-const FPS_UPPER = 58;
+/**
+ * The canvas's buffer, per CSS pixel of the element: the beam is a soft glow,
+ * so half resolution, stretched by CSS, looks the same at a quarter of the
+ * fragments. The pixel ratio stays 1 whatever the screen's.
+ */
+const BUFFER_SCALE = 0.5;
+/**
+ * The least time between two drawn frames: about 30 a second, on a 60 Hz or
+ * a 120 Hz screen alike. The time uniforms follow real time, so the beam
+ * flows at the same speed.
+ */
+const FRAME_INTERVAL_MS = 30;
+/** The longest step the time uniforms take, after a pause or a stall. */
+const MAX_STEP_S = 0.1;
 /**
  * How far the element may outgrow or shrink from the canvas's buffer, on
  * either axis, before the buffer is re-sized: CSS stretches the buffer up to
@@ -74,13 +82,14 @@ const hexToRgb = (hex: string): { r: number; g: number; b: number } => {
 /**
  * React Bits' LaserFlow (reactbits.dev), as the bridge zkapp shows it beside
  * its card: a WebGL beam with flowing wisps and fog that tilts towards the
- * pointer. It pauses while hidden or off screen and lowers its pixel ratio
- * when the frame rate drops. Each `@state` field drives one shader uniform.
+ * pointer. It draws about 30 frames a second and pauses while hidden or off
+ * screen. Each `@state` field drives one shader uniform.
  *
- * The canvas's buffer keeps the size it got at mount and CSS stretches it
- * over the element: re-sizing a WebGL buffer clears and redraws it, which
- * stalls the beam, and the element follows its card's height. Only the
- * shader's resolution follows the element, so the beam keeps its shape.
+ * The canvas's buffer is half the element's size, at a pixel ratio of 1,
+ * sized once the element has a size, and CSS stretches it over the element:
+ * re-sizing a WebGL buffer clears and redraws it, which stalls the beam, and
+ * the element follows its card's height. Only the shader's resolution follows
+ * the element, so the beam keeps its shape.
  */
 @Component({
     selector: 'laser-flow',
@@ -119,9 +128,7 @@ export class LaserFlow extends RxElement {
             preserveDrawingBuffer: false,
             failIfMajorPerformanceCaveat: false,
         });
-        const baseDpr = Math.min(window.devicePixelRatio || 1, 2);
-        let currentDpr = baseDpr;
-        renderer.setPixelRatio(currentDpr);
+        renderer.setPixelRatio(1);
         renderer.outputColorSpace = THREE.SRGBColorSpace;
         renderer.setClearColor(0x000000, 1);
         const canvas = renderer.domElement;
@@ -180,42 +187,44 @@ export class LaserFlow extends RxElement {
         const mouseSmooth = new THREE.Vector2(0, 0);
         let rect: DOMRect | undefined;
         let prevTime = 0;
-        let emaDt = 16.7;
-        let fpsSamples: number[] = [];
-        let lastFpsCheck = performance.now();
+        let lastFrame = -Infinity;
         let paused = false;
+        let contextLost = false;
         let inView = true;
 
-        // The element's size the buffer was last sized to, in CSS pixels.
+        // The element's size the buffer was last sized to, in CSS pixels; 0
+        // until the element has a size.
         let bufferW = 0;
         let bufferH = 0;
         const outgrown = (size: number, buffer: number): boolean =>
             size > buffer * RESIZE_RATIO || size * RESIZE_RATIO < buffer;
         /**
          * Points the shader at the element's box, and re-sizes the buffer only
-         * when the element has outgrown it or the pixel ratio changed.
+         * when the element has outgrown it. An element without a size yet (one
+         * growing in) leaves the buffer unsized until it has one.
          *
          * @param resizeBuffer Re-size the buffer to the element even if it still fits.
          */
         const fit = (resizeBuffer: boolean): void => {
-            const w = this.clientWidth || 1;
-            const h = this.clientHeight || 1;
+            const w = this.clientWidth;
+            const h = this.clientHeight;
             rect = canvas.getBoundingClientRect();
+            if (w === 0 || h === 0) return;
             let resized = false;
             if (resizeBuffer || outgrown(w, bufferW) || outgrown(h, bufferH)) {
                 bufferW = w;
                 bufferH = h;
-                renderer.setPixelRatio(currentDpr);
-                renderer.setSize(w, h, false);
+                renderer.setSize(
+                    Math.max(1, Math.round(w * BUFFER_SCALE)),
+                    Math.max(1, Math.round(h * BUFFER_SCALE)),
+                    false,
+                );
                 resized = true;
             }
-            uniforms.iResolution.value.set(w * currentDpr, h * currentDpr, currentDpr);
-            uniforms.uFragScale.value.set(
-                (w * currentDpr) / canvas.width,
-                (h * currentDpr) / canvas.height,
-            );
+            uniforms.iResolution.value.set(w, h, 1);
+            uniforms.uFragScale.value.set(w / canvas.width, h / canvas.height);
             // Re-sizing the buffer clears it: draw again at once, not on the next frame.
-            if (resized) renderer.render(scene, camera);
+            if (resized && !contextLost) renderer.render(scene, camera);
         };
         const onResize = (): void => {
             fit(false);
@@ -239,7 +248,7 @@ export class LaserFlow extends RxElement {
             if (rect === undefined) return;
             const x = event.clientX - rect.left;
             const y = event.clientY - rect.top;
-            mouseTarget.set(x * currentDpr, rect.height * currentDpr - y * currentDpr);
+            mouseTarget.set(x, rect.height - y);
         };
         const onLeave = (): void => {
             mouseTarget.set(0, 0);
@@ -250,47 +259,27 @@ export class LaserFlow extends RxElement {
         canvas.addEventListener('pointerleave', onLeave, { passive: true });
         const onContextLost = (event: Event): void => {
             event.preventDefault();
-            paused = true;
+            contextLost = true;
         };
         const onContextRestored = (): void => {
-            paused = false;
+            contextLost = false;
             fit(true);
         };
         canvas.addEventListener('webglcontextlost', onContextLost, false);
         canvas.addEventListener('webglcontextrestored', onContextRestored, false);
 
-        const clamp = (v: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, v));
-        const adjustDprIfNeeded = (now: number): void => {
-            if (now - lastFpsCheck < 750) return;
-            if (fpsSamples.length === 0) {
-                lastFpsCheck = now;
-                return;
-            }
-            const avgFps = fpsSamples.reduce((a, b) => a + b, 0) / fpsSamples.length;
-            let next = currentDpr;
-            if (avgFps < FPS_LOWER) next = clamp(currentDpr * 0.9, DPR_FLOOR, baseDpr);
-            else if (avgFps > FPS_UPPER && currentDpr < baseDpr)
-                next = clamp(currentDpr * 1.05, DPR_FLOOR, baseDpr);
-            if (Math.abs(next - currentDpr) > 0.01) {
-                currentDpr = next;
-                fit(true);
-            }
-            fpsSamples = [];
-            lastFpsCheck = now;
-        };
-
         let raf = 0;
-        const animate = (): void => {
+        const animate = (now: number): void => {
             raf = requestAnimationFrame(animate);
-            if (paused || !inView) return;
+            if (paused || contextLost || !inView || bufferW === 0) return;
+            if (now - lastFrame < FRAME_INTERVAL_MS) return;
+            lastFrame = now;
             timer.update();
             const t = timer.getElapsed();
             const dt = Math.max(0, t - prevTime);
             prevTime = t;
-            emaDt = emaDt * 0.9 + dt * 1000 * 0.1;
-            fpsSamples.push(1000 / Math.max(1, emaDt));
             uniforms.iTime.value = t;
-            const cdt = Math.min(0.033, Math.max(0.001, dt));
+            const cdt = Math.min(MAX_STEP_S, Math.max(0.001, dt));
             uniforms.uFlowTime.value += cdt;
             uniforms.uFogTime.value += cdt;
             uniforms.uFade.value = 1;
@@ -298,9 +287,8 @@ export class LaserFlow extends RxElement {
             mouseSmooth.lerp(mouseTarget, alpha);
             uniforms.iMouse.value.set(mouseSmooth.x, mouseSmooth.y, 0, 0);
             renderer.render(scene, camera);
-            adjustDprIfNeeded(performance.now());
         };
-        animate();
+        raf = requestAnimationFrame(animate);
 
         this.teardown = () => {
             cancelAnimationFrame(raf);
