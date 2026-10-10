@@ -1,11 +1,21 @@
 import { Component, Inject, RxElement, state } from '@yaw-rx/core';
 import { RxIf } from '@yaw-rx/core/directives/rx-if';
-import { distinctUntilChanged, filter, map, type Observable, switchMap, take } from 'rxjs';
+import {
+    combineLatest,
+    distinctUntilChanged,
+    filter,
+    map,
+    type Observable,
+    switchMap,
+    take,
+    timer,
+} from 'rxjs';
 import type {
     ProofRequestStateNodeUnion,
     UnprocessedProofRequestStateNodeUnion,
 } from '@nori-zk/nori-bridge-solana-sdk';
 import { type FollowedProof, ProofProgressService } from '../services/proof-progress.service.js';
+import { fillOf, waitedSec } from '../utils/proof-progress.js';
 import styles from './proof-progress.component.css';
 
 /**
@@ -45,18 +55,26 @@ const about = (seconds: number): string =>
         : `about ${Math.max(0, Math.round(seconds)).toString()}s`;
 
 /**
- * The fill of the progress bar: the whole wait, from when this page first
- * saw the request to its commit on Solana, as the machine estimates it. A
- * reload starts it again, scaled to the time left then.
+ * The fill of the progress bar: the whole wait, from the block that enqueued
+ * the request to its commit on Solana. It measures from that block's time,
+ * so a reload keeps it; until that time is read, or if the read fails, from
+ * when this page first saw the request. The time left is the bridge's
+ * estimate, which moves in steps as Ethereum finalizes an epoch (about every
+ * 6.4 min), so the bar and the minutes under it can step back after a reload.
  *
  * @param progress The unprocessed machine's state.
+ * @param enqueuedAtMs The enqueue block's time, unix milliseconds, or `undefined` while unknown.
+ * @param nowMs The time now, unix milliseconds.
  * @returns The fill, from 0 to 1.
  */
-const progressFill = (progress: UnprocessedProofRequestStateNodeUnion): number => {
+const progressFill = (
+    progress: UnprocessedProofRequestStateNodeUnion,
+    enqueuedAtMs: number | undefined,
+    nowMs: number,
+): number => {
     if (progress.node === 'FinishedWaiting') return 1;
     const { waiting_elapsed_sec, commit_time_remaining_sec } = progress.data;
-    const total = waiting_elapsed_sec + Math.max(0, commit_time_remaining_sec);
-    return Number.isFinite(total) && total > 0 ? Math.min(1, waiting_elapsed_sec / total) : 0;
+    return fillOf(waitedSec(nowMs, enqueuedAtMs, waiting_elapsed_sec), commit_time_remaining_sec);
 };
 
 /**
@@ -84,7 +102,7 @@ const progressDetail = (progress: UnprocessedProofRequestStateNodeUnion): string
  * Follows one proof request from the transaction that enqueued it until a
  * committed batch on Solana covers it. The status follows the proof request
  * machine; while the request is `unprocessed`, a bar follows the bridge's
- * progress on it from the websocket.
+ * progress on it from the websocket, measured from the block that enqueued it.
  */
 @Component({
     selector: 'proof-progress',
@@ -148,13 +166,20 @@ export class ProofProgress extends RxElement {
         return this.progress$.pipe(map((progress) => progress !== undefined));
     }
 
+    /** When the request was enqueued, from its block, once read. */
+    private get enqueuedAtMs$(): Observable<number | undefined> {
+        return this.followed$.pipe(switchMap(({ enqueuedAtMs$ }) => enqueuedAtMs$));
+    }
+
     get fill$(): Observable<string> {
-        return this.progress$.pipe(
-            map((progress) =>
+        // Ticks each second, so the bar moves with the clock between the machine's states.
+        return combineLatest([this.progress$, this.enqueuedAtMs$, timer(0, 1000)]).pipe(
+            map(([progress, enqueuedAtMs]) =>
                 progress === undefined
                     ? ''
-                    : `width: ${(progressFill(progress) * 100).toFixed(1)}%`,
+                    : `width: ${(progressFill(progress, enqueuedAtMs, Date.now()) * 100).toFixed(1)}%`,
             ),
+            distinctUntilChanged(),
         );
     }
 
