@@ -34,7 +34,7 @@ import styles from './latency-table.component.css';
             <span>BATCH</span>
             <span>LANDED</span>
             <span class="min">MIN</span>
-            <span></span>
+            <span>VS MEDIAN</span>
         </div>
         <div rx-for="rows by key">
             <latency-row></latency-row>

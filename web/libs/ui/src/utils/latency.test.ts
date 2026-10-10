@@ -47,20 +47,21 @@ void test('a time key splits into its block and timestamp; anything else is skip
     assert.equal(ethTimeOf(`0x1${'0'.repeat(32)}`), undefined);
 });
 
-void test('before the landings are read, each read shows … with an unknown bar', () => {
+void test('before the landings are read, each read shows … and nothing against the median', () => {
     const rows = rowsOf(batches, requests, undefined);
     assert.deepEqual(
-        rows.map(({ request: r, batch: b, ethTime, landed, minutes, bar }) => [
+        rows.map(({ request: r, batch: b, ethTime, landed, minutes, vsMedian, aboveP90 }) => [
             r,
             b,
             ethTime,
             landed,
             minutes,
-            bar,
+            vsMedian,
+            aboveP90,
         ]),
         [
-            ['#96', '#86', '18:59:48', '…', '', '··········'],
-            ['#95', '#85', '18:46:12', '…', '', '··········'],
+            ['#96', '#86', '18:59:48', '…', '', '', false],
+            ['#95', '#85', '18:46:12', '…', '', '', false],
         ],
     );
 });
@@ -81,17 +82,51 @@ void test('each read runs from its Ethereum time to its batch landing, newest fi
         landed: '19:18:00 ↗',
         landedUrl: `https://explorer.solana.com/tx/sig86?cluster=${NORI_WEB_ENV.solana.cluster}`,
         minutes: '18.2',
-        bar: '▓▓▓▓▓▓▓▓▓▓',
+        // Two reads: the median is sorted[1], the older one.
+        vsMedian: '−0.4 min',
+        aboveP90: false,
     });
     assert.equal(older?.minutes, '18.6');
-    assert.equal(older?.bar, '▓▓▓▓▓▓▓▓▓▓');
+    assert.equal(older?.vsMedian, 'median');
+    assert.equal(older?.aboveP90, false);
+});
+
+void test('a read above p90 is flagged, with its minutes over the median', () => {
+    // Twelve reads, one per batch: 15.0 to 20.5 min, then 26.0 min for the newest.
+    const many = Array.from({ length: 12 }, (_, i) => BigInt(i));
+    const minutesOf = (i: number): number => (i === 11 ? 26 : 15 + i * 0.5);
+    const rows = rowsOf(
+        many.map((i) => batch(i, i, i + 1n)),
+        many.map((i) => request(i, ['0x00', timeKey(11_879_000n + i, T95 + i * 60n)])),
+        new Map(
+            many.map((i) => [
+                i,
+                {
+                    atSecs: Number(T95 + i * 60n) + minutesOf(Number(i)) * 60,
+                    signature: `sig${i.toString()}`,
+                },
+            ]),
+        ),
+    );
+    // Median sorted[6] = 18.0, p90 sorted[10] = 20.0.
+    assert.deepEqual(
+        rows.slice(0, 3).map(({ minutes, vsMedian, aboveP90 }) => [minutes, vsMedian, aboveP90]),
+        [
+            ['26.0', '+8.0 min', true],
+            ['20.0', '+2.0 min', false],
+            ['19.5', '+1.5 min', false],
+        ],
+    );
+    assert.equal(rows[5]?.vsMedian, 'median');
+    assert.equal(rows[11]?.vsMedian, '−3.0 min');
 });
 
 void test('a batch without a landing shows —', () => {
     const [newest] = rowsOf(batches, requests, new Map());
     assert.equal(newest?.landed, '—');
     assert.equal(newest?.minutes, '');
-    assert.equal(newest?.bar, '');
+    assert.equal(newest?.vsMedian, '');
+    assert.equal(newest?.aboveP90, false);
 });
 
 void test('the summary picks median and spread as the soak report does', () => {

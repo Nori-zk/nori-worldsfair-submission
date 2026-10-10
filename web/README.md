@@ -125,8 +125,9 @@ to Etherscan.
 
 **Latency** (`?view=latency`): every `NoriSnapshot` read in the 30 newest batches, newest
 first, each from its Ethereum block time to the Solana transaction that landed its batch, in
-minutes, with the median, p90, min and max. A batch landed in the newest successful Nori
-`update` on its account. Read when the tab opens and on `[ Read again ]`.
+minutes and against the median (above p90 in the warning colour), with the median, p90, min
+and max. A batch landed in the newest successful Nori `update` on its account. Read when the
+tab opens and on `[ Read again ]`.
 
 Under both, Nori's loop: the stage it is in, over a bar that fills through each epoch
 until its next job.

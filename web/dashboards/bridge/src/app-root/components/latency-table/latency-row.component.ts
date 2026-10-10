@@ -8,7 +8,7 @@ export type { LatencyRowView };
 /**
  * One NoriSnapshot read: its request, the Ethereum time it read at, the
  * batch that holds it and when that batch landed on Solana, and the minutes
- * between, with a bar against the longest shown.
+ * between, against the median of those shown: in the warning colour above p90.
  */
 @Component({
     selector: 'latency-row',
@@ -21,7 +21,7 @@ export type { LatencyRowView };
                 landed
             }}</a>
             <span class="minutes">{{ minutes }}</span>
-            <span class="bar">{{ bar }}</span>
+            <span class="vs" [class.slow]="aboveP90">{{ vsMedian }}</span>
         </div>
     `,
     styles,
@@ -35,7 +35,8 @@ export class LatencyRow extends RxElement {
     @state landed = '';
     @state landedUrl = '';
     @state minutes = '';
-    @state bar = '';
+    @state vsMedian = '';
+    @state aboveP90 = false;
 
     /** While the landing is read or unknown: nothing to link to. */
     get pending$(): Observable<boolean> {

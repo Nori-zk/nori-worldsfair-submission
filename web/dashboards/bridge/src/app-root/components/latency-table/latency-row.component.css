@@ -26,6 +26,10 @@
 .minutes {
     text-align: right;
 }
-.bar {
-    color: var(--nori-light-green);
+.vs {
+    color: var(--nori-muted);
+}
+/* Above p90: the guard status's WARN colour. */
+.vs.slow {
+    color: var(--nori-neon-blue);
 }
