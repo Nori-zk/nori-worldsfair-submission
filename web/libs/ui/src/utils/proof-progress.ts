@@ -20,15 +20,50 @@ export function waitedSec(
 }
 
 /**
- * The part of the whole wait that is done: the time waited against the time
- * waited plus the time left.
+ * The bar's total for one followed request: the time waited plus the time
+ * left, taken from the first estimate and only ever extended after that.
+ * The bridge's estimate counts down a second at a time between its finality
+ * messages and re-bases when one arrives, so a total built from each
+ * estimate would sit low and jump; one total fills the bar steadily. When
+ * an estimate runs past the total, the total grows to it, and the fill can
+ * then step back a little: the bar stays honest rather than smooth.
  *
+ * @param previousTotalSec The total so far, or `undefined` before the first estimate.
  * @param elapsedSec The seconds waited.
  * @param remainingSec The seconds left, as estimated; negative counts as none left.
- * @returns From 0 to 1; 0 when the total is unknown.
+ * @returns The total in seconds; `previousTotalSec` while the estimate is unknown.
  */
-export function fillOf(elapsedSec: number, remainingSec: number): number {
+export function anchoredTotal(
+    previousTotalSec: number | undefined,
+    elapsedSec: number,
+    remainingSec: number,
+): number | undefined {
+    const total = Math.max(0, elapsedSec) + Math.max(0, remainingSec);
+    if (!Number.isFinite(total)) return previousTotalSec;
+    return previousTotalSec === undefined ? total : Math.max(previousTotalSec, total);
+}
+
+/**
+ * The part of the whole wait that is done: the time waited against the
+ * bar's total.
+ *
+ * @param elapsedSec The seconds waited.
+ * @param totalSec The bar's total (`anchoredTotal`), or `undefined` while unknown.
+ * @returns From 0 to 1; 0 while the total is unknown.
+ */
+export function anchoredFill(elapsedSec: number, totalSec: number | undefined): number {
+    if (totalSec === undefined || !Number.isFinite(totalSec) || totalSec <= 0) return 0;
     const elapsed = Math.max(0, elapsedSec);
-    const total = elapsed + Math.max(0, remainingSec);
-    return Number.isFinite(total) && total > 0 ? Math.min(1, elapsed / total) : 0;
+    return Number.isFinite(elapsed) ? Math.min(1, elapsed / totalSec) : 0;
+}
+
+/**
+ * A bar's total as kept in `sessionStorage`.
+ *
+ * @param stored The stored value, `null` when none is.
+ * @returns The total in seconds, or `undefined` when none is stored or it is not a positive number.
+ */
+export function storedTotal(stored: string | null): number | undefined {
+    const totalSec = stored === null ? Number.NaN : Number(stored);
+    return Number.isFinite(totalSec) && totalSec > 0 ? totalSec : undefined;
 }

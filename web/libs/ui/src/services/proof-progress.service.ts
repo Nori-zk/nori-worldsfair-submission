@@ -1,6 +1,7 @@
 import { Injectable } from '@yaw-rx/core';
 import {
     catchError,
+    combineLatest,
     defer,
     distinctUntilChanged,
     filter,
@@ -22,9 +23,47 @@ import {
 } from '@nori-zk/nori-bridge-solana-sdk';
 import { ConnectionsService } from './connections.service.js';
 import { NoriBridgeInfraService } from './nori-bridge-infra.service.js';
+import { anchoredTotal, storedTotal, waitedSec } from '../utils/proof-progress.js';
 
 /** How many times the enqueue block's read is tried again after it fails, and the wait before each. */
 const BLOCK_READ_RETRIES = { count: 2, delay: 5_000 };
+
+/**
+ * The `sessionStorage` key of a request's bar total: the total is kept for
+ * the tab, so a reload fills the bar against the same total.
+ *
+ * @param txHash The transaction that enqueued the proof request.
+ * @returns The key.
+ */
+const totalKey = (txHash: string): string => `nori-proof-progress-total:${txHash}`;
+
+/**
+ * Reads a request's bar total from `sessionStorage`.
+ *
+ * @param txHash The transaction that enqueued the proof request.
+ * @returns The total in seconds, or `undefined` when none is kept or storage is unavailable.
+ */
+const readTotal = (txHash: string): number | undefined => {
+    try {
+        return storedTotal(sessionStorage.getItem(totalKey(txHash)));
+    } catch {
+        return undefined;
+    }
+};
+
+/**
+ * Keeps a request's bar total in `sessionStorage`, when storage is available.
+ *
+ * @param txHash The transaction that enqueued the proof request.
+ * @param totalSec The total in seconds.
+ */
+const writeTotal = (txHash: string, totalSec: number): void => {
+    try {
+        sessionStorage.setItem(totalKey(txHash), totalSec.toString());
+    } catch {
+        // Without storage, a reload takes a new total.
+    }
+};
 
 /** One followed proof request: its state, its bridge progress while unprocessed, and its controls. */
 export interface FollowedProof {
@@ -38,6 +77,14 @@ export interface FollowedProof {
      * while it is read, and for good when the read fails.
      */
     enqueuedAtMs$: Observable<number | undefined>;
+    /**
+     * The progress bar's total, in seconds: the time waited plus the time
+     * left at the first estimate, extended only when an estimate runs past
+     * it (`anchoredTotal`). Kept with the request and in `sessionStorage`,
+     * so a view set up again or a reload keeps it. `undefined` until the
+     * first estimate.
+     */
+    totalSec$: Observable<number | undefined>;
     /** Reads again now, while a read has failed. */
     retry: () => void;
 }
@@ -124,7 +171,24 @@ export class ProofProgressService {
             startWith(undefined),
             shareReplay({ bufferSize: 1, refCount: false }),
         );
-        const proof = { request$, progress$, enqueuedAtMs$, retry, close };
+        let totalSec = readTotal(txHash);
+        const totalSec$ = combineLatest([progress$, enqueuedAtMs$]).pipe(
+            map(([progress, enqueuedAtMs]) => {
+                if (progress === undefined || progress.node === 'FinishedWaiting') return totalSec;
+                const { waiting_elapsed_sec, commit_time_remaining_sec } = progress.data;
+                const next = anchoredTotal(
+                    totalSec,
+                    waitedSec(Date.now(), enqueuedAtMs, waiting_elapsed_sec),
+                    commit_time_remaining_sec,
+                );
+                if (next !== undefined && next !== totalSec) writeTotal(txHash, next);
+                totalSec = next;
+                return totalSec;
+            }),
+            distinctUntilChanged(),
+            shareReplay({ bufferSize: 1, refCount: true }),
+        );
+        const proof = { request$, progress$, enqueuedAtMs$, totalSec$, retry, close };
         this.followed.set(txHash, proof);
         return proof;
     }
