@@ -1,0 +1,73 @@
+:host {
+    display: block;
+    padding: 1rem 0;
+    border-top: 1px solid color-mix(in srgb, var(--nori-text) 8%, transparent);
+}
+.top {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.25rem 1rem;
+    color: var(--nori-muted);
+    font-size: 0.9rem;
+}
+.where {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 0.4rem;
+}
+a {
+    color: var(--nori-light-green);
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+.status {
+    color: var(--nori-muted);
+}
+.status.proven {
+    color: var(--nori-light-green);
+}
+.sentence {
+    margin: 0.4rem 0 0;
+    color: var(--nori-text);
+    font-size: 1.05rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+.verify {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.75rem;
+    align-items: baseline;
+    margin-top: 0.6rem;
+    font-size: 0.9rem;
+}
+.verify.hidden {
+    display: none;
+}
+button {
+    padding: 0.25rem 0.6rem;
+    border: 1px solid var(--nori-light-green);
+    border-radius: 0;
+    background: transparent;
+    color: var(--nori-light-green);
+    cursor: pointer;
+    font: inherit;
+    white-space: nowrap;
+}
+button:hover:enabled {
+    background: color-mix(in srgb, var(--nori-light-green) 12%, transparent);
+}
+button:disabled {
+    cursor: default;
+    opacity: 0.6;
+}
+.verdict {
+    overflow-wrap: anywhere;
+}
+.verdict:empty {
+    display: none;
+}

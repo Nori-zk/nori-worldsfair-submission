@@ -9,6 +9,7 @@
         "web/libs/ui",
         "web/apps/prove-balance",
         "web/apps/guard-status",
+        "web/apps/proven-facts",
         "web/dashboards/bridge"
     ],
     "devDependencies": {
