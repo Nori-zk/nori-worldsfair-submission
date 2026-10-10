@@ -111,7 +111,8 @@ from the line, lists every read. The link is the dev dashboard's, `http://localh
 Below it, the 25 newest snapshots, newest first. Each says when and at which Ethereum block its
 view calls ran, whether Nori has proven it on Solana yet, and what they returned, as sentences:
 "The demo lockbox held 116,723.52 and was not paused." A query no guard names reads as
-"Query 0x1234…abcd returned 42."
+"Query 0x1234…abcd returned 42." The list shows the newest 8; `[ Show older ]` adds 8 more at a
+time, and once all 25 show, a line links to NoriSnapshot's events on the explorer for the rest.
 
 On a proven snapshot, `[ Verify on Solana ]` checks one result (the backing, else the first)
 by simulating `nori-read-example` against the proven batch, as Prove balance does: no wallet,

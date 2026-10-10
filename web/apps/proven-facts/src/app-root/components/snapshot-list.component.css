@@ -1,6 +1,25 @@
 :host {
     display: block;
 }
+.older {
+    margin: 0.75rem 0 0;
+    color: var(--nori-muted);
+    font-size: 0.9rem;
+}
+.older:has(button.hidden):has(.line.hidden) {
+    display: none;
+}
+.line.hidden {
+    display: none;
+}
+a {
+    color: var(--nori-light-green);
+    text-decoration: none;
+    white-space: nowrap;
+}
+a:hover {
+    text-decoration: underline;
+}
 .status {
     display: flex;
     flex-wrap: wrap;
