@@ -35,7 +35,9 @@ const viewOf = (view: string | null): View => (view === 'latency' ? view : 'queu
         </nav>
         <div class="panes">
             <div [class.hidden]="queueHidden"><batch-table></batch-table></div>
-            <div rx-for="latencyPane by key"><latency-table></latency-table></div>
+            <div [class.hidden]="latencyHidden" rx-for="latencyPane by key">
+                <latency-table></latency-table>
+            </div>
         </div>
         <infra-state></infra-state>
     `,
@@ -54,6 +56,11 @@ export class DashboardViews extends RxElement {
 
     get latencyShown$(): Observable<boolean> {
         return this.view$.pipe(map((view) => view === 'latency'));
+    }
+
+    /** The latency pane, empty while the queue shows, would still take the queue's clicks. */
+    get latencyHidden$(): Observable<boolean> {
+        return this.view$.pipe(map((view) => view !== 'latency'));
     }
 
     /** The latency table while its tab is shown, as a list of one. */
