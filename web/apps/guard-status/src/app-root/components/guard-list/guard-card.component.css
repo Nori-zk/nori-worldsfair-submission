@@ -1,0 +1,141 @@
+:host {
+    display: block;
+    padding: 1.1rem 1.25rem;
+    border: 1px solid rgb(255 255 255 / 10%);
+    background: color-mix(in srgb, var(--nori-very-dark-green) 45%, transparent);
+    color: var(--nori-text);
+    line-height: 1.5;
+}
+a {
+    color: var(--nori-light-green);
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+p {
+    margin: 0;
+}
+.hidden {
+    display: none;
+}
+.top {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.25rem 1rem;
+}
+.status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+    letter-spacing: 0.08em;
+}
+.dot {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    background: currentColor;
+}
+.mint {
+    font-size: 0.9rem;
+}
+.sentence {
+    margin-top: 0.35rem;
+    overflow-wrap: anywhere;
+}
+/* Label, number, then where the number comes from; the detail wraps under on a phone. */
+.figures {
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    gap: 0.2rem 1rem;
+    align-items: baseline;
+    margin-top: 0.9rem;
+}
+.label {
+    color: var(--nori-muted);
+    font-size: 0.85rem;
+}
+.number {
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+    text-align: right;
+}
+.detail {
+    color: var(--nori-muted);
+    font-size: 0.85rem;
+}
+.coverage {
+    margin-top: 0.35rem;
+    color: var(--nori-muted);
+    font-size: 0.85rem;
+}
+.coverage:empty {
+    display: none;
+}
+.lender {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    margin-top: 0.9rem;
+}
+button {
+    padding: 0.35rem 0.75rem;
+    border: 1px solid var(--nori-light-green);
+    border-radius: 0;
+    background: transparent;
+    color: var(--nori-light-green);
+    cursor: pointer;
+    font: inherit;
+    white-space: nowrap;
+}
+button:hover:enabled {
+    background: rgb(100 225 142 / 12%);
+}
+button:disabled {
+    cursor: progress;
+    opacity: 0.6;
+}
+.result {
+    margin-top: 0.4rem;
+    overflow-wrap: anywhere;
+}
+.result:empty {
+    display: none;
+}
+.note {
+    margin-top: 0.25rem;
+    color: var(--nori-muted);
+    font-size: 0.8rem;
+}
+@media (max-width: 560px) {
+    :host {
+        padding: 0.9rem 0.9rem;
+    }
+    .figures {
+        grid-template-columns: auto 1fr;
+    }
+    .number {
+        text-align: right;
+    }
+    .detail {
+        grid-column: 1 / -1;
+        margin-bottom: 0.3rem;
+    }
+}
+.how {
+    display: block;
+    margin-top: 0.6rem;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--nori-muted);
+    font-size: 0.85rem;
+}
+.how:hover:enabled {
+    background: transparent;
+    color: var(--nori-light-green);
+}

@@ -1,0 +1,17 @@
+:host {
+    display: block;
+}
+.cards {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.status {
+    margin: 0;
+    color: var(--nori-muted);
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+.status:empty {
+    display: none;
+}
