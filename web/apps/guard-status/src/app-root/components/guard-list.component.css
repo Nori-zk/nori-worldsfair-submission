@@ -6,6 +6,23 @@
     flex-direction: column;
     gap: 1rem;
 }
+.stale-toggle {
+    display: block;
+    margin: 1rem 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--nori-muted);
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+}
+.stale-toggle:hover {
+    color: var(--nori-light-green);
+}
+.hidden {
+    display: none;
+}
 .status {
     margin: 0;
     color: var(--nori-muted);
