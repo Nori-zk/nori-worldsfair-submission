@@ -56,6 +56,11 @@
     font-size: 0.75rem;
     letter-spacing: 0.1em;
 }
+/* On a narrow screen the table scrolls sideways as one, and the status column keeps room to read. */
+.head,
+.rows {
+    min-width: 46rem;
+}
 /* Opening a batch scrolls inside the table instead of growing the card. */
 .rows {
     height: 26rem;

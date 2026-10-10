@@ -5,6 +5,7 @@ import {
     jobTimingsOf,
     NORI_JOB_STAGES,
     sortWaitingProofRequests,
+    type EnqueuedProofRequest,
     type EthereumFinality,
 } from '@nori-zk/nori-bridge-solana-sdk';
 import {
@@ -19,6 +20,13 @@ import {
     idRange,
 } from '@nori-zk/solana-web-ui';
 import { type BatchesView } from '../ystate/bridge-batches.js';
+import {
+    blockAgeSec,
+    commitText,
+    finalityEstimate,
+    processingEstimate,
+    scheduledEstimate,
+} from './commit-fill.js';
 import { type Line, lineOf } from './request-line.js';
 
 /** One row above the batches: a set of the requests no batch covers yet, and where they wait. */
@@ -28,9 +36,9 @@ export interface WaitingRow {
     requests: string;
     /** The Ethereum block the row is about. */
     block: string;
-    /** How far along the row's wait is. */
+    /** How far its oldest request is from its Ethereum block to its commit on Solana. */
     bar: string;
-    /** What the row waits for, and the time left. */
+    /** What the row waits for, the time left, and the commit it lands in. */
     status: string;
     /** Its requests, oldest first. */
     lines: Line[];
@@ -80,8 +88,10 @@ const isShownStage = (name: string): name is NoriBridgeInfraStage =>
  * The rows above the batches, top to bottom: the requests waiting for
  * Ethereum finality, those finalized and scheduled for a later job, and,
  * while Nori's websocket says which job it is running, the requests in that
- * job. Each row's bar and time left count towards its next step: finality,
- * or the commit on Solana of the job its requests are in.
+ * job. Every row's bar shares one scale, from its oldest request's Ethereum
+ * block to that request's commit on Solana, so a fuller bar is further along
+ * the whole way; its time left counts towards its next step (finality, or
+ * the commit), and its status names the commit it lands in.
  *
  * @param input The view, Nori's state, timings and finality, and now.
  * @returns The rows.
@@ -116,43 +126,53 @@ export function waitingRows({
     );
     const commits = stage && getCommitTimes(stage, timings);
 
+    // One job's time, from Nori's timings where it reports them, as `getCommitTimes` counts it.
+    const known = jobTimingsOf(timings);
+    const jobSec = NORI_JOB_STAGES.reduce((total, name) => total + known[name], 0);
+    /** The seconds since a row's oldest request's block. */
+    const ageOf = (first: EnqueuedProofRequest | undefined) =>
+        first ? blockAgeSec(view.value.latestBlock, first.blockNumber, since(view.atMs)) : 0;
+
     const oldest = sorted.waitingForFinality[0];
     const finalityLeft =
         oldest &&
         getFinalityTimeRemainingSec(oldest.blockNumber, finalityNow.value) -
             since(finalityNow.atMs);
-    const age = oldest ? (view.value.latestBlock - oldest.blockNumber) * 12 + since(view.atMs) : 0;
+    const finalityRow =
+        finalityLeft === undefined
+            ? undefined
+            : finalityEstimate(ageOf(oldest), finalityLeft, jobSec, commits);
     const rows: Omit<WaitingRow, 'shown'>[] = [
         {
             key: 'finality',
             requests: idRange(sorted.waitingForFinality.map(({ requestId }) => requestId)),
             block: oldest ? blockText(oldest.blockNumber) : '',
-            bar:
-                finalityLeft === undefined
-                    ? UNKNOWN_BAR
-                    : asciiBar(age / (age + Math.max(0, finalityLeft))),
+            bar: finalityRow ? asciiBar(finalityRow.fill) : UNKNOWN_BAR,
             status:
                 finalityLeft === undefined
                     ? 'Waiting for Ethereum finality'
-                    : `Waiting for Ethereum finality · ${leftText(finalityLeft)}`,
+                    : [
+                          'Waiting for Ethereum finality',
+                          leftText(finalityLeft),
+                          finalityRow?.commit === undefined
+                              ? ''
+                              : `then ${commitText(finalityRow.commit)}`,
+                      ]
+                          .filter((part) => part !== '')
+                          .join(' · '),
             lines: sorted.waitingForFinality.map(lineOf),
         },
     ];
 
-    const fallbackJobSec = Object.values(jobTimingsOf(undefined)).reduce(
-        (total, s) => total + s,
-        0,
-    );
+    const scheduledRow = commits && scheduledEstimate(ageOf(sorted.scheduled[0]), commits);
     rows.push({
         key: 'scheduled',
         requests: idRange(sorted.scheduled.map(({ requestId }) => requestId)),
         block: '',
-        bar: commits
-            ? asciiBar(1 - commits.nextJobSec / (ETHEREUM_EPOCH_SEC + commits.jobSec))
-            : UNKNOWN_BAR,
-        status: commits
-            ? `Scheduled for processing · ${leftText(commits.nextJobSec)}`
-            : `Scheduled for processing · within ~${Math.round((ETHEREUM_EPOCH_SEC + fallbackJobSec) / 60).toString()}m`,
+        bar: scheduledRow ? asciiBar(scheduledRow.fill) : UNKNOWN_BAR,
+        status: scheduledRow
+            ? `Scheduled for ${commitText(1)} · ${leftText(scheduledRow.remainingSec)}`
+            : `Scheduled for processing · within ~${Math.round((ETHEREUM_EPOCH_SEC + jobSec) / 60).toString()}m`,
         lines: sorted.scheduled.map(lineOf),
     });
 
@@ -164,13 +184,16 @@ export function waitingRows({
         running && isShownStage(stage.stage_name)
             ? NORI_BRIDGE_INFRA_STAGE_TEXT[stage.stage_name]
             : '';
+    const currentJobSec = commits?.currentJobSec ?? 0;
     rows.push({
         key: 'processing',
         requests: idRange(sorted.processing.map(({ requestId }) => requestId)),
         block: running ? blockText(stage.output_block_number) : '',
-        bar: running ? asciiBar(1 - (commits.currentJobSec ?? 0) / commits.jobSec) : UNKNOWN_BAR,
+        bar: running
+            ? asciiBar(processingEstimate(ageOf(sorted.processing[0]), currentJobSec).fill)
+            : UNKNOWN_BAR,
         status: running
-            ? ['Processing', stageText, leftText(commits.currentJobSec ?? 0)]
+            ? ['Processing', stageText, leftText(currentJobSec)]
                   .filter((part) => part !== '')
                   .join(' · ')
             : 'Processing',

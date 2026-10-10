@@ -59,7 +59,7 @@ const batchesStatus = (state: BridgeBatchesState | undefined): string => {
             <span>BATCH</span>
             <span>REQUESTS</span>
             <span>ETH BLOCK</span>
-            <span>PROVEN</span>
+            <span>TO SOLANA</span>
             <span></span>
         </div>
         <div class="rows">
