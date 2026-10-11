@@ -25,7 +25,7 @@ Read before writing code: code written first tends to reinvent what already exis
 | `programs/nori-read-example/` | Smallest consumer + surfpool test                                                                                                                                                                                                                                |
 | `programs/backstop/`          | Guards: proven backing vs Solana supply ([diagram](docs/backstop-guard.drawio.png))                                                                                                                                                                              |
 | `scripts/`                    | `dry-run.sh` (local loop, fake prover), `deploy-devnet.sh` (Backstop, nori-read-example, demo mint), `soak.sh` (keeper for hours, then `report.md`), `replay-wormhole.sh` (Wormhole 2022 on its own guard, live)                                                 |
-| `client/`                     | Sample TS client and keeper CLI (`npm run keeper`). Encoders are pinned to Rust bytes. `fake-prover` is for local dry runs only. Tests run with `node --test` on the build, since the wasm hasher breaks jest                                                    |
+| `keeper/`                     | Backstop keeper CLI (`npm run keeper`) and the TS library it shares with the web apps. Encoders are pinned to Rust bytes. `fake-prover` is for local dry runs only. Tests run with `node --test` on the build, since the wasm hasher breaks jest                 |
 | `web/`                        | yaw + vite UIs ([README](web/README.md)): `apps/prove-balance`, `apps/guard-status`, `apps/proven-facts`, `dashboards/bridge`, shared `libs/ui` (`@nori-zk/solana-web-ui`: the reads and helpers the apps share). Build constants in `web/.env` via `web/env.ts` |
 | `test-harness/`               | Test context for the program tests (validator, client, payer, Anchor events) over the sdk's `test-utils` (deploy, plant accounts, time travel, send)                                                                                                             |
 | (no submodules)               | The Nori SDK is the npm packages `@nori-zk/nori-bridge-solana-sdk`, `@nori-zk/ethereum-solana-bridge`, `@nori-zk/ethereum-solana-proof-queue-utils-glam` and, for Rust, `token` and `test-utils` from the sdk repo by git rev                                    |
@@ -34,7 +34,7 @@ Read before writing code: code written first tends to reinvent what already exis
 
 ```bash
 npm install && npm run build      # build: every workspace's build, --workspaces --if-present
-npm test                          # ethereum (incl. vector drift check) + client
+npm test                          # ethereum (incl. vector drift check) + keeper
 npm run test:fork -w ethereum     # mainnet fork (network)
 npm run vectors -w ethereum       # regenerate test vectors
 npm run typecheck                 # every workspace's typecheck, --workspaces --if-present
@@ -80,7 +80,7 @@ cargo fmt --all --check
 - Root `package.json` lists every workspace by its path (`"web/apps/prove-balance"`, not `"web/apps/*"`), in build order (libraries before the apps that use them). Root scripts run a script across them with `--workspaces --if-present`; a new package picks them up by defining the script.
 - Keep docs short. Prefer a diagram in `docs/` over prose.
 - What this repo needs from the sdk goes through the sdk's change procedure (its AGENTS.md): one request covering everything, the user approves, commits and publishes; then bump the pins here.
-- Stop using promises: the sdk is an rxjs library, and so is everything built on it here, the `client/` scripts included. A promise exists only inside the lowest step, where a dependency (ethers, `@solana/kit`) returns one: wrapped once in the sdk's `ethRpcRead$` or `solanaRpcRead$`, or one `defer` around one call. Nothing above it sees a promise:
+- Stop using promises: the sdk is an rxjs library, and so is everything built on it here, the `keeper/` scripts included. A promise exists only inside the lowest step, where a dependency (ethers, `@solana/kit`) returns one: wrapped once in the sdk's `ethRpcRead$` or `solanaRpcRead$`, or one `defer` around one call. Nothing above it sees a promise:
     - never pull an observable or a machine back into a promise (`firstValueFrom`, `lastValueFrom`, `await` on a stream);
     - never compose with promises (`Promise.all`, a chain of `await`s, an `async` helper that awaits another); compose with rxjs (`switchMap`, `forkJoin`, `concatMap`);
     - a helper that derives addresses or builds an instruction is an observable, as the sdk's `stateAddress$`, `proofQueueBatchAddress$` and `mintCall$` are, never an `async` function.
@@ -90,10 +90,10 @@ cargo fmt --all --check
 jk89 was sad the agents ignored his abstraction and worked around it
 
 - The sdk's connection layer and machines exist so that no app handles connectivity itself. Read the sdk's own Lessons (its AGENTS.md) first; use what it exports and never work around it. What it lacks is asked of the sdk through its change procedure, not written in an app. Machines for this repo's own contracts and programs (NoriSnapshot, nori-read-example, Backstop) are this repo's, built from the sdk's helpers (`readThroughConnectionsOf`, `startReadThroughConnectionsMachine`, `ethRpcRead$`, `solanaRpcRead$`).
-- Apps and the client compose observables only: the machines' `state$` and live streams. No `await` of a read, no promise read once, no `catchError(() => EMPTY)`. Every value that can change stays current; nothing is read once.
+- Apps and the keeper compose observables only: the machines' `state$` and live streams. No `await` of a read, no promise read once, no `catchError(() => EMPTY)`. Every value that can change stays current; nothing is read once.
 - The graph is the program, not a diagram of it. A machine gives every state a node, puts data only where it is valid, makes failures and lost connections states it recovers from, and cancels a read when its node is left. That holds only while every read, send and wait goes through a graph: one `from(promise)`, `await` or `catchError` in a component or service brings back a state nobody designed. A value with no machine gets one; the code never goes around the graph.
 - Machines are isolated by domain and couple through `$` (web/AGENTS.md, "Machines (ystate)"). Never copy another machine's states into your own data, and never keep an old member alive as a shim derived from a machine so that unported callers still compile: remove it and port every caller.
 - Connection state is shown in one place, the pins along the bottom (`libs/ui`), from the app's own connection config. No errors in rows, tables or lists: views show the machine's state in plain words, and the machine retries by itself.
 - Test the unhappy path before showing anything: no wallet, the wallet on the wrong chain, a chain's RPC down.
-- Code is never copied: the second time the same code appears, in a machine, a service or a component, it is abstracted into one place every user calls (an sdk machine, `client/` for what the keeper and the browser share, or `libs/ui`).
+- Code is never copied: the second time the same code appears, in a machine, a service or a component, it is abstracted into one place every user calls (an sdk machine, `keeper/` for what the keeper and the browser share, or `libs/ui`).
 - Finding a shortcut means searching the whole codebase for the same pattern and fixing every instance.

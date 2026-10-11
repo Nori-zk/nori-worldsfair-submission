@@ -16,7 +16,7 @@ import {
     backstopErrorName,
     customErrorOf,
     transactionErrorText,
-} from '@nori-zk/backstop-client/guard';
+} from '@nori-zk/backstop-keeper/guard';
 
 /**
  * What a simulation gives back that the verdict reads: its error, a

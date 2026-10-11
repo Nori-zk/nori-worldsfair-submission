@@ -35,7 +35,7 @@ import {
     followedStates$,
     heldAcrossMoves,
     type SnapshotVerificationState,
-} from '@nori-zk/backstop-client/read';
+} from '@nori-zk/backstop-keeper/read';
 import { balanceQuery, type BalanceRequest, preview$ } from './preview.impl.js';
 import { type Preview, ProveBalanceGraph, type ProveBalanceState } from './prove-balance.js';
 import { createResumeMachine } from './resume.impl.js';

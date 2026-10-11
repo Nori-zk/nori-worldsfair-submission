@@ -1,7 +1,7 @@
 import { Injectable } from '@yaw-rx/core';
 import { combineLatest, map, type Observable, shareReplay } from 'rxjs';
 import { createBridgeStateMachine } from '@nori-zk/nori-bridge-solana-sdk';
-import { type GuardState } from '@nori-zk/backstop-client/guard';
+import { type GuardState } from '@nori-zk/backstop-keeper/guard';
 import { ConnectionsService } from './connections.service.js';
 import { GuardBoardService } from './guard-board.service.js';
 import { createSnapshotFactsMachine } from '../machines/snapshotFacts.impl.js';

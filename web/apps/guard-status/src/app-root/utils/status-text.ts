@@ -3,7 +3,7 @@ import {
     backstopErrorName,
     customErrorOf,
     transactionErrorText,
-} from '@nori-zk/backstop-client/guard';
+} from '@nori-zk/backstop-keeper/guard';
 import type { GuardRead, Simulated } from '@nori-zk/solana-web-ui';
 
 // Every sentence the page says about a guard. The numbers come in formatted

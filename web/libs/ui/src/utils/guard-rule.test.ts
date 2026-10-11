@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { address } from '@solana/kit';
-import { type Checkpoint, type GuardState } from '@nori-zk/backstop-client/guard';
+import { type Checkpoint, type GuardState } from '@nori-zk/backstop-keeper/guard';
 import { checkpointRows, windowOf } from './guard-rule.js';
 
 // The demo guard's numbers: a 9-decimal mint, backing 223.52, supply

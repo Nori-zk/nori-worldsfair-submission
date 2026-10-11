@@ -27,7 +27,7 @@ import {
     type ProofQueueBatchRequestsState,
     type ShownProofQueueBatch,
 } from '@nori-zk/nori-bridge-solana-sdk';
-import { followedStates$ } from '@nori-zk/backstop-client/read';
+import { followedStates$ } from '@nori-zk/backstop-keeper/read';
 import { ConnectionsService, NoriBridgeInfraService } from '@nori-zk/solana-web-ui';
 import { waitingRows, type WaitingRow } from '../utils/waiting-rows.js';
 import { SYNTHETIC, syntheticRequests } from '../utils/synthetic-requests.js';

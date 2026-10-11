@@ -1,14 +1,14 @@
-# Backstop client
+# Backstop keeper
 
-Sample client and keeper CLI, in Node. The browser apps are in [web/](../web/README.md).
+Keeper CLI and its library, in Node. The browser apps are in [web/](../web/README.md).
 
 - `createProvenRequestMachine`: one proof request until Nori has proven its batch, with the request's witness in it; it gates on the sdk's proof request machine, which its creator owns.
 - `createSnapshotEventMachine`: a snapshot transaction's `Snapshot` event, read from its receipt through the sdk's connections.
 - `createSnapshotVerificationMachine`: verifies one result on Solana, from the snapshot transaction on, by simulating `nori-read-example`'s `read_snapshot_result` with the result's witness (`createSnapshotResultSimulationMachine`; no signature, no fee; the fee payer must be an existing funded account).
 - `createAssertHealthyMachine`: one guard's `assert_healthy`, simulated as a lender calls it.
-- `followedStates$`, `heldAcrossMoves`, `valueOnce$`: a machine made for one thing inside a stream, and closed with it. `@nori-zk/backstop-client/read` exports these and the machines above without the Backstop encoders, for browsers.
+- `followedStates$`, `heldAcrossMoves`, `valueOnce$`: a machine made for one thing inside a stream, and closed with it. `@nori-zk/backstop-keeper/read` exports these and the machines above without the Backstop encoders, for browsers.
 - `createGuardInstruction$`, `guardAddress$`, `submitReadInstruction`, `checkpointInstruction`, `assertHealthyInstruction`, `decodeGuard`: bytes pinned to the Rust program (`test-vectors/backstop`); `decodeGuard` also returns the supply checkpoints the guard keeps (the last 64), oldest first. `BackstopError`: its error codes.
-- `guardStatus`, `mintSupply`, `mintDecimals`: a guard's status against its mint's live supply. `@nori-zk/backstop-client/guard` exports them with `decodeGuard`, `assertHealthyInstruction`, `BackstopError`, `BACKSTOP_ERROR_MESSAGE` and the transaction error helpers (`customErrorOf`, `transactionErrorText`), for browsers.
+- `guardStatus`, `mintSupply`, `mintDecimals`: a guard's status against its mint's live supply. `@nori-zk/backstop-keeper/guard` exports them with `decodeGuard`, `assertHealthyInstruction`, `BackstopError`, `BACKSTOP_ERROR_MESSAGE` and the transaction error helpers (`customErrorOf`, `transactionErrorText`), for browsers.
 
 ## Keeper
 

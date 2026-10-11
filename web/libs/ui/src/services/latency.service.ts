@@ -17,7 +17,7 @@ import {
     type ProofQueueBatchesState,
     type ProofQueueBatchSummary,
 } from '@nori-zk/nori-bridge-solana-sdk';
-import { followedStates$ } from '@nori-zk/backstop-client/read';
+import { followedStates$ } from '@nori-zk/backstop-keeper/read';
 import { ConnectionsService } from './connections.service.js';
 import { createBatchLandingsMachine } from '../machines/batchLandings.impl.js';
 import { type BatchLanding } from '../utils/batch-landing.js';

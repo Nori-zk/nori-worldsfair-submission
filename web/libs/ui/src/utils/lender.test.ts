@@ -7,7 +7,7 @@ import {
     getTransactionDecoder,
     type TransactionError,
 } from '@solana/kit';
-import { BACKSTOP_PROGRAM } from '@nori-zk/backstop-client/guard';
+import { BACKSTOP_PROGRAM } from '@nori-zk/backstop-keeper/guard';
 import { depositTransaction, simulationFailed, verdictText } from './lender.js';
 
 const guard = address('E8M7dU4Dp3j6AE3FnFv6fNJXp5tBg3xEUw1xg4eF7PYD');

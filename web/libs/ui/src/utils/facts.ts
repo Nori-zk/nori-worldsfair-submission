@@ -1,4 +1,4 @@
-import { type GuardState } from '@nori-zk/backstop-client/guard';
+import { type GuardState } from '@nori-zk/backstop-keeper/guard';
 import { amount, shortHex } from './format.js';
 
 /** What a guard tells about a query id: its mint, its two queries and the backing's decimals. */

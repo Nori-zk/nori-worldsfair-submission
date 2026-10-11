@@ -5,7 +5,7 @@
 # taken a full window after the forgery is proven. About 50 min.
 #
 # Usage: scripts/replay-wormhole.sh
-# Its own lockbox, mint and guard (client/keeper.wormhole.json), added to the
+# Its own lockbox, mint and guard (keeper/keeper.wormhole.json), added to the
 # deploy outputs once, like the soak's shadow guard. Reads .env like the keeper.
 # Rerun to continue: the setup and the forgery happen once.
 
@@ -18,7 +18,7 @@ LOG=$REPO/replay-wormhole.log
 
 # The shell wins; otherwise the last line in .env or the Solana deploy output that sets it
 env_of() { [ -n "${!1:-}" ] && echo "${!1}" || { grep -hE "^$1=" .env .env.nori-sol-demo 2>/dev/null || true; } | tail -1 | cut -d= -f2- | tr -d "\"'"; }
-keeper() { (cd client && node --experimental-wasm-modules build/bin/keeper.js "$@" keeper.wormhole.json); }
+keeper() { (cd keeper && node --experimental-wasm-modules build/bin/keeper.js "$@" keeper.wormhole.json); }
 status() { keeper status | grep -o 'wormhole: [A-Z_]*' | cut -d' ' -f2; }
 # Waits up to an hour (a proof takes ~18 min) for one of the statuses: the
 # one expected next, or a later one when a rerun is past it
@@ -40,7 +40,7 @@ grep -qs '^BACKSTOP_WORMHOLE_MINT=' .env.nori-sol-demo ||
 keeper create-guards
 
 # The keeper checkpoints, snapshots and submits for the whole replay
-(cd client && exec node --experimental-wasm-modules build/bin/keeper.js run keeper.wormhole.json) >>"$LOG" 2>&1 &
+(cd keeper && exec node --experimental-wasm-modules build/bin/keeper.js run keeper.wormhole.json) >>"$LOG" 2>&1 &
 KEEPER=$!
 trap 'kill "$KEEPER" 2>/dev/null || true' EXIT
 
@@ -62,7 +62,7 @@ keeper assert
 
 # The trip takes the lowest supply in the read's window, so snapshot once a
 # whole window holds only the forged supply
-WINDOW=$(node -p 'require("./client/keeper.wormhole.json").guards[0].windowSecs')
+WINDOW=$(node -p 'require("./keeper/keeper.wormhole.json").guards[0].windowSecs')
 if [ "$(status)" != TRIPPED ]; then
     echo "Snapshot in $((WINDOW / 60 + 1)) min, then its proof (~20 min)"
     sleep $((WINDOW + 60))

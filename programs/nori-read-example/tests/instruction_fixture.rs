@@ -1,5 +1,5 @@
 //! Pins `read_snapshot_result` instruction bytes and the `SnapshotResultRead`
-//! event for the TS client (`client/src/noriRead.ts`).
+//! event for the TS decoder (`keeper/src/noriRead.ts`).
 //! `UPDATE_FIXTURES=1` rewrites them.
 
 use anchor_lang::{Event, InstructionData};
@@ -22,7 +22,7 @@ fn check(name: &str, data: Vec<u8>) {
     );
 }
 
-/// The Kelp replay's drained lockbox balance, as `client/src/snapshotWitness.test.ts` encodes it.
+/// The Kelp replay's drained lockbox balance, as `keeper/src/snapshotWitness.test.ts` encodes it.
 #[test]
 fn read_snapshot_result_bytes_match_the_fixture() {
     let vectors = test_vectors::kelp_replay();
@@ -38,7 +38,7 @@ fn read_snapshot_result_bytes_match_the_fixture() {
     );
 }
 
-/// The event the program emits, as `client/src/noriRead.test.ts` decodes it
+/// The event the program emits, as `keeper/src/noriRead.test.ts` decodes it
 /// from a `Program data:` log.
 #[test]
 fn snapshot_result_read_event_bytes_match_the_fixture() {

@@ -19,7 +19,7 @@
         "tokens:fetch": "node scripts/fetch-token-list.mjs"
     },
     "dependencies": {
-        "@nori-zk/backstop-client": "*",
+        "@nori-zk/backstop-keeper": "*",
         "@nori-zk/nori-bridge-solana-sdk": "0.3.0",
         "@solana/kit": "^8.3.0",
         "@yaw-rx/core": "^0.1.4",

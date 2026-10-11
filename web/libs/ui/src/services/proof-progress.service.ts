@@ -19,7 +19,7 @@ import {
     type ProofRequestStateNodeUnion,
     type UnprocessedProofRequestStateNodeUnion,
 } from '@nori-zk/nori-bridge-solana-sdk';
-import { followedStates$ } from '@nori-zk/backstop-client/read';
+import { followedStates$ } from '@nori-zk/backstop-keeper/read';
 import { ConnectionsService } from './connections.service.js';
 import { NoriBridgeInfraService } from './nori-bridge-infra.service.js';
 import { anchoredTotal, storedTotal, waitedSec } from '../utils/proof-progress.js';

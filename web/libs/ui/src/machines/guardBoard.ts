@@ -1,7 +1,7 @@
 import { define, type StateUnion } from '@yaw-rx/ystate';
 import { type Address } from '@solana/kit';
 import { readThroughConnectionsOf } from '@nori-zk/nori-bridge-solana-sdk';
-import { type guardStatus, type GuardState } from '@nori-zk/backstop-client/guard';
+import { type guardStatus, type GuardState } from '@nori-zk/backstop-keeper/guard';
 
 /** One guard and its mint's live supply. */
 export interface GuardRead {

@@ -2,7 +2,7 @@ import { Component, Inject, RxElement } from '@yaw-rx/core';
 import { RxIf } from '@yaw-rx/core/directives/rx-if';
 import { combineLatest, map, type Observable, take } from 'rxjs';
 import { ConnectionsService, TokenListService, tokenAmountText } from '@nori-zk/solana-web-ui';
-import { NORI_READ_EXAMPLE_PROGRAM } from '@nori-zk/backstop-client/read';
+import { NORI_READ_EXAMPLE_PROGRAM } from '@nori-zk/backstop-keeper/read';
 import { TOKEN_CHOSEN } from './prove-form/token-option.component.js';
 import './prove-form/token-select.component.js';
 import { type BalanceRequest, previewOf, requestOf } from '../machines/prove-balance.impl.js';

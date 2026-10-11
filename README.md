@@ -25,7 +25,7 @@ Addresses and numbers: [docs/README.md](docs/README.md).
 | `ethereum/`     | `NoriSnapshot` contract, query list, deploy and snapshot tasks                                                                                                            |
 | `nori-read/`    | Rust crate: verify a snapshot result on Solana in one call ([README](nori-read/README.md))                                                                                |
 | `programs/`     | Solana programs: `nori-read-example`, [`backstop`](programs/backstop) (circuit breaker)                                                                                   |
-| `client/`       | Sample TS client and keeper CLI: create-guards, snapshot, checkpoint, submit, status, assert, unlatch, run                                                                |
+| `keeper/`       | Backstop keeper CLI and its TS library: create-guards, snapshot, checkpoint, submit, status, assert, unlatch, run                                                         |
 | `web/`          | Browser apps: guard status, proven facts, prove a balance, and the bridge dashboard (proof queue and read latency) ([README](web/README.md))                              |
 | `test-vectors/` | Test data shared by the TS and Rust tests                                                                                                                                 |
 | `test-harness/` | Surfpool helpers for the program tests                                                                                                                                    |
@@ -37,7 +37,7 @@ Addresses and numbers: [docs/README.md](docs/README.md).
 ```sh
 git clone https://github.com/Nori-zk/nori-worldsfair-submission
 npm install && npm run build
-npm test                 # ethereum contracts, then the client
+npm test                 # ethereum contracts, then the keeper
 npm run lint             # every workspace
 cargo test --locked -p nori-read  # Solana-side verification
 scripts/dry-run.sh       # the whole loop on local chains, with a fake prover
@@ -70,12 +70,12 @@ npm run deploy-demo -w ethereum -- 116723.52   # -> ethereum/.env.nori-eth-demo
 # Solana: Backstop, nori-read-example, and a demo mint of 116,700 (-> .env.nori-sol-demo); safe to rerun
 scripts/deploy-devnet.sh
 
-# Keeper: client/keeper.demo.json reads .env and the deploy outputs
-npm run keeper -w client -- create-guards
-npm run keeper -w client -- status   # Nori's progress through the queue, then each guard
-npm run keeper -w client -- run      # snapshots on the heartbeat and as soon as a watched result changes
-npm run keeper -w client -- assert   # each guard's assert_healthy, as a lender calls it (--send lands it)
-npm run keeper -w client -- verify <snapshot tx>   # nori-read-example verifies each result, on-chain
+# Keeper: keeper/keeper.demo.json reads .env and the deploy outputs
+npm run keeper -w keeper -- create-guards
+npm run keeper -w keeper -- status   # Nori's progress through the queue, then each guard
+npm run keeper -w keeper -- run      # snapshots on the heartbeat and as soon as a watched result changes
+npm run keeper -w keeper -- assert   # each guard's assert_healthy, as a lender calls it (--send lands it)
+npm run keeper -w keeper -- verify <snapshot tx>   # nori-read-example verifies each result, on-chain
 ```
 
 bridge-head proves `NORI_ETH_PROOF_QUEUE_ADDRESS` and updates `NORI_SOL_TOKEN_PROGRAM_ID`.

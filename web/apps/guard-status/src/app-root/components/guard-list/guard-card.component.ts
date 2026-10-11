@@ -7,7 +7,7 @@ import {
     verdictText,
     type GuardRead,
 } from '@nori-zk/solana-web-ui';
-import { createAssertHealthyMachine, followedStates$ } from '@nori-zk/backstop-client/read';
+import { createAssertHealthyMachine, followedStates$ } from '@nori-zk/backstop-keeper/read';
 import { checkFailed, depositSentence, type GuardStatus } from '../../utils/status-text.js';
 import './guard-card/guard-how.component.js';
 import styles from './guard-card.component.css';

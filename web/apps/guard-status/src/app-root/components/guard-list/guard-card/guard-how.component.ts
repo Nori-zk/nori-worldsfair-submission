@@ -12,7 +12,7 @@ import {
     solanaAccountUrl,
     windowOf,
 } from '@nori-zk/solana-web-ui';
-import { CHECKPOINTS } from '@nori-zk/backstop-client/guard';
+import { CHECKPOINTS } from '@nori-zk/backstop-keeper/guard';
 import { lockboxOf } from '../../../utils/guards.js';
 import { settingsSentence, type Sentence } from '../../../utils/status-text.js';
 import styles from './guard-how.component.css';

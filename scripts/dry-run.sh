@@ -90,7 +90,7 @@ wait_for() {
 for tool in solana spl-token surfpool cast npx; do
     command -v "$tool" >/dev/null || { echo "Missing: $tool"; exit 1; }
 done
-[ -d "$REPO/client/build" ] || { echo "Run 'npm install && npm run build' first"; exit 1; }
+[ -d "$REPO/keeper/build" ] || { echo "Run 'npm install && npm run build' first"; exit 1; }
 for port in 18545 18899 18900; do
     if lsof -i ":$port" >/dev/null 2>&1; then echo "Port $port is busy"; exit 1; fi
 done
@@ -110,7 +110,7 @@ cast rpc evm_mine --rpc-url "$ETH_URL" >/dev/null
 echo "Ethereum: fork of chain $(cast chain-id --rpc-url "$ETH_FORK_RPC") ($ETH_FORK_RPC) on $ETH_URL"
 echo "surfpool on $SOL_URL, accounts from ${SOLANA_FORK_RPC:-nowhere (offline)}"
 
-say "Building Backstop and the client"
+say "Building Backstop and the keeper"
 # build-sbf ignores --locked and would silently re-resolve a stale lock into
 # crates the SBF rustc can't build; catch that here with a clear message
 cargo metadata --locked --format-version 1 --manifest-path "$REPO/Cargo.toml" >/dev/null 2>&1 ||
@@ -120,7 +120,7 @@ if ! BUILD=$(cargo build-sbf --manifest-path "$REPO/programs/backstop/Cargo.toml
     exit 1
 fi
 echo "$BUILD" | grep -E "Finished" || true
-(cd "$REPO" && npm run -s build -w ethereum -w client >/dev/null)
+(cd "$REPO" && npm run -s build -w ethereum -w keeper >/dev/null)
 
 say "Solana: deploying Backstop, minting 116,700 rsETH"
 PAYER=$W/payer.json
@@ -164,8 +164,8 @@ cat >"$W/keeper.json" <<EOF
 EOF
 echo "Keeper config: $W/keeper.json"
 
-keeper() { (cd "$REPO/client" && quiet npm run -s keeper -- "$@" "$W/keeper.json"); }
-prove() { (cd "$REPO/client" && quiet npm run -s fake-prover -- "$W/keeper.json"); }
+keeper() { (cd "$REPO/keeper" && quiet npm run -s keeper -- "$@" "$W/keeper.json"); }
+prove() { (cd "$REPO/keeper" && quiet npm run -s fake-prover -- "$W/keeper.json"); }
 demo_set() { (cd "$REPO/ethereum" && quiet npx hardhat --network localfork demoSet "$@" | grep -oE "DemoLockbox: .*\)"); }
 expect_status() {
     local out
@@ -185,7 +185,7 @@ expect_assert() {
 # snapshots only if a watched result changed: expect_round none|"results changed"
 expect_round() {
     local log=$W/keeper-run.log pid
-    (cd "$REPO/client" && exec node --experimental-wasm-modules build/bin/keeper.js run "$W/keeper.json") >"$log" 2>&1 &
+    (cd "$REPO/keeper" && exec node --experimental-wasm-modules build/bin/keeper.js run "$W/keeper.json") >"$log" 2>&1 &
     pid=$!
     PIDS+=("$pid")
     wait_for "keeper run" "grep -q 'demo-lockbox: [A-Z_]* |' '$log'"

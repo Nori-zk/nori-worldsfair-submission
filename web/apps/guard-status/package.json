@@ -20,7 +20,7 @@
         "format:fix": "prettier --write src/"
     },
     "dependencies": {
-        "@nori-zk/backstop-client": "*",
+        "@nori-zk/backstop-keeper": "*",
         "@nori-zk/nori-bridge-solana-sdk": "0.3.0",
         "@nori-zk/solana-web-ui": "*",
         "@solana/kit": "^8.3.0",

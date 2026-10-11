@@ -1,7 +1,7 @@
 {
-    "name": "@nori-zk/backstop-client",
+    "name": "@nori-zk/backstop-keeper",
     "version": "0.0.1",
-    "description": "Sample client: from a NoriSnapshot transaction to a Backstop submit_read",
+    "description": "Backstop keeper and its library: from a NoriSnapshot transaction to a Backstop submit_read",
     "license": "MIT",
     "type": "module",
     "main": "build/index.js",

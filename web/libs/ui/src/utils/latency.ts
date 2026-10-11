@@ -110,7 +110,7 @@ export function readsOf(
 
 /**
  * The latency at a quantile, picked as the soak report does
- * (`client/src/bin/soakReport.ts`): `sorted[min(n − 1, floor(q × n))]`.
+ * (`keeper/src/bin/soakReport.ts`): `sorted[min(n − 1, floor(q × n))]`.
  *
  * @param sorted Minutes, ascending.
  * @param q The quantile, from 0 to 1.

@@ -1,4 +1,4 @@
-//! Pins Backstop instruction bytes for the TS client (`client/src/backstop.ts`).
+//! Pins Backstop instruction bytes for the TS encoders (`keeper/src/backstop.ts`).
 //! `UPDATE_FIXTURES=1` rewrites them.
 
 use anchor_lang::{prelude::Pubkey, pubkey, InstructionData};
@@ -6,7 +6,7 @@ use backstop::{BackstopError, GuardConfig, ReadKind};
 use nori_read::test_vectors;
 
 /// Any program id works; a fixed one keeps the fixtures stable when the sdk's
-/// program id changes. `client/src/backstop.test.ts` uses the same.
+/// program id changes. `keeper/src/backstop.test.ts` uses the same.
 const NORI_PROGRAM: Pubkey = pubkey!("5xS32i7XNRk7JCjYR7RgfHVxdLepVSnnJ1gdHkmfD8W1");
 
 fn check(name: &str, data: Vec<u8>) {
@@ -40,7 +40,7 @@ fn submit_read_bytes_match_the_fixture() {
     );
 }
 
-/// The sample config `client/src/backstop.test.ts` encodes.
+/// The sample config `keeper/src/backstop.test.ts` encodes.
 #[test]
 fn create_guard_bytes_match_the_fixture() {
     let config = GuardConfig {
@@ -123,7 +123,7 @@ fn guard_account_bytes_match_the_fixture() {
     check("guard-account-sample", data);
 }
 
-/// `client/src/backstop.ts` names these (`BackstopError`): the keeper skips
+/// `keeper/src/backstop.ts` names these (`BackstopError`): the keeper skips
 /// ReadNotNewer and CheckpointTooSoon, and `keeper assert` prints the
 /// rest. New errors go at the end of `BackstopError` so the codes never shift.
 #[test]

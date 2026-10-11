@@ -5,7 +5,7 @@
     "type": "module",
     "workspaces": [
         "ethereum",
-        "client",
+        "keeper",
         "web/libs/ui",
         "web/apps/prove-balance",
         "web/apps/guard-status",
@@ -29,8 +29,8 @@
         "lint": "npm run typecheck -w ethereum && npm run lint --workspaces --if-present",
         "format": "prettier --check .",
         "format:fix": "prettier --write .",
-        "test": "npm run test -w ethereum && npm run test -w client",
-        "test-ci": "npm run test-ci -w ethereum && npm run test-ci -w client",
+        "test": "npm run test -w ethereum && npm run test -w keeper",
+        "test-ci": "npm run test-ci -w ethereum && npm run test-ci -w keeper",
         "clean:modules": "rm -rf node_modules */node_modules */*/node_modules */*/*/node_modules",
         "reinstall": "npm run clean:modules && rm -f package-lock.json && npm install",
         "reinstall:ci": "npm run clean:modules && npm ci"

@@ -15,8 +15,8 @@ import {
     guardStatus,
     mintDecimals,
     mintSupply,
-} from '@nori-zk/backstop-client/guard';
-import { changesOrEvery$ } from '@nori-zk/backstop-client/read';
+} from '@nori-zk/backstop-keeper/guard';
+import { changesOrEvery$ } from '@nori-zk/backstop-keeper/read';
 import { GuardBoardGraph, type GuardRead } from './guardBoard.js';
 
 /** How often the board reads the guards again, as a guard's status moves with the clock. */

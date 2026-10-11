@@ -7,7 +7,7 @@ import {
     createSnapshotVerificationMachine,
     followedStates$,
     type SnapshotVerificationState,
-} from '@nori-zk/backstop-client/read';
+} from '@nori-zk/backstop-keeper/read';
 import { verdictSentence } from '../../utils/verdict.js';
 import styles from './snapshot-block.component.css';
 

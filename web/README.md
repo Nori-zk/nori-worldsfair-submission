@@ -28,10 +28,10 @@ the addresses in `web/.env` (committed: public values only; everything in it rea
 ### Hosting
 
 Each app is a static site: build it and serve its `dist/` at the root of its own domain or
-subdomain (the build's asset paths are absolute). The apps import the client, so build it first:
+subdomain (the build's asset paths are absolute). The apps import `keeper/`, so build it first:
 
 ```sh
-npm ci && npm run build -w client
+npm ci && npm run build -w keeper
 npm run build -w web/dashboards/bridge    # → web/dashboards/bridge/dist
 npm run build -w web/apps/prove-balance   # → web/apps/prove-balance/dist
 npm run build -w web/apps/guard-status    # → web/apps/guard-status/dist
@@ -67,13 +67,13 @@ page's URL holds the snapshot transaction (`?tx=<hash>`) while it is proven, so 
 link picks the same proof up again once the wallet is connected.
 
 Once the batch lands, the app verifies the balance on Solana: it builds the result's witness
-(`createSnapshotVerificationMachine` in [`client/`](../client/README.md)) and simulates
+(`createSnapshotVerificationMachine` in [`keeper/`](../keeper/README.md)) and simulates
 [`nori-read-example`](../programs/nori-read-example/src/lib.rs)'s `read_snapshot_result`. It
 shows what the program verified: the balance, the Ethereum block and its time, the Nori batch,
 and the compute units (~2.5k). A simulation needs no wallet and no fee; it names
 `NORI_WEB_SOLANA_FEE_PAYER` as fee payer, which signs and pays nothing. Any Solana program can
 make the same check with [`nori-read`](../nori-read/README.md). To record it on-chain, with a
-transaction to link to: `npm run keeper -w client -- verify <snapshot tx>`.
+transaction to link to: `npm run keeper -w keeper -- verify <snapshot tx>`.
 
 ## Guard status
 

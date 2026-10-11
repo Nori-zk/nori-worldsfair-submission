@@ -1,4 +1,4 @@
-import { CHECKPOINTS, type Checkpoint, type GuardState } from '@nori-zk/backstop-client/guard';
+import { CHECKPOINTS, type Checkpoint, type GuardState } from '@nori-zk/backstop-keeper/guard';
 import { amount, clock } from './format.js';
 
 /** How many checkpoints the pane lists, newest first. */
