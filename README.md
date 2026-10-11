@@ -90,7 +90,6 @@ Create guards only after that program is initialized: a guard pins it.
 | Keeper, local dry run                                                                    | Built                                                                                                              |
 | Browser apps: prove a balance, bridge dashboard                                          | Built (Sepolia + Solana devnet)                                                                                    |
 | Live loop on Sepolia + Solana devnet                                                     | Running on real proofs since 7 Oct ([results](docs/README.md#test-deployments-sepolia--solana-devnet-68-oct-2026)) |
-| `enforce`: pause a Token-2022 mint when its guard trips                                  | Roadmap                                                                                                            |
 | Separate warn tolerance (in-flight transfers) from the trip tolerance                    | Roadmap (one `tolerance` today)                                                                                    |
 | Auto-unlatch for Solana-only custody; timelocked admin `unlatch`                         | Roadmap (admin `unlatch` today)                                                                                    |
 | Check the Solana mint's authority is the expected bridge                                 | Roadmap                                                                                                            |

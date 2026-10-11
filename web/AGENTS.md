@@ -10,7 +10,7 @@ At the start of every new session, before anything else, prompt the user to have
 Read all of it, in full, before any work in a session, and tell the user what you have read. Grepping or skimming parts does not count. Code written before reading invents what already exists.
 
 - This repo: [AGENTS.md](../AGENTS.md), [README.md](../README.md), [docs/README.md](../docs/README.md), [docs/how-it-works.drawio.png](../docs/how-it-works.drawio.png), [ethereum/README.md](../ethereum/README.md), every contract in `ethereum/contracts/` (`NoriSnapshot.sol`, `interfaces/INoriProofRequestQueue.sol`, `demo/DemoLockbox.sol`, and the test contracts in `test/`), [nori-read/README.md](../nori-read/README.md), [programs/backstop/README.md](../programs/backstop/README.md), [keeper/README.md](../keeper/README.md), [web/README.md](README.md).
-- The sdk: read the sibling checkout `../nori-solana-sdk`, at the pinned commit (root AGENTS.md, Quirks: one sdk release). Use what the sdk exports before writing anything of your own; changing it follows its AGENTS.md procedure. In `../nori-solana-sdk`:
+- The sdk: read [nori-solana-sdk](https://github.com/Nori-zk/nori-solana-sdk), cloned next to this repo as `../nori-solana-sdk`, at the pinned commit (root AGENTS.md, Quirks: one sdk release). Use what the sdk exports before writing anything of your own; changing it follows its AGENTS.md procedure. In `../nori-solana-sdk`:
     - `AGENTS.md`, `README.md`, `sdk/README.md`
     - `ethereum/contracts/NoriProofRequestQueue.sol`, `ethereum/contracts/NoriTokenBridge.sol`
     - The Solana program: every file in `programs/token/src/`
@@ -25,8 +25,8 @@ Read all of it, in full, before any work in a session, and tell the user what yo
     - Connections and reads: `sdk/src/rpc/connection/` `connections.ts`, `connectionGrants.ts`, `connectionNotReady.ts`, `healthCheckTimings.ts`, `websocket.ts`, `jsonRpcTopic.ts`; `sdk/src/proofRequest/` `connectedRead.ts`, `getProofRequestStateSnapshot.ts`, `fetchProofRequestHistory.ts`, `proofRequestSnapshots.ts`, `waitingProofRequests.ts`, `types.ts`
     - The lowest steps, one RPC call each, that a read is built from: `sdk/src/rpc/eth/` `ethRpcRead.ts`, `blockRanges.ts`, `blockNumber.ts`, `blockTimestamp.ts`, `enqueuedProofRequests.ts`, `proofRequest.ts`, `proofRequestsByTarget.ts`, `proofRequestBatch.ts`, `proofQueueHead.ts`, `transactionReceipt.ts`, `topics.ts`, `errors.ts`, `eip1193.ts`, `ethereumHttp.ts`, `ethereumWebsocket.ts`, `walletSubscriptions.ts`; `sdk/src/rpc/solana/` `solanaRpcRead.ts`, `programAddresses.ts`, `bridgeState.ts`, `proofQueueBatches.ts`, `proofQueueBatchSummaries.ts`, `proofQueueBatchCovering.ts`, `account.ts`, `signatureStatus.ts`, `transactionLogs.ts`, `slots.ts`, `accountChecks.ts`, `errors.ts`, `solanaHttp.ts`, `solanaWebsocket.ts`
     - Nori websocket: `sdk/src/rpc/nori/` `noriWebsocket.ts`, `topics.ts`, `state.ts`, `proofRequest.ts`, `commitTimes.ts`
-- ystate: the whole [README](https://github.com/yaw-rx/ystate/blob/main/packages/ystate/README.md) and the studio's [default-workspaces.ts](https://github.com/yaw-rx/ystate/blob/main/packages/studio/src/app-root/default-workspaces.ts) (local: `../yaw/ystate`).
-- yaw: [yaw-example](https://github.com/yaw-rx/yaw/tree/main/packages/yaw-example) and the [docs](https://yaw-rx.github.io/docs/) (local: `../yaw/yaw`).
+- ystate: the whole [README](https://github.com/yaw-rx/ystate/blob/main/packages/ystate/README.md) and the studio's [default-workspaces.ts](https://github.com/yaw-rx/ystate/blob/main/packages/studio/src/app-root/default-workspaces.ts).
+- yaw: [yaw-example](https://github.com/yaw-rx/yaw/tree/main/packages/yaw-example) and the [docs](https://yaw-rx.github.io/docs/).
 - This file, then the "web/ (yaw + ystate)" section again before any `web/` change.
 
 ## Quirks
