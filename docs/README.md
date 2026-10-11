@@ -14,7 +14,7 @@
 | [nori-read/README.md](../nori-read/README.md)                                   | Verify a snapshot result in your Solana program                                   |
 | [programs/backstop/README.md](../programs/backstop/README.md)                   | Circuit breaker for one bridged asset; [guard diagram](backstop-guard.drawio.png) |
 | [keeper/README.md](../keeper/README.md)                                         | Keeper CLI, its library and the local dry run                                     |
-| [web/README.md](../web/README.md)                                               | Browser apps: prove a balance, bridge dashboard                                   |
+| [web/README.md](../web/README.md)                                               | Browser apps: prove a balance, guard status, proven facts, bridge dashboard       |
 | [test-vectors/nori-snapshot/README.md](../test-vectors/nori-snapshot/README.md) | Test data shared by the TS and Rust tests                                         |
 
 Upstream: the Nori SDK at the pinned release (npm 0.3.0, git `ee4cc78`)

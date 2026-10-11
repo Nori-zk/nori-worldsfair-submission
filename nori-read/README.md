@@ -1,7 +1,8 @@
 # nori-read
 
 Rust crate: verify one `NoriSnapshot` result inside a Solana program, against a
-proof queue batch the Nori light client proved. About 3,400 CU.
+proof queue batch the Nori light client proved. About 3,200 CU for a whole
+`nori-read-example` read on surfpool (its test prints them).
 
 ```rust
 use nori_read::{load_proof_queue_batch, verify_snapshot_result, NORI_PROGRAM_ID};

@@ -44,7 +44,7 @@ export const MAINNET = {
 
 /**
  * Backing and pause facts for the Ethereum-bridged assets on Solana that the
- * guards check (NORI-backstop-spec.md §2.2).
+ * guards check.
  */
 export const MAINNET_SNAPSHOT_QUERIES: readonly SnapshotQuery[] = [
     {

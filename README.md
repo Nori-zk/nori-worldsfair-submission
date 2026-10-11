@@ -1,13 +1,19 @@
 # Nori: World's Fair submission
 
-Read Ethereum state from any Solana program, proven instead of relayed.
+Nori is infrastructure for reading Ethereum state from Solana (and Tempo), proven instead of
+relayed: no signers or oracles in between. This repo is the Solana side of Nori's World's Fair
+entry: `NoriSnapshot` batches any Ethereum view calls on Sepolia, Nori's prover proves them with
+Helios inside SP1, and [`nori-read`](nori-read/README.md) checks one answer inside any Solana
+program on devnet, in one call. The first consumer is Backstop, a circuit breaker that trips when
+a bridged token's proven backing on Ethereum falls below its supply on Solana.
 
 ![How a read works](docs/how-it-works.drawio.png)
 
-## Where it stands (8 Oct)
+## Where it stands (12 Oct)
 
-- **Live on real Nori proofs**, Ethereum Sepolia → Solana devnet, since 7 Oct.
-- **10-hour soak:** 39 of 39 snapshots proven and applied; a read reaches Solana a median
+- **Live on real Nori proofs**, Ethereum Sepolia → Solana devnet: the prover since 7 Oct;
+  the Backstop keeper, paused on 11 Oct, has run on its own server since 12 Oct, in a 7-day soak.
+- **10-hour soak (7–8 Oct):** 39 of 39 snapshots proven and applied; a read reaches Solana a median
   18 min after its Ethereum block (15–22), almost all of it Ethereum finality. An untouched
   guard stayed HEALTHY all night.
 - **Drain demo:** draining the lockbox trips the guard; a refill doesn't reset it; the
@@ -38,8 +44,10 @@ Addresses and numbers: [docs/README.md](docs/README.md).
 git clone https://github.com/Nori-zk/nori-worldsfair-submission
 npm install && npm run build
 npm test                 # ethereum contracts, then the keeper
+npm run test --workspaces --if-present  # the same, plus the web apps' unit tests
 npm run lint             # every workspace
 cargo test --locked -p nori-read  # Solana-side verification
+cargo test --locked -p backstop -p nori-read-example  # the programs on surfpool; cargo build-sbf them first (AGENTS.md)
 scripts/dry-run.sh       # the whole loop on local chains, with a fake prover
 ```
 
@@ -57,6 +65,9 @@ npm run dev -w web/apps/guard-status    # each Backstop guard in plain words: ht
 npm run dev -w web/apps/proven-facts    # what NoriSnapshot read on Ethereum, proven on Solana: http://localhost:5182
 npm run dev -w web/dashboards/bridge    # every proof request from Ethereum to Solana, live: http://localhost:7400
 ```
+
+Every page links to the others along its top; to host them, set their addresses
+(`NORI_WEB_*_URL`) as [web/README.md](web/README.md#hosting) says.
 
 ## Deploy (Sepolia + Solana devnet)
 
@@ -83,17 +94,37 @@ Create guards only after that program is initialized: a guard pins it.
 
 ## Built vs roadmap
 
-|                                                                                          | Status                                                                                                             |
-| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| NoriSnapshot (batched reads) and `nori-read`                                             | Built                                                                                                              |
-| Backstop guards: trip rule, latch, paused-at-source, stale, `assert_healthy` for lenders | Built                                                                                                              |
-| Keeper, local dry run                                                                    | Built                                                                                                              |
-| Browser apps: prove a balance, bridge dashboard                                          | Built (Sepolia + Solana devnet)                                                                                    |
-| Live loop on Sepolia + Solana devnet                                                     | Running on real proofs since 7 Oct ([results](docs/README.md#test-deployments-sepolia--solana-devnet-68-oct-2026)) |
-| Separate warn tolerance (in-flight transfers) from the trip tolerance                    | Roadmap (one `tolerance` today)                                                                                    |
-| Auto-unlatch for Solana-only custody; timelocked admin `unlatch`                         | Roadmap (admin `unlatch` today)                                                                                    |
-| Check the Solana mint's authority is the expected bridge                                 | Roadmap                                                                                                            |
-| Direct storage proofs: any slot, no Ethereum transaction                                 | Roadmap                                                                                                            |
+|                                                                                          | Status                                                                                                                                                 |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| NoriSnapshot (batched reads) and `nori-read`                                             | Built                                                                                                                                                  |
+| Backstop guards: trip rule, latch, paused-at-source, stale, `assert_healthy` for lenders | Built                                                                                                                                                  |
+| Keeper (`keeper/`), local dry run                                                        | Built                                                                                                                                                  |
+| Browser apps: prove a balance, guard status, proven facts, bridge dashboard              | Built (Sepolia + Solana devnet)                                                                                                                        |
+| Live loop on Sepolia + Solana devnet                                                     | Prover on real proofs since 7 Oct, keeper in a 7-day soak since 12 Oct ([results](docs/README.md#test-deployments-sepolia--solana-devnet-68-oct-2026)) |
+| Separate warn tolerance (in-flight transfers) from the trip tolerance                    | Roadmap (one `tolerance` today)                                                                                                                        |
+| Auto-unlatch for Solana-only custody; timelocked admin `unlatch`                         | Roadmap (admin `unlatch` today)                                                                                                                        |
+| Check the Solana mint's authority is the expected bridge                                 | Roadmap                                                                                                                                                |
+| Direct storage proofs: any slot, no Ethereum transaction                                 | Roadmap                                                                                                                                                |
 
 Direct proofs work because each Nori update already puts Ethereum's state
 root on Solana. The hackathon build uses snapshots through the existing proof queue.
+
+## Tempo
+
+[nori-worldsfair-submission-tempo](https://github.com/Nori-zk/nori-worldsfair-submission-tempo)
+ports `NoriRead` and Backstop to Solidity on Tempo. Each reader chain has its own proof request
+queue and its own Groth16 proof from the same Helios-in-SP1 program, so a similar proof feeds
+Tempo. The contracts pass local dry runs (a Sepolia fork and a local Tempo node, with a fake
+prover); there is no live Tempo infrastructure for the hackathon, as the team had limited time
+and resources to run a second one. The token-migration app is still being worked on.
+
+## What was built during the hackathon
+
+Before the World's Fair started on 14 Sep 2026, Nori had its prover,
+[nori-bridge-head](https://github.com/Nori-zk/nori-bridge-head) (Helios inside SP1, a fork of
+Succinct's sp1-helios), and its SP1 v6 fork of Succinct's
+[sp1-solana](https://github.com/Nori-zk/sp1-solana), the Groth16 verifier, used as is;
+[nori-solana-sdk](https://github.com/Nori-zk/nori-solana-sdk) held a 332-line stub program.
+Built during the hackathon, from 14 Sep on: the prover's port to Solana and Tempo, the SDK's
+real work (the light-client program, proof submission, the TypeScript SDK), and everything in
+this repo: NoriSnapshot, `nori-read`, Backstop, the keeper and the four web apps.
