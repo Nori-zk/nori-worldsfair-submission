@@ -6,11 +6,9 @@ import styles from './latency-headline.component.css';
 
 /**
  * The bridge dashboard's latency tab, where every read is listed with its
- * batch and landing transaction. In dev the dashboard runs on :7400
- * (`web/README.md`). The dashboard is served from the same host as this app,
- * so the link follows the page's own hostname; there is no build constant for it.
+ * batch and landing transaction, at `NORI_WEB_DASHBOARD_URL` from `web/.env`.
  */
-const DASHBOARD_LATENCY_URL = `${window.location.protocol}//${window.location.hostname}:7400/?view=latency`;
+const DASHBOARD_LATENCY_URL = new URL('?view=latency', NORI_WEB_ENV.urls.dashboard).href;
 
 /** One read of the latency headline: what it says while it reads, has read, or failed. */
 interface HeadlineView {

@@ -36,6 +36,15 @@ export interface WebEnv {
         /** The bridge's websocket, for the live processing stages. */
         wssUrl: string;
     };
+    /** Each app's and dashboard's address, for the links along the top of every page. */
+    urls: {
+        proveBalance: string;
+        guardStatus: string;
+        provenFacts: string;
+        dashboard: string;
+        /** The Tempo submission's bridge dashboard, or `''` to leave its link out. */
+        tempoDashboard: string;
+    };
 }
 
 const SOLANA_CLUSTERS: readonly SolanaCluster[] = ['mainnet', 'devnet', 'testnet'];
@@ -93,6 +102,13 @@ export function loadWebEnv(): WebEnv {
         }
     };
 
+    const readHttpUrl = (name: string): string => {
+        const url = read(name);
+        if (!/^https?:\/\//.test(url))
+            throw new WebEnvError(name, 'is not an http:// or https:// URL');
+        return url;
+    };
+
     const readSolanaAddress = (name: string): Address => {
         try {
             return address(read(name));
@@ -108,9 +124,7 @@ export function loadWebEnv(): WebEnv {
             'NORI_WEB_SOLANA_CLUSTER',
             `is not one of ${SOLANA_CLUSTERS.join(', ')}`,
         );
-    const rpcUrl = read('NORI_WEB_ETH_RPC_URL');
-    if (!/^https?:\/\//.test(rpcUrl))
-        throw new WebEnvError('NORI_WEB_ETH_RPC_URL', 'is not an http:// or https:// URL');
+    const rpcUrl = readHttpUrl('NORI_WEB_ETH_RPC_URL');
     const solanaRpcUrl = process.env.NORI_WEB_SOLANA_RPC_URL || file.NORI_WEB_SOLANA_RPC_URL || '';
     if (solanaRpcUrl !== '' && !/^https?:\/\//.test(solanaRpcUrl))
         throw new WebEnvError('NORI_WEB_SOLANA_RPC_URL', 'is not an http:// or https:// URL');
@@ -133,5 +147,15 @@ export function loadWebEnv(): WebEnv {
             feePayer: readSolanaAddress('NORI_WEB_SOLANA_FEE_PAYER'),
         },
         bridge: { wssUrl },
+        urls: {
+            proveBalance: readHttpUrl('NORI_WEB_PROVE_BALANCE_URL'),
+            guardStatus: readHttpUrl('NORI_WEB_GUARD_STATUS_URL'),
+            provenFacts: readHttpUrl('NORI_WEB_PROVEN_FACTS_URL'),
+            dashboard: readHttpUrl('NORI_WEB_DASHBOARD_URL'),
+            tempoDashboard:
+                process.env.NORI_WEB_TEMPO_DASHBOARD_URL || file.NORI_WEB_TEMPO_DASHBOARD_URL
+                    ? readHttpUrl('NORI_WEB_TEMPO_DASHBOARD_URL')
+                    : '',
+        },
     };
 }

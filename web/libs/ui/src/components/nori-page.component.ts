@@ -16,15 +16,17 @@ const BEAM = `
 `;
 
 /**
- * Every page's frame, as in the bridge zkapp: the background, Nori's logo,
- * the card with its heading and lede over its children, a beam on each side
- * of it once both chains are ready, and the connection pins along the bottom.
+ * Every page's frame, as in the bridge zkapp: the background, the links to
+ * each app and dashboard along the top, Nori's logo, the card with its
+ * heading and lede over its children, a beam on each side of it once both
+ * chains are ready, and the connection pins along the bottom.
  */
 @Component({
     selector: 'nori-page',
     directives: [RxIf],
     template: `
         <nori-background></nori-background>
+        <nori-nav [heading]="heading"></nori-nav>
         <header>
             <img class="logo" src="${noriLogo}" alt="Nori" />
         </header>

@@ -43,6 +43,11 @@ Prove balance reads through the wallet) and `NORI_WEB_SOLANA_RPC_URL` (both apps
 against the cluster's genesis) in the host's build environment rather than `web/.env`. They are
 built into the page, so anyone can read them: restrict each key to your domains at the provider.
 
+Every page links to the others along its top. Set each one's hosted address there too:
+`NORI_WEB_PROVE_BALANCE_URL`, `NORI_WEB_GUARD_STATUS_URL`, `NORI_WEB_PROVEN_FACTS_URL` and
+`NORI_WEB_DASHBOARD_URL` (`web/.env` has the dev servers'), and `NORI_WEB_TEMPO_DASHBOARD_URL`,
+the Tempo submission's bridge dashboard, linked only when set.
+
 ## Prove balance
 
 Connect an Ethereum wallet. The app asks you to install MetaMask if you have none, to pick
@@ -108,8 +113,7 @@ time. No wallet needed: Ethereum reads fall back to `NORI_WEB_ETH_RPC_URL`.
 At the top, one line: how long a read takes from its Ethereum block to the Solana transaction
 that lands its batch, as the median over the reads in the 30 newest batches, with p90, fastest
 and slowest under it. These are the numbers the dashboard's Latency tab shows; the tab, linked
-from the line, lists every read. The link is the dev dashboard's, `http://localhost:7400`
-(`DASHBOARD_LATENCY_URL` in `latency-headline.component.ts`): change it when hosting.
+from the line, lists every read, at `NORI_WEB_DASHBOARD_URL`.
 
 Below it, the 25 newest snapshots, newest first. Each says when and at which Ethereum block its
 view calls ran, whether Nori has proven it on Solana yet, and what they returned, as sentences:

@@ -17,6 +17,7 @@ export { ProgressBar } from './components/progress-bar.component.js';
 export { NoriBackground } from './components/nori-background.component.js';
 export { NoriCard } from './components/nori-card.component.js';
 export { NoriPage } from './components/nori-page.component.js';
+export { NoriNav } from './components/nori-nav.component.js';
 export {
     NORI_BRIDGE_INFRA_STAGE_ORDER,
     NORI_BRIDGE_INFRA_STAGE_TEXT,
