@@ -3,6 +3,7 @@
 ## Start here
 
 - [README](../README.md): what this is, how to run it, how to deploy.
+- [Quickstart](../README.md#read-any-ethereum-view-function-from-solana-quickstart): read an Ethereum view function from Solana, locally in ~4 min or live on Sepolia → devnet.
 - [How a read works](how-it-works.drawio.png): the whole loop, Ethereum to any Solana program.
 - [AGENTS.md](../AGENTS.md): commands, quirks and the rules that bite (for developers and coding agents).
 
