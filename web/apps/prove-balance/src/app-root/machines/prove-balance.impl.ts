@@ -1,8 +1,10 @@
 import {
+    concat,
     debounceTime,
     distinctUntilChanged,
     filter,
     map,
+    NEVER,
     type Observable,
     pairwise,
     share,
@@ -231,15 +233,19 @@ export function createProveBalanceMachine(
                 'awaitingSignature',
             ).pipe(
                 switchMap((data) =>
-                    followedStates$(() => {
-                        const transaction = createWalletTransactionMachine(
-                            connections,
-                            snapshotCall(addresses.snapshotAddress, data),
-                            { errors: noriSnapshotInterface },
-                        );
-                        transaction.send();
-                        return transaction;
-                    }),
+                    concat(
+                        followedStates$(() => {
+                            const transaction = createWalletTransactionMachine(
+                                connections,
+                                snapshotCall(addresses.snapshotAddress, data),
+                                { errors: noriSnapshotInterface },
+                            );
+                            transaction.send();
+                            return transaction;
+                        }),
+                        // Its states end at `confirmed`; the edges still following it wait instead.
+                        NEVER,
+                    ),
                 ),
                 heldAcrossMoves(),
             );
@@ -412,7 +418,9 @@ export function createProveBalanceMachine(
                         transaction$.pipe(
                             map((state) => {
                                 if (state.node === 'refused') return state.data.errorName;
-                                if (state.node === 'sendFailed') return state.data.error;
+                                // The wallet's own error is not for the page: say what happened in plain words.
+                                if (state.node === 'sendFailed')
+                                    return "Your wallet couldn't send the transaction. Prove again once it has no transaction pending.";
                                 if (state.node === 'notReadyToSend')
                                     return `Waiting on ${state.data.waitingOn.join(', ')}`;
                                 return undefined;
