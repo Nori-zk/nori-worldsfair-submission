@@ -1,9 +1,9 @@
 # web: browser apps
 
 Four apps on Sepolia + Solana devnet, built with [yaw](https://yaw-rx.github.io/) and
-[ystate](https://ystate.github.io/) on the Nori SDK. Each app with a flow has it as a ystate graph,
-drawn next to it (`ProveBalanceGraph.svg`, `BridgeBatchesGraph.svg`); Guard status and Proven
-facts have no flow of their own and show the shared reads.
+[ystate](https://ystate.github.io/) on the Nori SDK. Prove balance's flow is a ystate graph,
+drawn next to it (`machines/ProveBalanceGraph.svg`); the bridge dashboard shows the sdk's batches
+machines; Guard status and Proven facts show the shared reads, each a machine in `libs/ui`.
 
 | Package              | What                                                                                                                                                                                                              |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -62,7 +62,7 @@ page's URL holds the snapshot transaction (`?tx=<hash>`) while it is proven, so 
 link picks the same proof up again once the wallet is connected.
 
 Once the batch lands, the app verifies the balance on Solana: it builds the result's witness
-(`verifySnapshotResult` in [`client/`](../client/README.md)) and simulates
+(`createSnapshotVerificationMachine` in [`client/`](../client/README.md)) and simulates
 [`nori-read-example`](../programs/nori-read-example/src/lib.rs)'s `read_snapshot_result`. It
 shows what the program verified: the balance, the Ethereum block and its time, the Nori batch,
 and the compute units (~2.5k). A simulation needs no wallet and no fee; it names

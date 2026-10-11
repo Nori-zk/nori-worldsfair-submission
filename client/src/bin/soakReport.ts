@@ -5,6 +5,7 @@
 // Usage: soak-report <config.json> <keeper.log>
 import { readFileSync } from 'node:fs';
 import { FetchRequest, JsonRpcProvider } from 'ethers';
+import { switchMap } from 'rxjs';
 import { loadConfig, loadEnv } from '../keeper/config.js';
 import { Keeper } from '../keeper/keeper.js';
 import { RPC_TIMEOUT_MS } from '../keeper/solana.js';
@@ -152,7 +153,23 @@ const out: string[] = [
     '```',
 ];
 console.log(out.join('\n'));
-const keeper = await Keeper.connect(config);
-await keeper.status();
-console.log('```');
-process.exit(0);
+let connected: Keeper | undefined;
+Keeper.connect$(config)
+    .pipe(
+        switchMap((keeper) => {
+            connected = keeper;
+            return keeper.status$();
+        })
+    )
+    .subscribe({
+        complete: () => {
+            console.log('```');
+            connected?.close();
+            process.exit(0);
+        },
+        error: (error: unknown) => {
+            console.error(error);
+            connected?.close();
+            process.exit(1);
+        },
+    });

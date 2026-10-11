@@ -2,9 +2,12 @@
 
 Sample client and keeper CLI, in Node. The browser apps are in [web/](../web/README.md).
 
-- `fetchProvenSnapshot`: snapshot transaction -> the witness for any of its results, once Nori has proven its batch. Reads through the sdk's `createConnections`.
-- `verifySnapshotResult`: verifies one result on Solana by simulating `nori-read-example`'s `read_snapshot_result` (no signature, no fee; the fee payer must be an existing funded account). `@nori-zk/backstop-client/read` exports it without the Backstop encoders, for browsers.
-- `createGuardInstruction`, `submitReadInstruction`, `checkpointInstruction`, `assertHealthyInstruction`, `decodeGuard`: bytes pinned to the Rust program (`test-vectors/backstop`); `decodeGuard` also returns the supply checkpoints the guard keeps (the last 64), oldest first. `BackstopError`: its error codes.
+- `createProvenRequestMachine`: one proof request until Nori has proven its batch, with the request's witness in it; it gates on the sdk's proof request machine, which its creator owns.
+- `createSnapshotEventMachine`: a snapshot transaction's `Snapshot` event, read from its receipt through the sdk's connections.
+- `createSnapshotVerificationMachine`: verifies one result on Solana, from the snapshot transaction on, by simulating `nori-read-example`'s `read_snapshot_result` with the result's witness (`createSnapshotResultSimulationMachine`; no signature, no fee; the fee payer must be an existing funded account).
+- `createAssertHealthyMachine`: one guard's `assert_healthy`, simulated as a lender calls it.
+- `followedStates$`, `heldAcrossMoves`, `valueOnce$`: a machine made for one thing inside a stream, and closed with it. `@nori-zk/backstop-client/read` exports these and the machines above without the Backstop encoders, for browsers.
+- `createGuardInstruction$`, `guardAddress$`, `submitReadInstruction`, `checkpointInstruction`, `assertHealthyInstruction`, `decodeGuard`: bytes pinned to the Rust program (`test-vectors/backstop`); `decodeGuard` also returns the supply checkpoints the guard keeps (the last 64), oldest first. `BackstopError`: its error codes.
 - `guardStatus`, `mintSupply`, `mintDecimals`: a guard's status against its mint's live supply. `@nori-zk/backstop-client/guard` exports them with `decodeGuard`, `assertHealthyInstruction`, `BackstopError`, `BACKSTOP_ERROR_MESSAGE` and the transaction error helpers (`customErrorOf`, `transactionErrorText`), for browsers.
 
 ## Keeper
@@ -19,7 +22,9 @@ npm run keeper -- verify <snapshot tx> # nori-read-example verifies each result 
 
 The default config, `keeper.demo.json`, takes its `${VARS}` from the repo's `.env`
 and the deploy outputs (see the root README, "Deploy"); an empty value counts as unset.
-`ETH_PRIVATE_KEY` signs the snapshot transactions. Another config: pass its path last.
+`ETH_PRIVATE_KEY` signs the snapshot transactions. `ETH_CHAIN_ID` and `SOLANA_GENESIS_HASH`
+name the chains the RPCs must be on (`ethereum.chainId`, `solana.genesisHash`); the keeper
+refuses an RPC on another. Another config: pass its path last.
 
 ## Overnight soak (a second, untouched guard)
 

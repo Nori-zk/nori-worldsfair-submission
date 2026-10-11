@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { EMPTY, type Observable, switchMap } from 'rxjs';
 import { loadConfig, loadEnv } from '../keeper/config.js';
 import { Keeper } from '../keeper/keeper.js';
 
@@ -48,35 +49,36 @@ if (
     process.exit(command ? 1 : 0);
 }
 
+/** Each command: what it does, until it completes (`run` never does). */
+const run: Record<string, (keeper: Keeper) => Observable<unknown>> = {
+    'create-guards': (keeper) => keeper.createGuards$(),
+    snapshot: (keeper) => keeper.snapshot$(),
+    checkpoint: (keeper) => keeper.checkpoint$(),
+    submit: (keeper) => keeper.submit$(),
+    status: (keeper) => keeper.status$(),
+    verify: (keeper) => keeper.verify$(txHash ?? ''),
+    assert: (keeper) => keeper.assertHealthy$(send),
+    unlatch: (keeper) => keeper.unlatch$(),
+    run: (keeper) => keeper.run$(),
+};
+
 loadEnv();
-const keeper = await Keeper.connect(loadConfig(configPath));
-switch (command) {
-    case 'create-guards':
-        await keeper.createGuards();
-        break;
-    case 'snapshot':
-        await keeper.snapshot();
-        break;
-    case 'checkpoint':
-        await keeper.checkpoint();
-        break;
-    case 'submit':
-        await keeper.submit();
-        break;
-    case 'status':
-        await keeper.status();
-        break;
-    case 'verify':
-        await keeper.verify(txHash ?? '');
-        break;
-    case 'assert':
-        await keeper.assertHealthy(send);
-        break;
-    case 'unlatch':
-        await keeper.unlatch();
-        break;
-    case 'run':
-        await keeper.run();
-        break;
-}
-if (command !== 'run') process.exit(0);
+let connected: Keeper | undefined;
+Keeper.connect$(loadConfig(configPath))
+    .pipe(
+        switchMap((keeper) => {
+            connected = keeper;
+            return run[command]?.(keeper) ?? EMPTY;
+        })
+    )
+    .subscribe({
+        complete: () => {
+            connected?.close();
+            process.exit(0);
+        },
+        error: (error: unknown) => {
+            console.error(error);
+            connected?.close();
+            process.exit(1);
+        },
+    });

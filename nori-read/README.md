@@ -14,7 +14,8 @@ let proven = verify_snapshot_result(&batch, &NORI_SNAPSHOT, &QUERY_ID, &witness)
 ```
 
 The witness is built off-chain from the `Snapshot` event and the queue
-(`fetchProvenSnapshot` in [`client/`](../client)).
+(`createSnapshotEventMachine`, `createProvenRequestMachine` and `snapshotResultWitness` in
+[`client/`](../client)).
 
 Your program must:
 

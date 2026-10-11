@@ -1,6 +1,6 @@
 import { Component } from '@yaw-rx/core';
 import { combineLatest, map, take, type Observable } from 'rxjs';
-import type { EthereumWalletState } from '@nori-zk/nori-bridge-solana-sdk';
+import type { EthereumWalletState, WalletAccountState } from '@nori-zk/nori-bridge-solana-sdk';
 import { ethereumLogo } from '../../brand/brand.js';
 import { ChainButton } from './chain-button.component.js';
 
@@ -58,30 +58,16 @@ const ethereumText = (wallet: EthereumWalletState, expectedChainId: bigint): str
 };
 
 /**
- * The wallet's own error, when its state carries one.
+ * Whether the wallet shares no account: none yet, or the user declined.
+ * The account machine waits for the wallet itself, so it is only here
+ * while the wallet is ready.
  *
- * @param wallet The wallet machine's state.
- * @returns The error, or an empty string.
- */
-const walletError = (wallet: EthereumWalletState): string => {
-    if (wallet.node === 'unreachable') return wallet.data.error;
-    if (wallet.node === 'wrongNetwork') return wallet.data.lastSwitchError;
-    return '';
-};
-
-/**
- * Whether the wallet is on the expected chain and reads can run, but it has
- * shared no account yet.
- *
- * @param wallet The wallet machine's state.
- * @param account The wallet's first account, or an empty string.
+ * @param account The account machine's state.
  * @returns Whether the user still has to share an account.
  */
-const needsAccount = (
-    wallet: EthereumWalletState,
-    account: string,
-): wallet is Extract<EthereumWalletState, { node: 'ready' }> =>
-    wallet.node === 'ready' && account === '';
+const needsAccount = (account: WalletAccountState): boolean =>
+    (account.node === 'current' && account.data.account === undefined) ||
+    account.node === 'shareDeclined';
 
 /**
  * The Ethereum side of the wallet pair: the user's wallet, which Ethereum
@@ -98,8 +84,8 @@ const needsAccount = (
     `,
 })
 export class EthereumButton extends ChainButton {
-    private get states$(): Observable<[EthereumWalletState, string]> {
-        return combineLatest([this.connections.walletState$, this.connections.account$]);
+    private get states$(): Observable<[EthereumWalletState, WalletAccountState]> {
+        return combineLatest([this.connections.walletState$, this.connections.accountState$]);
     }
 
     private get expectedChainId(): bigint {
@@ -108,24 +94,29 @@ export class EthereumButton extends ChainButton {
 
     get text$(): Observable<string> {
         return this.states$.pipe(
-            map(([wallet, account]) =>
-                needsAccount(wallet, account)
-                    ? `Connect ${wallet.data.wallet.name}`
-                    : ethereumText(wallet, this.expectedChainId),
-            ),
+            map(([wallet, account]) => {
+                if (wallet.node !== 'ready') return ethereumText(wallet, this.expectedChainId);
+                if (account.node === 'askingToShareAccount')
+                    return `Confirm in ${wallet.data.wallet.name}`;
+                if (needsAccount(account)) return `Connect ${wallet.data.wallet.name}`;
+                return ethereumText(wallet, this.expectedChainId);
+            }),
         );
     }
 
-    /** The button's text, or the wallet's error when it has one. */
+    /** The wallet's state in words, as the button's tooltip. */
     get detail$(): Observable<string> {
-        return this.states$.pipe(
-            map(([wallet]) => walletError(wallet) || ethereumText(wallet, this.expectedChainId)),
-        );
+        return this.states$.pipe(map(([wallet]) => ethereumText(wallet, this.expectedChainId)));
     }
 
     get ready$(): Observable<boolean> {
         return this.states$.pipe(
-            map(([wallet, account]) => wallet.node === 'ready' && account !== ''),
+            map(
+                ([wallet, account]) =>
+                    wallet.node === 'ready' &&
+                    account.node === 'current' &&
+                    account.data.account !== undefined,
+            ),
         );
     }
 
@@ -135,7 +126,7 @@ export class EthereumButton extends ChainButton {
                 ([wallet, account]) =>
                     wallet.node !== 'noWalletFound' &&
                     wallet.node !== 'wrongNetwork' &&
-                    !needsAccount(wallet, account),
+                    !needsAccount(account),
             ),
         );
     }
@@ -145,7 +136,7 @@ export class EthereumButton extends ChainButton {
             if (wallet.node === 'noWalletFound')
                 window.open(METAMASK_DOWNLOAD_URL, '_blank', 'noopener');
             if (wallet.node === 'wrongNetwork') this.connections.wallet.switchToExpectedChain();
-            if (needsAccount(wallet, account)) this.connections.connectAccount();
+            if (needsAccount(account)) this.connections.connectAccount();
         });
     }
 }

@@ -14,8 +14,10 @@ button {
     font: inherit;
     text-align: left;
 }
-button:hover {
-    background: var(--nori-connected-green);
+@media (hover: hover) {
+    button:hover {
+        background: var(--nori-connected-green);
+    }
 }
 img {
     width: 1.4rem;

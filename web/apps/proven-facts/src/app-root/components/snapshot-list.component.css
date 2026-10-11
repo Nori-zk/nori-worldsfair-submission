@@ -17,8 +17,10 @@ a {
     text-decoration: none;
     white-space: nowrap;
 }
-a:hover {
-    text-decoration: underline;
+@media (hover: hover) {
+    a:hover {
+        text-decoration: underline;
+    }
 }
 .status {
     display: flex;
@@ -43,8 +45,10 @@ button {
     font: inherit;
     white-space: nowrap;
 }
-button:hover {
-    text-decoration: underline;
+@media (hover: hover) {
+    button:hover {
+        text-decoration: underline;
+    }
 }
 button.hidden {
     display: none;

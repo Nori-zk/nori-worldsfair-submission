@@ -52,11 +52,11 @@ cargo fmt --all --check
 
 ## Quirks
 
-- One sdk release everywhere: the npm versions in every `package.json` (exact, no ranges) and the cargo `rev` in `nori-read/` and `test-harness/` `Cargo.toml` (the sdk commit npm published: now 0.1.1, `4e43865`). Bump them together; `Cargo.lock` then changes only those sources.
+- One sdk release everywhere: the npm versions in every `package.json` (exact, no ranges) and the cargo `rev` in `nori-read/` and `test-harness/` `Cargo.toml` (npm now 0.2.0, `cbcfcc0`; cargo `4e43865`, whose Rust 0.2.0 left unchanged). Bump them together; `Cargo.lock` then changes only those sources.
 - Node 23 needs `--experimental-wasm-modules` for the hashing wasm (`@nori-zk/ethereum-solana-proof-queue-utils-glam`); the test scripts set it.
 - Toolchain: solana-cli (Agave) 3.1.x with platform-tools v1.54 (SBF rustc 1.89). That's what the tests ran on.
 - `cargo build-sbf` ignores `--locked`: if `Cargo.lock` drifts from `Cargo.toml`, it re-resolves (e.g. to alloy 1.8, which needs rustc 1.91) and fails with "requires rustc 1.91". `cargo metadata --locked` checks the lock; the scripts run it first.
-- The keeper signs through its own Ethereum and Solana clients and reads proof requests and Nori's state through the sdk's `createConnections`. The sdk's requests have no timeout, so the keeper caps each read.
+- The keeper reads and sends through the sdk's `createConnections`, with its own signers: an ethers `Wallet` for the snapshot and a kit keypair for Solana. Its reads are machines that retry by themselves; its sends are the sdk's signer transaction machines. Its config names the chains its RPCs must be on (`ETH_CHAIN_ID`, `SOLANA_GENESIS_HASH`), and the connections refuse an RPC on another.
 - surfpool must be 1.5 or later (1.0 breaks `solana program deploy`).
 - A Hardhat fork's clock lags real time. Align it (`evm_setNextBlockTimestamp`) before testing guards, or no supply checkpoint falls in the window.
 - Config: one root `.env` (`.env.example`) for Hardhat, the ethereum scripts and the keeper; deploy outputs land in `ethereum/.env.nori-eth-*` and `.env.nori-sol-demo` (`scripts/deploy-devnet.sh`). The shell environment wins over both; `dry-run.sh` blanks the queue settings so it never uses yours. `web/.env` is different: it holds public build constants only, is committed, and must never be gitignored, deleted or replaced with a `.env.example`.
@@ -80,3 +80,20 @@ cargo fmt --all --check
 - Root `package.json` lists every workspace by its path (`"web/apps/prove-balance"`, not `"web/apps/*"`), in build order (libraries before the apps that use them). Root scripts run a script across them with `--workspaces --if-present`; a new package picks them up by defining the script.
 - Keep docs short. Prefer a diagram in `docs/` over prose.
 - What this repo needs from the sdk goes through the sdk's change procedure (its AGENTS.md): one request covering everything, the user approves, commits and publishes; then bump the pins here.
+- Stop using promises: the sdk is an rxjs library, and so is everything built on it here, the `client/` scripts included. A promise exists only inside the lowest step, where a dependency (ethers, `@solana/kit`) returns one: wrapped once in the sdk's `ethRpcRead$` or `solanaRpcRead$`, or one `defer` around one call. Nothing above it sees a promise:
+    - never pull an observable or a machine back into a promise (`firstValueFrom`, `lastValueFrom`, `await` on a stream);
+    - never compose with promises (`Promise.all`, a chain of `await`s, an `async` helper that awaits another); compose with rxjs (`switchMap`, `forkJoin`, `concatMap`);
+    - a helper that derives addresses or builds an instruction is an observable, as the sdk's `stateAddress$`, `proofQueueBatchAddress$` and `mintCall$` are, never an `async` function.
+
+## Lessons
+
+jk89 was sad the agents ignored his abstraction and worked around it
+
+- The sdk's connection layer and machines exist so that no app handles connectivity itself. Read the sdk's own Lessons (its AGENTS.md) first; use what it exports and never work around it. What it lacks is asked of the sdk through its change procedure, not written in an app. Machines for this repo's own contracts and programs (NoriSnapshot, nori-read-example, Backstop) are this repo's, built from the sdk's helpers (`readThroughConnectionsOf`, `startReadThroughConnectionsMachine`, `ethRpcRead$`, `solanaRpcRead$`).
+- Apps and the client compose observables only: the machines' `state$` and live streams. No `await` of a read, no promise read once, no `catchError(() => EMPTY)`. Every value that can change stays current; nothing is read once.
+- The graph is the program, not a diagram of it. A machine gives every state a node, puts data only where it is valid, makes failures and lost connections states it recovers from, and cancels a read when its node is left. That holds only while every read, send and wait goes through a graph: one `from(promise)`, `await` or `catchError` in a component or service brings back a state nobody designed. A value with no machine gets one; the code never goes around the graph.
+- Machines are isolated by domain and couple through `$` (web/AGENTS.md, "Machines (ystate)"). Never copy another machine's states into your own data, and never keep an old member alive as a shim derived from a machine so that unported callers still compile: remove it and port every caller.
+- Connection state is shown in one place, the pins along the bottom (`libs/ui`), from the app's own connection config. No errors in rows, tables or lists: views show the machine's state in plain words, and the machine retries by itself.
+- Test the unhappy path before showing anything: no wallet, the wallet on the wrong chain, a chain's RPC down.
+- Code is never copied: the second time the same code appears, in a machine, a service or a component, it is abstracted into one place every user calls (an sdk machine, `client/` for what the keeper and the browser share, or `libs/ui`).
+- Finding a shortcut means searching the whole codebase for the same pattern and fixing every instance.

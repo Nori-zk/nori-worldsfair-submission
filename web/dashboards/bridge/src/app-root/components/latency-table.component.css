@@ -22,7 +22,7 @@
     margin: 0 0 1rem;
     color: var(--nori-text);
 }
-.summary:empty {
+.summary:has(> span:empty) {
     display: none;
 }
 .head {
@@ -41,7 +41,8 @@
     margin: 0.5rem 0 0;
     color: var(--nori-muted);
 }
-.status:empty {
+/* yaw renders the status binding as a span: the line hides while that span is empty. */
+:host > .status:has(> span:empty) {
     display: none;
 }
 .again {
@@ -55,6 +56,8 @@
     cursor: pointer;
     font: inherit;
 }
-.again:hover {
-    background: rgb(100 225 142 / 12%);
+@media (hover: hover) {
+    .again:hover {
+        background: rgb(100 225 142 / 12%);
+    }
 }

@@ -10,7 +10,8 @@ import {
     type ReadonlyUint8Array,
 } from '@solana/kit';
 import { NoriProofRequestQueue__factory } from '@nori-zk/ethereum-solana-bridge';
-import { findProofQueueBatchPda } from '@nori-zk/nori-bridge-solana-sdk';
+import { firstValueFrom } from 'rxjs';
+import { proofQueueBatchAddress$ } from '@nori-zk/nori-bridge-solana-sdk';
 import {
     findStatePda,
     getNoriSolTokenBridgeDecoder,
@@ -106,9 +107,8 @@ if (head > cursor) {
             ),
         });
     }
-    const [batchAddress] = await findProofQueueBatchPda(
-        batchCount,
-        noriProgram
+    const batchAddress = await firstValueFrom(
+        proofQueueBatchAddress$(batchCount, noriProgram)
     );
     await setAccount(
         batchAddress,

@@ -1,6 +1,6 @@
 import { Component, Inject, RxElement } from '@yaw-rx/core';
 import { RxFor } from '@yaw-rx/core/directives/rx-for';
-import { map, type Observable } from 'rxjs';
+import { combineLatest, map, type Observable } from 'rxjs';
 import {
     LatencyService,
     latencyMinutes,
@@ -14,8 +14,8 @@ import styles from './latency-table.component.css';
 /**
  * How long each NoriSnapshot read took from its Ethereum block to the Solana
  * transaction that landed its batch: the reads in the newest 30 batches,
- * newest first. Read once when the tab opens and again on `[ Read again ]`;
- * the rows show first, then their landings.
+ * newest first. Kept current as batches land. The rows show first, then
+ * their landings.
  */
 @Component({
     selector: 'latency-table',
@@ -40,7 +40,6 @@ import styles from './latency-table.component.css';
             <latency-row></latency-row>
         </div>
         <p class="status">{{ status }}</p>
-        <button type="button" class="again" onclick="readAgain">[ Read again ]</button>
     `,
     styles,
 })
@@ -49,11 +48,7 @@ export class LatencyTable extends RxElement {
 
     get rows$(): Observable<LatencyRowView[]> {
         return this.latency.latency$.pipe(
-            map((latency) =>
-                latency === undefined || typeof latency === 'string'
-                    ? []
-                    : rowsOf(latency.batches, latency.requests, latency.landings),
-            ),
+            map((latency) => rowsOf(latency.batches, latency.requests, latency.landings)),
         );
     }
 
@@ -61,8 +56,6 @@ export class LatencyTable extends RxElement {
     get summary$(): Observable<string> {
         return this.latency.latency$.pipe(
             map((latency) =>
-                latency === undefined ||
-                typeof latency === 'string' ||
                 latency.landings === undefined
                     ? ''
                     : summaryOf(
@@ -74,10 +67,22 @@ export class LatencyTable extends RxElement {
 
     /** Why there are no rows, what is still read, or nothing. */
     get status$(): Observable<string> {
-        return this.latency.latency$.pipe(
-            map((latency) => {
-                if (latency === undefined) return 'Reading the newest reads';
-                if (typeof latency === 'string') return `Reading failed: ${latency}`;
+        return combineLatest([this.latency.state$, this.latency.latency$]).pipe(
+            map(([batches, latency]) => {
+                // Until the batches' first read lands; the machine reads again by itself, and the pins show the connections.
+                switch (batches.node) {
+                    case 'loading':
+                    case 'waitingForConnectionWhileLoading':
+                    case 'failedWhileLoading':
+                        return 'Reading the newest reads';
+                    case 'closed':
+                        return '';
+                    case 'current':
+                    case 'refreshing':
+                    case 'waitingForConnectionWhileRefreshing':
+                    case 'failedWhileRefreshing':
+                        break;
+                }
                 if (rowsOf(latency.batches, latency.requests, undefined).length === 0) {
                     return 'No reads yet';
                 }
@@ -86,9 +91,5 @@ export class LatencyTable extends RxElement {
                 return `Reading when ${count.toString()} batch${count === 1 ? '' : 'es'} landed`;
             }),
         );
-    }
-
-    readAgain(): void {
-        this.latency.readAgain();
     }
 }

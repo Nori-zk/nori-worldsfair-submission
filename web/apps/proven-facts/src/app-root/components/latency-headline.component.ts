@@ -1,6 +1,6 @@
 import { Component, Inject, RxElement } from '@yaw-rx/core';
 import { map, type Observable } from 'rxjs';
-import { FactsService, LatencyService, latencyMinutes, type Latency } from '@nori-zk/solana-web-ui';
+import { LatencyService, latencyMinutes, type Latency } from '@nori-zk/solana-web-ui';
 import { headlineOf, type Headline } from '../utils/headline.js';
 import styles from './latency-headline.component.css';
 
@@ -19,21 +19,21 @@ interface HeadlineView {
 }
 
 /**
- * The headline for one emission of `latency$`.
+ * The headline for the reads: measuring until they are read, then kept as
+ * they are read again.
  *
- * @param latency The read: `undefined` while it runs, the reads, or why it failed.
+ * @param latency The reads.
  * @returns The big line and its muted spread.
  */
-function viewOf(latency: Latency | string | undefined): HeadlineView {
-    if (latency === undefined || (typeof latency !== 'string' && latency.landings === undefined)) {
+function viewOf(latency: Latency): HeadlineView {
+    if (latency.landings === undefined) {
         return { line: 'Measuring the last reads…', spread: '' };
     }
-    if (typeof latency === 'string') return { line: '', spread: `Reading failed: ${latency} ·` };
     const headline: Headline | undefined = headlineOf(
         latencyMinutes(latency.batches, latency.requests, latency.landings),
     );
     return headline
-        ? { line: headline.line, spread: `${headline.spread} ·` }
+        ? { line: headline.line, spread: headline.spread }
         : { line: 'No read has landed on Solana yet.', spread: '' };
 }
 
@@ -41,8 +41,7 @@ function viewOf(latency: Latency | string | undefined): HeadlineView {
  * How fast a read gets from Ethereum to Solana, in one line: the median
  * minutes from each NoriSnapshot read's Ethereum block to the Solana
  * transaction that landed its batch, over the newest 30 batches, with the
- * spread under it. Read once when the page opens; `[ Read again ]` reads
- * it and the snapshots again, so the whole page is from one moment.
+ * spread under it. Kept current as batches land.
  */
 @Component({
     selector: 'latency-headline',
@@ -50,7 +49,6 @@ function viewOf(latency: Latency | string | undefined): HeadlineView {
         <p class="line">{{ line }}</p>
         <p class="spread">
             <span>{{ spread }}</span>
-            <button type="button" onclick="readAgain">[ Read again ]</button>
         </p>
         <p class="more">
             Every read, with its batch and landing transaction:
@@ -61,7 +59,6 @@ function viewOf(latency: Latency | string | undefined): HeadlineView {
 })
 export class LatencyHeadline extends RxElement {
     @Inject(LatencyService) private readonly latency!: LatencyService;
-    @Inject(FactsService) private readonly facts!: FactsService;
 
     private get view$(): Observable<HeadlineView> {
         return this.latency.latency$.pipe(map(viewOf));
@@ -73,10 +70,5 @@ export class LatencyHeadline extends RxElement {
 
     get spread$(): Observable<string> {
         return this.view$.pipe(map(({ spread }) => spread));
-    }
-
-    readAgain(): void {
-        this.latency.readAgain();
-        this.facts.readAgain();
     }
 }

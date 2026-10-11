@@ -24,8 +24,10 @@
     text-align: left;
     text-overflow: ellipsis;
 }
-.row:hover {
-    background: rgb(100 225 142 / 10%);
+@media (hover: hover) {
+    .row:hover {
+        background: rgb(100 225 142 / 10%);
+    }
 }
 /* The step is a whole sentence: it wraps rather than being cut. */
 .row > .status {
@@ -50,8 +52,10 @@
     opacity: 0.6;
     text-decoration: none;
 }
-.nested a:hover {
-    opacity: 1;
+@media (hover: hover) {
+    .nested a:hover {
+        opacity: 1;
+    }
 }
 .batch,
 .requests {
@@ -86,4 +90,18 @@
 }
 .stages .current {
     color: var(--nori-light-green);
+}
+@container batch-table (max-width: 46rem) {
+    .row > .block {
+        display: none;
+    }
+    /* The step takes its own line under the row. */
+    .row > .status {
+        grid-column: 1 / -1;
+        padding-left: 2.5ch;
+    }
+    .nested request-line {
+        grid-template-columns: 4.5rem minmax(0, 1fr);
+        gap: 0.25rem 0.75rem;
+    }
 }

@@ -1,9 +1,9 @@
 :host {
     /* In rem, not ch: the header's smaller font would otherwise narrow its columns. */
-    --batch-columns: 5.5rem 8.5rem 7rem 7.5rem 1fr;
+    --batch-columns: 5.5rem 8.5rem 7rem 7.5rem minmax(0, 1fr);
     display: block;
     margin-top: 2rem;
-    overflow-x: auto;
+    container: batch-table / inline-size;
     font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
     font-size: 0.9rem;
 }
@@ -36,15 +36,17 @@
     cursor: pointer;
     font: inherit;
 }
-.filter button:hover,
-.retry:hover {
-    background: rgb(100 225 142 / 12%);
+@media (hover: hover) {
+    .filter button:hover,
+    .retry:hover {
+        background: rgb(100 225 142 / 12%);
+    }
 }
 .summary {
     margin: 0 0 1rem;
     color: var(--nori-text);
 }
-.summary:empty {
+.summary:has(> span:empty) {
     display: none;
 }
 .head {
@@ -55,11 +57,6 @@
     color: var(--nori-muted);
     font-size: 0.75rem;
     letter-spacing: 0.1em;
-}
-/* On a narrow screen the table scrolls sideways as one, and the status column keeps room to read. */
-.head,
-.rows {
-    min-width: 46rem;
 }
 /* Opening a batch scrolls inside the table instead of growing the card. */
 .rows {
@@ -81,15 +78,62 @@
 .rows::-webkit-scrollbar-thumb:hover {
     background: var(--nori-light-green);
 }
+/* The scroll-thumb directive's track: pinned to the top of the rows in view and taking no space. */
+.rows > .scroll-thumb {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    height: 0;
+}
+.rows > .scroll-thumb > div {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 4px;
+    height: var(--scroll-thumb-height);
+    border-radius: 2px;
+    background: rgb(100 225 142 / 60%);
+    transform: translateY(var(--scroll-thumb-offset));
+}
+@media (pointer: coarse) {
+    /* On a touch screen the browser's own bar is an overlay that fades: the directive's thumb replaces it. */
+    .rows {
+        scrollbar-width: none;
+    }
+    .rows::-webkit-scrollbar {
+        display: none;
+    }
+}
 :host > .status {
     margin: 1rem 0 0;
     color: var(--nori-light-green);
     text-align: center;
 }
-:host > .status:empty {
+/* yaw renders the status binding as a span: the line hides while that span is empty. */
+:host > .status:has(> span:empty) {
     display: none;
 }
 .retry {
     display: block;
     margin: 0.75rem auto 0;
+}
+@container batch-table (max-width: 46rem) {
+    /* Last so it overrides the rules above. BATCH REQUESTS and TO SOLANA only: the rows hide or wrap their other cells on the same query. */
+    .head,
+    .rows {
+        --batch-columns: 4.5rem minmax(0, 1fr) 7.5rem;
+    }
+    .head > span:nth-child(3),
+    .head > span:nth-child(5) {
+        display: none;
+    }
+    .filter {
+        flex-wrap: wrap;
+    }
+    .filter input {
+        flex-basis: 100%;
+    }
+    .filter button {
+        flex: 1;
+    }
 }

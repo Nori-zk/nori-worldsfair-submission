@@ -3,7 +3,6 @@ import {
     ConnectionsService,
     PROOF_REQUEST_CONNECTIONS_OPTIONS,
     type ConnectionsOptions,
-    BatchTimesService,
     FactsService,
     GuardBoardService,
     LatencyService,
@@ -14,14 +13,13 @@ import './app-root/components/snapshot-list.component.js';
 /**
  * The chain, cluster, Nori websocket, queue and program this build reads,
  * from `web/.env`: the bridge dashboard's, so Ethereum reads go through the
- * wallet when there is one and the public RPC otherwise.
+ * public RPC. The page sends nothing, so it has no wallet.
  */
 const connectionsOptions: ConnectionsOptions = {
     ethereum: {
         expectedChainId: BigInt(NORI_WEB_ENV.ethereum.chainId),
         http: { rpcUrl: NORI_WEB_ENV.ethereum.rpcUrl },
-        wallet: true,
-        order: { calls: ['wallet', 'http'], logs: ['wallet', 'http'] },
+        order: { calls: ['http'], logs: ['http'] },
     },
     solana: {
         cluster: NORI_WEB_ENV.solana.cluster,
@@ -43,7 +41,6 @@ const connectionsOptions: ConnectionsOptions = {
         ConnectionsService,
         GuardBoardService,
         FactsService,
-        BatchTimesService,
         LatencyService,
     ],
     template: `

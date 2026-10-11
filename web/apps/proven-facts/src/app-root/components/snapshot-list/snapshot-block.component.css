@@ -21,8 +21,10 @@ a {
     color: var(--nori-light-green);
     text-decoration: none;
 }
-a:hover {
-    text-decoration: underline;
+@media (hover: hover) {
+    a:hover {
+        text-decoration: underline;
+    }
 }
 .status {
     color: var(--nori-muted);
@@ -58,8 +60,10 @@ button {
     font: inherit;
     white-space: nowrap;
 }
-button:hover:enabled {
-    background: color-mix(in srgb, var(--nori-light-green) 12%, transparent);
+@media (hover: hover) {
+    button:hover:enabled {
+        background: color-mix(in srgb, var(--nori-light-green) 12%, transparent);
+    }
 }
 button:disabled {
     cursor: default;
@@ -68,6 +72,6 @@ button:disabled {
 .verdict {
     overflow-wrap: anywhere;
 }
-.verdict:empty {
+.verdict:has(> span:empty) {
     display: none;
 }

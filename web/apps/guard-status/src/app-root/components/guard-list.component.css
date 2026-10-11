@@ -17,8 +17,10 @@
     font: inherit;
     text-align: left;
 }
-.stale-toggle:hover {
-    color: var(--nori-light-green);
+@media (hover: hover) {
+    .stale-toggle:hover {
+        color: var(--nori-light-green);
+    }
 }
 .hidden {
     display: none;
@@ -29,6 +31,7 @@
     text-align: center;
     overflow-wrap: anywhere;
 }
-.status:empty {
+/* Its own line only: a guard card's status is a .status too. yaw renders the binding as a span. */
+:host > .status:has(> span:empty) {
     display: none;
 }

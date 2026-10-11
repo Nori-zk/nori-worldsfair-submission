@@ -21,7 +21,8 @@ const OLDER_TEXT = olderLinkText(NORI_WEB_ENV.ethereum.chainId);
 /**
  * The newest snapshots, newest first, each told in sentences: when and at
  * which Ethereum block its view calls ran, what they returned, and whether
- * Nori has proven it on Solana. Read once when the page opens. It shows the
+ * Nori has proven it on Solana. Read when the page opens and again on each
+ * new snapshot. It shows the
  * newest 8; `[ Show older ]` adds 8 more, and once every snapshot read shows,
  * a line links to NoriSnapshot on the explorer for the rest.
  */
@@ -43,9 +44,6 @@ const OLDER_TEXT = olderLinkText(NORI_WEB_ENV.ethereum.chainId);
         </p>
         <p class="status">
             <span>{{ status }}</span>
-            <button type="button" [class.hidden]="readable" onclick="readAgain">
-                [ Read again ]
-            </button>
         </p>
         <p class="note">
             A snapshot is one Ethereum transaction that runs up to 256 view calls and commits their
@@ -57,13 +55,13 @@ const OLDER_TEXT = olderLinkText(NORI_WEB_ENV.ethereum.chainId);
 })
 export class SnapshotList extends RxElement {
     @Inject(FactsService) private readonly facts!: FactsService;
-    /** How many snapshots show; kept across `[ Read again ]`, so a re-read never folds the list. */
+    /** How many snapshots show; kept as the snapshots are read again, so a re-read never folds the list. */
     @state shown: number = REVEAL_STEP;
 
     get snapshots$(): Observable<SnapshotView[]> {
         return this.facts.facts$.pipe(
             map((facts) => {
-                if (facts === undefined || typeof facts === 'string') return [];
+                if (facts === undefined) return [];
                 const now = Math.floor(Date.now() / 1000);
                 return facts.snapshots.map((snapshot) => snapshotViewOf(snapshot, facts, now));
             }),
@@ -100,26 +98,24 @@ export class SnapshotList extends RxElement {
 
     /** What the list is doing while it has no snapshots to show, or nothing. */
     get status$(): Observable<string> {
-        return this.facts.facts$.pipe(
-            map((facts) =>
-                facts === undefined
-                    ? 'Reading the newest snapshots…'
-                    : typeof facts === 'string'
-                      ? `Reading failed: ${facts}`
-                      : facts.snapshots.length === 0
-                        ? 'No snapshots yet.'
-                        : '',
-            ),
+        return this.facts.state$.pipe(
+            map((reading) => {
+                // Until the first read lands; the machine reads again by itself, and the pins show the connections.
+                switch (reading.node) {
+                    case 'loading':
+                    case 'waitingForConnectionWhileLoading':
+                    case 'failedWhileLoading':
+                        return 'Reading the newest snapshots…';
+                    case 'closed':
+                        return '';
+                    case 'current':
+                    case 'refreshing':
+                    case 'waitingForConnectionWhileRefreshing':
+                    case 'failedWhileRefreshing':
+                        return reading.data.snapshots.length === 0 ? 'No snapshots yet.' : '';
+                }
+            }),
         );
-    }
-
-    /** Hides `[ Read again ]` unless the read failed. */
-    get readable$(): Observable<boolean> {
-        return this.facts.facts$.pipe(map((facts) => typeof facts !== 'string'));
-    }
-
-    readAgain(): void {
-        this.facts.readAgain();
     }
 
     /** Shows the next 8 older snapshots; `visibleOf` stops at every one read. */

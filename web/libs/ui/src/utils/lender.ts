@@ -19,9 +19,13 @@ import {
     transactionErrorText,
 } from '@nori-zk/backstop-client/guard';
 
-/** What a simulation gives back that the verdict reads. */
+/**
+ * What a simulation gives back that the verdict reads: its error, a
+ * `TransactionError` (`null` when it succeeded; `customErrorOf` reads its
+ * code), and what it cost.
+ */
 export interface Simulated {
-    err: TransactionError | null;
+    err: unknown;
     unitsConsumed?: bigint;
 }
 

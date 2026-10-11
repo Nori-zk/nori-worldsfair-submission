@@ -1,19 +1,21 @@
 .bar {
     position: fixed;
-    left: 50%;
+    right: 0;
+    left: 0;
     bottom: 0;
     z-index: 50;
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     gap: 0.5rem 1.25rem;
-    max-width: calc(100vw - 2rem);
+    width: fit-content;
+    max-width: calc(100% - 2rem);
+    margin: 0 auto;
     padding: 0.5rem 1.5rem;
     border-radius: 0.75rem 0.75rem 0 0;
     background: var(--nori-connected-green);
     color: var(--nori-muted);
     font-size: 0.85rem;
-    transform: translateX(-50%);
 }
 .item {
     display: inline-flex;
@@ -29,8 +31,10 @@ a.item .link {
     text-decoration: underline;
     text-underline-offset: 0.2em;
 }
-a.item:hover {
-    color: var(--nori-logo-green);
+@media (hover: hover) {
+    a.item:hover {
+        color: var(--nori-logo-green);
+    }
 }
 .clip {
     margin-left: -0.2rem;

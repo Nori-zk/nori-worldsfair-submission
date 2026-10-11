@@ -114,7 +114,12 @@ function checkpointsOf(view: DataView, count: bigint): Checkpoint[] {
 
 /** The guard's status, as the program's `status` computes it. */
 export function guardStatus(
-    guard: GuardState,
+    guard: Pick<
+        GuardState,
+        'tripped' | 'paused' | 'backingEthTime' | 'backing'
+    > & {
+        config: Pick<GuardConfig, 'maxStalenessSecs' | 'tolerance'>;
+    },
     liveSupply: bigint,
     nowSecs: bigint
 ): 'HEALTHY' | 'WARN' | 'STALE' | 'PAUSED_AT_SOURCE' | 'TRIPPED' {
@@ -194,18 +199,22 @@ export const BACKSTOP_ERROR_MESSAGE: Record<number, string> = {
 };
 
 /** A transaction error as JSON (its numbers may be bigints). */
-export function transactionErrorText(err: TransactionError): string {
+export function transactionErrorText(err: TransactionError | unknown): string {
     return JSON.stringify(err, (_, v: unknown) =>
         typeof v === 'bigint' ? Number(v) : v
     );
 }
 
 /** The custom program error code in a transaction error, if it has one. */
-export function customErrorOf(err: TransactionError): number | undefined {
-    if (typeof err !== 'object' || !('InstructionError' in err))
+export function customErrorOf(
+    err: TransactionError | unknown
+): number | undefined {
+    if (typeof err !== 'object' || err === null || !('InstructionError' in err))
         return undefined;
-    const [, error] = err.InstructionError;
-    return typeof error === 'object' && 'Custom' in error
+    const instructionError: unknown = err.InstructionError;
+    if (!Array.isArray(instructionError)) return undefined;
+    const error: unknown = instructionError[1];
+    return typeof error === 'object' && error !== null && 'Custom' in error
         ? Number(error.Custom)
         : undefined;
 }

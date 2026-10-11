@@ -22,7 +22,9 @@ export {
     noriBridgeInfraStageIndex,
     type NoriBridgeInfraStage,
 } from './text/noriBridgeInfraStages.js';
+export { TOKEN_AMOUNT_DECIMALS_SHOWN, tokenAmountText } from './text/tokenAmount.js';
 export { LaserFlow } from './components/laser-flow.component.js';
+export { ScrollThumb } from './directives/scroll-thumb.directive.js';
 export {
     brandStyles,
     noriLogo,
@@ -32,10 +34,22 @@ export {
     backgroundLight,
     bottomShadows,
 } from './brand/brand.js';
-export { GuardBoardService, type GuardRead } from './services/guard-board.service.js';
+export { GuardBoardService } from './services/guard-board.service.js';
+export { GuardBoardGraph, type GuardBoardState, type GuardRead } from './machines/guardBoard.js';
+export { createGuardBoardMachine } from './machines/guardBoard.impl.js';
+export { SnapshotFactsGraph, type SnapshotFactsState } from './machines/snapshotFacts.js';
+export {
+    createSnapshotFactsMachine,
+    type SnapshotFactsAddresses,
+} from './machines/snapshotFacts.impl.js';
+export {
+    BatchLandingsGraph,
+    type BatchLandingRead,
+    type BatchLandingsState,
+} from './machines/batchLandings.js';
+export { createBatchLandingsMachine } from './machines/batchLandings.impl.js';
 export { FactsService, type Facts, type SnapshotFact } from './services/facts.service.js';
 export { LatencyService, type Latency } from './services/latency.service.js';
-export { BatchTimesService } from './services/batch-times.service.js';
 export {
     shortHex,
     transactionUrl,

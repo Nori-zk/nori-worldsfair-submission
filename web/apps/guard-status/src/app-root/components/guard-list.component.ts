@@ -1,6 +1,6 @@
 import { Component, Inject, RxElement, state } from '@yaw-rx/core';
 import { RxFor } from '@yaw-rx/core/directives/rx-for';
-import { combineLatest, map, type Observable, startWith, take } from 'rxjs';
+import { combineLatest, map, type Observable, take } from 'rxjs';
 import { GuardBoardService } from '@nori-zk/solana-web-ui';
 import { cardOf, type GuardCardView } from '../utils/card.js';
 import { type CardSplit, ordered, splitCards } from '../utils/guards.js';
@@ -12,8 +12,9 @@ import styles from './guard-list.component.css';
  * use first, then the tripped and paused ones. The stale ones fold into one
  * line under them, `▸ 3 guards with no recent backing`, which shows their
  * cards on a click; they start shown when the page's link names one, or when
- * every guard is stale. Read from Solana every 30 seconds by
- * `GuardBoardService`; a failed read is shown and tried again on the next one.
+ * every guard is stale. Read from Solana by `GuardBoardService`'s machine,
+ * again on each Backstop transaction and every 30 seconds; the cards keep
+ * the last read while the machine reads again.
  */
 @Component({
     selector: 'guard-list',
@@ -41,13 +42,11 @@ export class GuardList extends RxElement {
     /** The cards split around the stale line. */
     get split$(): Observable<CardSplit<GuardCardView>> {
         const linked = new URLSearchParams(window.location.search).get('guard');
-        return combineLatest([this.board.guards$, this.showStale$]).pipe(
-            map(([guards, choice]) => {
+        return combineLatest([this.board.state$, this.showStale$]).pipe(
+            map(([board, choice]) => {
                 const now = Math.floor(Date.now() / 1000);
-                const cards =
-                    typeof guards === 'string'
-                        ? []
-                        : ordered(guards).map((read) => cardOf(read, now));
+                const guards = 'guards' in board.data ? board.data.guards : [];
+                const cards = ordered(guards).map((read) => cardOf(read, now));
                 return splitCards(cards, choice, linked);
             }),
         );
@@ -78,15 +77,23 @@ export class GuardList extends RxElement {
 
     /** Why there are no cards, or nothing. */
     get status$(): Observable<string> {
-        return this.board.guards$.pipe(
-            map((guards) =>
-                typeof guards === 'string'
-                    ? `Reading failed: ${guards}. Trying again in 30 s.`
-                    : guards.length === 0
-                      ? 'No guards on this cluster.'
-                      : '',
-            ),
-            startWith('Reading the guards…'),
+        return this.board.state$.pipe(
+            map((board) => {
+                // Until the first read lands; the machine reads again by itself, and the pins show the connections.
+                switch (board.node) {
+                    case 'loading':
+                    case 'waitingForConnectionWhileLoading':
+                    case 'failedWhileLoading':
+                        return 'Reading the guards…';
+                    case 'closed':
+                        return '';
+                    case 'current':
+                    case 'refreshing':
+                    case 'waitingForConnectionWhileRefreshing':
+                    case 'failedWhileRefreshing':
+                        return board.data.guards.length === 0 ? 'No guards on this cluster.' : '';
+                }
+            }),
         );
     }
 }

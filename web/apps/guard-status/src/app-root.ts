@@ -12,9 +12,7 @@ const connectionsOptions: ConnectionsOptions = {
     ethereum: {
         expectedChainId: BigInt(NORI_WEB_ENV.ethereum.chainId),
         http: { rpcUrl: NORI_WEB_ENV.ethereum.rpcUrl },
-        wallet: true,
-        // The wallet when there is one, else the public RPC: the page reads Solana only.
-        order: { calls: ['wallet', 'http'], logs: ['wallet', 'http'] },
+        order: { calls: ['http'], logs: ['http'] },
     },
     solana: {
         cluster: NORI_WEB_ENV.solana.cluster,

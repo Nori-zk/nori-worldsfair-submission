@@ -13,8 +13,10 @@ a {
     color: var(--nori-light-green);
     text-decoration: none;
 }
-a:hover {
-    text-decoration: underline;
+@media (hover: hover) {
+    a:hover {
+        text-decoration: underline;
+    }
 }
 .hidden {
     display: none;
@@ -41,7 +43,7 @@ a:hover {
     white-space: pre-wrap;
     overflow-wrap: anywhere;
 }
-.checkpoints:empty {
+.checkpoints:has(> span:empty) {
     display: none;
 }
 .links {

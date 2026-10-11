@@ -26,9 +26,17 @@ export interface GuardEntry {
 }
 
 export interface KeeperConfig {
-    ethereum: { rpcUrl: string; noriSnapshot: string; proofQueue: string };
+    ethereum: {
+        rpcUrl: string;
+        /** The chain `rpcUrl` must be on (`ETH_CHAIN_ID`). */
+        chainId: string;
+        noriSnapshot: string;
+        proofQueue: string;
+    };
     solana: {
         rpcUrl: string;
+        /** The cluster `rpcUrl` must be on, by its genesis hash (`SOLANA_GENESIS_HASH`). */
+        genesisHash: string;
         keypair: string;
         noriProgram: Address;
     };

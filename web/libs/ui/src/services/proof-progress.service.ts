@@ -1,32 +1,43 @@
 import { Injectable } from '@yaw-rx/core';
 import {
-    catchError,
     combineLatest,
-    defer,
     distinctUntilChanged,
     filter,
     map,
     Observable,
     of,
-    retry as retryOnError,
     shareReplay,
     startWith,
     switchMap,
     take,
 } from 'rxjs';
 import {
+    createProofRequestBlockTimeMachine,
     createProofRequestStateMachine,
     createUnprocessedProofRequestStateMachine,
-    forCalls,
+    ProofRequestState,
     type ProofRequestStateNodeUnion,
     type UnprocessedProofRequestStateNodeUnion,
 } from '@nori-zk/nori-bridge-solana-sdk';
+import { followedStates$ } from '@nori-zk/backstop-client/read';
 import { ConnectionsService } from './connections.service.js';
 import { NoriBridgeInfraService } from './nori-bridge-infra.service.js';
 import { anchoredTotal, storedTotal, waitedSec } from '../utils/proof-progress.js';
 
-/** How many times the enqueue block's read is tried again after it fails, and the wait before each. */
-const BLOCK_READ_RETRIES = { count: 2, delay: 5_000 };
+/**
+ * The block an unprocessed request was enqueued in: while the proof request
+ * machine holds it as `unprocessed`, read or being read again.
+ *
+ * @param request The proof request machine's state.
+ * @returns The block, or `undefined` while the request is not known to be unprocessed.
+ */
+const unprocessedBlockOf = (request: ProofRequestStateNodeUnion): bigint | undefined => {
+    if (!('snapshot' in request.data)) return undefined;
+    const { snapshot } = request.data;
+    return snapshot.state === ProofRequestState.Unprocessed && 'requestBlockNumber' in snapshot
+        ? snapshot.requestBlockNumber
+        : undefined;
+};
 
 /**
  * The `sessionStorage` key of a request's bar total: the total is kept for
@@ -119,23 +130,22 @@ export class ProofProgressService {
         if (existing) return existing;
 
         const { connections, options } = this.connections;
-        const { proofRequestState, retry, close } = createProofRequestStateMachine(
+        const proofRequest = createProofRequestStateMachine(
             connections,
             { ...options.proofRequests, proofRequestTxHash: txHash },
             undefined,
             15_000,
             this.noriBridgeInfra.state$,
         );
-        const request$ = proofRequestState.state$.pipe(
-            shareReplay({ bufferSize: 1, refCount: false }),
-        );
+        const request$ = proofRequest.state$.pipe(shareReplay({ bufferSize: 1, refCount: false }));
         const progress$ = request$.pipe(
-            distinctUntilChanged((previous, current) => previous.node === current.node),
-            switchMap((request) =>
-                request.node === 'unprocessed'
+            map(unprocessedBlockOf),
+            distinctUntilChanged(),
+            switchMap((requestBlockNumber) =>
+                requestBlockNumber !== undefined
                     ? new Observable<UnprocessedProofRequestStateNodeUnion>((subscriber) => {
                           const unprocessed = createUnprocessedProofRequestStateMachine(
-                              Number(request.data.requestBlockNumber),
+                              Number(requestBlockNumber),
                               connections.nori,
                           )
                               .close()
@@ -150,26 +160,23 @@ export class ProofProgressService {
             ),
             shareReplay({ bufferSize: 1, refCount: true }),
         );
-        // One block read per request, kept with it: the machines' own counts restart with the page.
+        // One block time machine per request, made from its enqueue block and closed with the stream.
         const enqueuedAtMs$ = request$.pipe(
-            filter((request) => request.node === 'unprocessed'),
+            map(unprocessedBlockOf),
+            filter(
+                (requestBlockNumber): requestBlockNumber is bigint =>
+                    requestBlockNumber !== undefined,
+            ),
             take(1),
-            switchMap((request) =>
-                defer(async () =>
-                    forCalls(connections.ethereum, async (provider) =>
-                        provider.getBlock(request.data.requestBlockNumber),
-                    ),
-                ).pipe(
-                    map((block) => {
-                        if (block === null) throw new Error('The enqueue block is not found.');
-                        return block.timestamp * 1000;
-                    }),
-                    retryOnError(BLOCK_READ_RETRIES),
-                    catchError(() => of(undefined)),
+            switchMap((requestBlockNumber) =>
+                followedStates$(() =>
+                    createProofRequestBlockTimeMachine(connections, Number(requestBlockNumber)),
                 ),
             ),
+            map((state) => (state.node === 'current' ? state.data.timestampMs : undefined)),
             startWith(undefined),
-            shareReplay({ bufferSize: 1, refCount: false }),
+            distinctUntilChanged(),
+            shareReplay({ bufferSize: 1, refCount: true }),
         );
         let totalSec = readTotal(txHash);
         const totalSec$ = combineLatest([progress$, enqueuedAtMs$]).pipe(
@@ -188,7 +195,14 @@ export class ProofProgressService {
             distinctUntilChanged(),
             shareReplay({ bufferSize: 1, refCount: true }),
         );
-        const proof = { request$, progress$, enqueuedAtMs$, totalSec$, retry, close };
+        const proof = {
+            request$,
+            progress$,
+            enqueuedAtMs$,
+            totalSec$,
+            retry: () => proofRequest.retry(),
+            close: () => proofRequest.close(),
+        };
         this.followed.set(txHash, proof);
         return proof;
     }

@@ -173,9 +173,11 @@ proof-progress {
     color: var(--nori-light-green);
     text-decoration: none;
 }
-.verify a:hover,
-.link:hover {
-    text-decoration: underline;
+@media (hover: hover) {
+    .verify a:hover,
+    .link:hover {
+        text-decoration: underline;
+    }
 }
 .note {
     margin: var(--gap) 0 0;

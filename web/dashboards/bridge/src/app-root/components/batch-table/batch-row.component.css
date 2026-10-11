@@ -22,8 +22,10 @@
     text-align: left;
     text-overflow: ellipsis;
 }
-.row:hover {
-    background: rgb(100 225 142 / 5%);
+@media (hover: hover) {
+    .row:hover {
+        background: rgb(100 225 142 / 5%);
+    }
 }
 .batch,
 .requests {
@@ -52,14 +54,27 @@
     opacity: 0.6;
     text-decoration: none;
 }
-.nested a:hover {
-    opacity: 1;
+@media (hover: hover) {
+    .nested a:hover {
+        opacity: 1;
+    }
 }
 .opened-status {
     margin: 0.25rem 0 0.25rem 2.5ch;
     color: var(--nori-muted);
     font-size: 0.85rem;
 }
-.opened-status:empty {
+.opened-status:has(> span:empty) {
     display: none;
+}
+@container batch-table (max-width: 46rem) {
+    /* The bar already says it is on Solana. */
+    .row > .block,
+    .row > .status {
+        display: none;
+    }
+    .nested request-line {
+        grid-template-columns: 4.5rem minmax(0, 1fr);
+        gap: 0.25rem 0.75rem;
+    }
 }

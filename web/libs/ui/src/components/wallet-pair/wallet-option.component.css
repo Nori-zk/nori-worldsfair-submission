@@ -10,8 +10,10 @@ button {
     cursor: pointer;
     font: inherit;
 }
-button:hover {
-    background: var(--nori-light-green);
+@media (hover: hover) {
+    button:hover {
+        background: var(--nori-light-green);
+    }
 }
 img {
     width: 20px;

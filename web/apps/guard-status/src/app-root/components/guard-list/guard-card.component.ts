@@ -1,13 +1,13 @@
 import { Component, Inject, RxElement, state } from '@yaw-rx/core';
 import { RxFor } from '@yaw-rx/core/directives/rx-for';
-import { combineLatest, map, type Observable } from 'rxjs';
+import { combineLatest, filter, map, type Observable, type Subscription, take } from 'rxjs';
 import {
     ConnectionsService,
-    depositTransaction,
     STATUS_COLOUR,
     verdictText,
     type GuardRead,
 } from '@nori-zk/solana-web-ui';
+import { createAssertHealthyMachine, followedStates$ } from '@nori-zk/backstop-client/read';
 import { checkFailed, depositSentence, type GuardStatus } from '../../utils/status-text.js';
 import './guard-card/guard-how.component.js';
 import styles from './guard-card.component.css';
@@ -109,6 +109,8 @@ export class GuardCard extends RxElement {
     @state result = '';
     @state resultStyle = '';
     @state simulating = false;
+    /** The running deposit check, from the last click until its result. */
+    private check: Subscription | undefined;
     /** Whether "How this is checked" is open: the card's own, so a refresh keeps it. */
     @state open = false;
 
@@ -153,30 +155,46 @@ export class GuardCard extends RxElement {
     }
 
     /** Simulates the deposit once and says what it got. */
-    async checkDeposit(): Promise<void> {
+    checkDeposit(): void {
         const read = this.read;
         if (read === undefined || this.simulating) return;
         this.simulating = true;
-        try {
-            const rpc = await this.connections.connections.solana.http.ready();
-            const { value } = await rpc
-                .simulateTransaction(
-                    depositTransaction(read.address, read.guard.mint, NORI_WEB_ENV.solana.feePayer),
-                    {
-                        encoding: 'base64',
-                        sigVerify: false,
-                        replaceRecentBlockhash: true,
-                        commitment: 'confirmed',
-                    },
-                )
-                .send();
-            this.result = depositSentence(value);
-            this.resultStyle = verdictText(value, STATUS_COLOUR[read.status]).style;
-        } catch (error: unknown) {
-            this.result = checkFailed(error);
-            this.resultStyle = 'color: var(--nori-muted)';
-        } finally {
-            this.simulating = false;
-        }
+        this.check?.unsubscribe();
+        this.check = followedStates$(() =>
+            createAssertHealthyMachine(
+                this.connections.connections,
+                NORI_WEB_ENV.solana.feePayer,
+                read.address,
+                read.guard.mint,
+            ),
+        )
+            .pipe(
+                filter(
+                    (simulation) =>
+                        (simulation.node === 'current' &&
+                            simulation.data.simulated !== undefined) ||
+                        simulation.node === 'failedWhileLoading',
+                ),
+                take(1),
+            )
+            .subscribe((simulation) => {
+                if (simulation.node === 'current' && simulation.data.simulated !== undefined) {
+                    this.result = depositSentence(simulation.data.simulated);
+                    this.resultStyle = verdictText(
+                        simulation.data.simulated,
+                        STATUS_COLOUR[read.status],
+                    ).style;
+                } else {
+                    this.result = checkFailed(
+                        'error' in simulation.data ? simulation.data.error : '',
+                    );
+                    this.resultStyle = 'color: var(--nori-muted)';
+                }
+                this.simulating = false;
+            });
+    }
+
+    override onDestroy(): void {
+        this.check?.unsubscribe();
     }
 }

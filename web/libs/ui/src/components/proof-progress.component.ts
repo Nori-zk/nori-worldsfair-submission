@@ -10,36 +10,46 @@ import {
     take,
     timer,
 } from 'rxjs';
-import type {
-    ProofRequestStateNodeUnion,
-    UnprocessedProofRequestStateNodeUnion,
+import {
+    ProofRequestState,
+    type ProofRequestStateNodeUnion,
+    type UnprocessedProofRequestStateNodeUnion,
 } from '@nori-zk/nori-bridge-solana-sdk';
 import { type FollowedProof, ProofProgressService } from '../services/proof-progress.service.js';
 import { anchoredFill, waitedSec } from '../utils/proof-progress.js';
 import styles from './proof-progress.component.css';
 
 /**
- * The status line for each node of the proof request machine.
+ * The status line for each node of the proof request machine: where the
+ * request is, from the snapshot each live node holds.
  *
  * @param request The proof request machine's state.
  * @returns The status.
  */
 const requestStatus = (request: ProofRequestStateNodeUnion): string => {
     switch (request.node) {
-        case 'undetermined':
-            return 'Finding the proof request on Ethereum';
-        case 'unprocessed':
-            return `Request #${request.data.requestId.toString()} is waiting for the bridge`;
         case 'proofAvailable':
-            return `Proven on Solana in batch #${request.data.proofQueueBatchIndex.toString()}`;
-        case 'waitingForConnectionWhileUndetermined':
-        case 'waitingForConnectionWhileUnprocessed':
+            return `Proven on Solana in batch #${request.data.snapshot.proofQueueBatchIndex.toString()}`;
+        case 'transactionReplaced':
+            return 'The transaction was replaced in your wallet before it enqueued a proof request';
+        case 'transactionDropped':
+            return 'The transaction was dropped before it enqueued a proof request';
+        case 'waitingForConnectionWhileLoading':
+        case 'waitingForConnectionWhileRefreshing':
             return `Waiting for ${request.data.waitingOn.join(' and ')}`;
-        case 'failedWhileUndetermined':
-        case 'failedWhileUnprocessed':
+        case 'failedWhileLoading':
+        case 'failedWhileRefreshing':
             return `Reading failed: ${request.data.error}`;
         case 'closed':
             return 'Stopped';
+        case 'loading':
+        case 'current':
+        case 'refreshing': {
+            const { snapshot } = request.data;
+            return snapshot.state === ProofRequestState.Unprocessed && 'requestId' in snapshot
+                ? `Request #${snapshot.requestId.toString()} is waiting for the bridge`
+                : 'Finding the proof request on Ethereum';
+        }
     }
 };
 
@@ -165,8 +175,8 @@ export class ProofProgress extends RxElement {
         return this.request$.pipe(
             map(
                 (request) =>
-                    request.node === 'failedWhileUndetermined' ||
-                    request.node === 'failedWhileUnprocessed',
+                    request.node === 'failedWhileLoading' ||
+                    request.node === 'failedWhileRefreshing',
             ),
         );
     }

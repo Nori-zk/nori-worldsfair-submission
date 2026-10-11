@@ -17,8 +17,10 @@
     font-size: 1rem;
     text-align: left;
 }
-.current:hover:not(:disabled) {
-    border-color: var(--nori-light-green);
+@media (hover: hover) {
+    .current:hover:not(:disabled) {
+        border-color: var(--nori-light-green);
+    }
 }
 .current:disabled {
     cursor: not-allowed;

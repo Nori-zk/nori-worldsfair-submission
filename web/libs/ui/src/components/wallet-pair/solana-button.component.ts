@@ -51,14 +51,12 @@ const solanaText = (cluster: string, state: HttpConnectionState<SolanaHealth>): 
 })
 export class SolanaButton extends ChainButton {
     get text$(): Observable<string> {
-        return this.connections.connections.solana.http.connection.state$.pipe(
+        return this.connections.solanaHttpState$.pipe(
             map((state) => solanaText(this.connections.solanaCluster, state)),
         );
     }
 
     get ready$(): Observable<boolean> {
-        return this.connections.connections.solana.http.connection.state$.pipe(
-            map((state) => state.node === 'ready'),
-        );
+        return this.connections.solanaHttpState$.pipe(map((state) => state.node === 'ready'));
     }
 }

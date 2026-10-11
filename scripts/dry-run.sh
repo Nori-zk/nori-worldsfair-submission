@@ -143,10 +143,14 @@ set -a
 . "$W/.env.nori-eth-demo"
 set +a
 
+# The chains the keeper's connections must be on: the local nodes' own
+ETH_CHAIN_ID=$(cast chain-id --rpc-url "$ETH_URL")
+SOLANA_GENESIS_HASH=$(solana genesis-hash -u "$SOL_URL")
+
 cat >"$W/keeper.json" <<EOF
 {
-  "ethereum": { "rpcUrl": "$ETH_URL", "noriSnapshot": "$NORI_ETH_SNAPSHOT_ADDRESS", "proofQueue": "$NORI_ETH_PROOF_QUEUE_ADDRESS" },
-  "solana": { "rpcUrl": "$SOL_URL", "keypair": "$PAYER", "noriProgram": "$NORI_PROGRAM" },
+  "ethereum": { "rpcUrl": "$ETH_URL", "chainId": "$ETH_CHAIN_ID", "noriSnapshot": "$NORI_ETH_SNAPSHOT_ADDRESS", "proofQueue": "$NORI_ETH_PROOF_QUEUE_ADDRESS" },
+  "solana": { "rpcUrl": "$SOL_URL", "genesisHash": "$SOLANA_GENESIS_HASH", "keypair": "$PAYER", "noriProgram": "$NORI_PROGRAM" },
   "intervals": { "snapshotSecs": 3600, "checkpointSecs": 10, "pollSecs": 15 },
   "stateFile": "$W/keeper-state.json",
   "guards": [{

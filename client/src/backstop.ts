@@ -7,7 +7,8 @@ import {
     type Instruction,
 } from '@solana/kit';
 import { concat, getBytes, toUtf8Bytes } from 'ethers';
-import { findStatePda } from '@nori-zk/nori-bridge-solana-sdk/program';
+import { defer, forkJoin, map, type Observable } from 'rxjs';
+import { stateAddress$ } from '@nori-zk/nori-bridge-solana-sdk';
 import { discriminator, encodeSnapshotResultWitness, le } from './anchor.js';
 import type { SnapshotResultWitnessArgs } from './snapshotWitness.js';
 import { BACKSTOP_PROGRAM, type GuardConfig } from './guard.js';
@@ -101,45 +102,54 @@ export function encodeCreateGuard(config: GuardConfig): Uint8Array {
     );
 }
 
-/** The guard PDA: `[b"guard", mint, admin]`. */
-export async function findGuardAddress(
+/**
+ * The guard PDA: `[b"guard", mint, admin]`.
+ *
+ * @param mint The guarded mint.
+ * @param admin The guard's admin.
+ * @returns The guard's address, once.
+ */
+export const guardAddress$ = (
     mint: Address,
     admin: Address
-): Promise<Address> {
-    const [pda] = await getProgramDerivedAddress({
-        programAddress: BACKSTOP_PROGRAM,
-        seeds: [toUtf8Bytes('guard'), addressBytes(mint), addressBytes(admin)],
-    });
-    return pda;
-}
+): Observable<Address> =>
+    defer(() =>
+        getProgramDerivedAddress({
+            programAddress: BACKSTOP_PROGRAM,
+            seeds: [
+                toUtf8Bytes('guard'),
+                addressBytes(mint),
+                addressBytes(admin),
+            ],
+        })
+    ).pipe(map(([pda]) => pda));
 
 const SYSTEM_PROGRAM = address('11111111111111111111111111111111');
 
-/** `create_guard`: `admin` pays and becomes the guard's admin. */
-export async function createGuardInstruction(accounts: {
+/**
+ * `create_guard`: `admin` pays and becomes the guard's admin.
+ *
+ * @param accounts The admin, the mint and the guard's settings.
+ * @returns The instruction, once.
+ */
+export const createGuardInstruction$ = (accounts: {
     admin: Address;
     mint: Address;
     config: GuardConfig;
-}): Promise<Instruction> {
-    return {
-        programAddress: BACKSTOP_PROGRAM,
-        accounts: [
-            { address: accounts.admin, role: AccountRole.WRITABLE_SIGNER },
-            { address: accounts.mint, role: AccountRole.READONLY },
-            {
-                address: (
-                    await findStatePda({
-                        programAddress: accounts.config.noriProgram,
-                    })
-                )[0],
-                role: AccountRole.READONLY,
-            },
-            {
-                address: await findGuardAddress(accounts.mint, accounts.admin),
-                role: AccountRole.WRITABLE,
-            },
-            { address: SYSTEM_PROGRAM, role: AccountRole.READONLY },
-        ],
-        data: encodeCreateGuard(accounts.config),
-    };
-}
+}): Observable<Instruction> =>
+    forkJoin({
+        noriState: stateAddress$(accounts.config.noriProgram),
+        guard: guardAddress$(accounts.mint, accounts.admin),
+    }).pipe(
+        map(({ noriState, guard }) => ({
+            programAddress: BACKSTOP_PROGRAM,
+            accounts: [
+                { address: accounts.admin, role: AccountRole.WRITABLE_SIGNER },
+                { address: accounts.mint, role: AccountRole.READONLY },
+                { address: noriState, role: AccountRole.READONLY },
+                { address: guard, role: AccountRole.WRITABLE },
+                { address: SYSTEM_PROGRAM, role: AccountRole.READONLY },
+            ],
+            data: encodeCreateGuard(accounts.config),
+        }))
+    );

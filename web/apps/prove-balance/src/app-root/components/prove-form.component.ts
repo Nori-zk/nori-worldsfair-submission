@@ -1,13 +1,12 @@
 import { Component, Inject, RxElement } from '@yaw-rx/core';
 import { RxIf } from '@yaw-rx/core/directives/rx-if';
 import { combineLatest, map, type Observable, take } from 'rxjs';
-import { formatEther, formatUnits } from 'ethers';
-import { ConnectionsService, TokenListService } from '@nori-zk/solana-web-ui';
+import { ConnectionsService, TokenListService, tokenAmountText } from '@nori-zk/solana-web-ui';
 import { NORI_READ_EXAMPLE_PROGRAM } from '@nori-zk/backstop-client/read';
 import { TOKEN_CHOSEN } from './prove-form/token-option.component.js';
 import './prove-form/token-select.component.js';
-import type { BalanceRequest } from '../ystate/prove-balance.impl.js';
-import type { ProveBalanceState } from '../ystate/prove-balance.js';
+import { type BalanceRequest, previewOf, requestOf } from '../machines/prove-balance.impl.js';
+import type { ProveBalanceState } from '../machines/prove-balance.js';
 import {
     type ProveBalanceMachine,
     ProveBalanceService,
@@ -27,6 +26,9 @@ const atNode =
 
 /** The nodes that follow a snapshot transaction once it is sent. */
 const FOLLOWING: ProveBalanceState['node'][] = ['proving', 'verifying', 'verifyFailed', 'verified'];
+
+/** The nodes where reading the balance failed, to read again. */
+const READ_FAILED: ProveBalanceState['node'][] = ['failedWhileLoading', 'failedWhileRefreshing'];
 
 /** Each Ethereum chain's block explorer. */
 const ETHEREUM_EXPLORERS: Record<number, string> = {
@@ -190,14 +192,15 @@ export class ProveForm extends RxElement {
     }
 
     get disconnected$(): Observable<boolean> {
-        return combineLatest([this.connections.ready$, this.connections.account$]).pipe(
-            map(([ready, account]) => !ready || account === ''),
+        return combineLatest([this.connections.ready$, this.state$]).pipe(
+            map(([ready, state]) => !ready || state.node === 'noAccount'),
         );
     }
 
+    /** The form shows once the wallet has shared an account, and not while `?tx=` is read back. */
     get editable$(): Observable<boolean> {
         return combineLatest([this.disconnected$, this.state$]).pipe(
-            map(([disconnected]) => !disconnected),
+            map(([disconnected, state]) => !disconnected && state.node !== 'resuming'),
         );
     }
 
@@ -215,7 +218,7 @@ export class ProveForm extends RxElement {
     get actionLabel$(): Observable<string> {
         return this.state$.pipe(
             map((state) =>
-                state.node === 'readFailed'
+                atNode(...READ_FAILED)(state)
                     ? 'Read again'
                     : state.node === 'awaitingSignature'
                       ? 'Confirming in your wallet…'
@@ -227,56 +230,67 @@ export class ProveForm extends RxElement {
     /** Enabled when there is something to do: prove a read balance, or read again. */
     get actionDisabled$(): Observable<boolean> {
         return this.state$.pipe(
-            map((state) => !atNode('balanceRead', 'declined', 'sendFailed', 'readFailed')(state)),
+            map(
+                (state) =>
+                    !atNode(
+                        'current',
+                        'refreshing',
+                        'declined',
+                        'sendFailed',
+                        ...READ_FAILED,
+                    )(state),
+            ),
         );
     }
 
     get asset$(): Observable<string> {
-        return this.state$.pipe(map(({ data }) => data.asset));
+        return this.state$.pipe(map((state) => requestOf(state)?.asset ?? ''));
     }
 
     /** Whether the asset is a token the list does not have: its address is typed in. */
     get isOther$(): Observable<boolean> {
-        return combineLatest([this.state$, this.tokenList.tokens$]).pipe(
+        return combineLatest([this.asset$, this.tokenList.tokens$]).pipe(
             map(
-                ([{ data }, tokens]) =>
-                    data.asset !== 'eth' &&
-                    !tokens.some(
-                        (token) => token.address.toLowerCase() === data.asset.toLowerCase(),
-                    ),
+                ([asset, tokens]) =>
+                    asset !== 'eth' &&
+                    !tokens.some((token) => token.address.toLowerCase() === asset.toLowerCase()),
             ),
         );
     }
 
     get tokenAddress$(): Observable<string> {
-        return this.state$.pipe(map(({ data }) => (data.asset === 'eth' ? '' : data.asset)));
+        return this.asset$.pipe(map((asset) => (asset === 'eth' ? '' : asset)));
     }
 
     get holder$(): Observable<string> {
-        return this.state$.pipe(map(({ data }) => data.holder));
+        return this.state$.pipe(map((state) => requestOf(state)?.holder ?? ''));
     }
 
     get reading$(): Observable<boolean> {
-        return this.state$.pipe(map(atNode('reading')));
+        return this.state$.pipe(map(atNode('loading')));
     }
 
     /** The balance read, nothing while reading, or "—" before there is one. */
     get balance$(): Observable<string> {
         return this.state$.pipe(
-            map((state) =>
-                'balance' in state.data
-                    ? `${formatUnits(state.data.balance, state.data.decimals)} ${state.data.symbol}`
-                    : state.node === 'reading'
+            map((state) => {
+                const preview = previewOf(state);
+                return preview !== undefined
+                    ? tokenAmountText(preview.balance, preview.decimals, preview.symbol)
+                    : state.node === 'loading'
                       ? ''
-                      : '—',
-            ),
+                      : '—';
+            }),
         );
     }
 
     /** The snapshot fee read, or "—" before there is one. */
     get fee$(): Observable<string> {
         return this.state$.pipe(
-            map((state) => ('fee' in state.data ? `${formatEther(state.data.fee)} ETH` : '—')),
+            map((state) => {
+                const preview = previewOf(state);
+                return preview !== undefined ? tokenAmountText(preview.fee, 18, 'ETH') : '—';
+            }),
         );
     }
 
@@ -287,16 +301,22 @@ export class ProveForm extends RxElement {
                 switch (state.node) {
                     case 'editing':
                         return 'Enter a token and an Ethereum address';
-                    case 'waitingForConnection':
+                    case 'waitingForConnectionWhileLoading':
+                    case 'waitingForConnectionWhileRefreshing':
                         return `Waiting for ${state.data.waitingOn.join(' and ')}`;
-                    case 'readFailed':
+                    case 'failedWhileLoading':
+                    case 'failedWhileRefreshing':
                         return state.data.error;
                     case 'declined':
                         return 'You cancelled the transaction in your wallet';
                     case 'sendFailed':
                         return state.data.error;
-                    case 'reading':
-                    case 'balanceRead':
+                    case 'resuming':
+                    case 'noAccount':
+                    case 'loading':
+                    case 'current':
+                    case 'refreshing':
+                    case 'closed':
                     case 'awaitingSignature':
                     case 'proving':
                     case 'verifying':
@@ -340,7 +360,7 @@ export class ProveForm extends RxElement {
                 state.node === 'verifying'
                     ? `Verifying the balance on Solana against batch #${state.data.proofQueueBatchIndex.toString()}`
                     : state.node === 'verifyFailed'
-                      ? `Verifying failed: ${state.data.error}`
+                      ? 'Verifying failed'
                       : state.node === 'verified'
                         ? 'Verified on Solana'
                         : '',
@@ -362,8 +382,8 @@ export class ProveForm extends RxElement {
 
     get provenBalance$(): Observable<string> {
         return this.verifiedFact$(
-            ({ provenBalance, decimals, symbol }) =>
-                `${formatUnits(provenBalance, decimals)} ${symbol}`,
+            ({ provenBalance, preview }) =>
+                tokenAmountText(provenBalance, preview.decimals, preview.symbol),
         );
     }
 
@@ -441,7 +461,7 @@ export class ProveForm extends RxElement {
             .pipe(take(1))
             .subscribe((state) =>
                 this.control((machine) =>
-                    state.node === 'readFailed' ? machine.retry() : machine.prove(),
+                    atNode(...READ_FAILED)(state) ? machine.retry() : machine.prove(),
                 ),
             );
     }
@@ -457,7 +477,7 @@ export class ProveForm extends RxElement {
      * @returns {void}
      */
     private control(call: (machine: ProveBalanceMachine) => void): void {
-        this.proveBalance.machine$.pipe(take(1)).subscribe(call);
+        call(this.proveBalance.machine);
     }
 
     /**

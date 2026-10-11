@@ -1,11 +1,13 @@
 {
     "ethereum": {
         "rpcUrl": "${ETH_RPC_URL}",
+        "chainId": "${ETH_CHAIN_ID}",
         "noriSnapshot": "${NORI_ETH_SNAPSHOT_ADDRESS}",
         "proofQueue": "${NORI_ETH_PROOF_QUEUE_ADDRESS}"
     },
     "solana": {
         "rpcUrl": "${SOLANA_RPC_NETWORK_URL}",
+        "genesisHash": "${SOLANA_GENESIS_HASH}",
         "keypair": "${SOLANA_PAYER_KEYPAIR_PATH}",
         "noriProgram": "${NORI_SOL_TOKEN_PROGRAM_ID}"
     },

@@ -18,8 +18,10 @@
     cursor: pointer;
     font: inherit;
 }
-.views button:hover {
-    background: rgb(100 225 142 / 12%);
+@media (hover: hover) {
+    .views button:hover {
+        background: rgb(100 225 142 / 12%);
+    }
 }
 .views button.current {
     background: var(--nori-light-green);

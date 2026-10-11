@@ -1,146 +1,176 @@
 import { Injectable } from '@yaw-rx/core';
 import {
-    catchError,
-    concat,
-    defer,
+    combineLatest,
+    distinctUntilChanged,
     map,
-    Observable,
+    type Observable,
     of,
     shareReplay,
-    startWith,
-    Subject,
     switchMap,
 } from 'rxjs';
-import { ConnectionsService } from './connections.service.js';
 import {
-    bothReady$,
-    getBridgeState,
-    getEnqueuedProofRequests,
-    getProofQueueBatchSummaries,
+    createBridgeStateMachine,
+    createEthereumBlocksMachine,
+    createProofQueueBatchesMachine,
+    createProofQueueBatchRequestsMachine,
     type EnqueuedProofRequest,
+    type ProofQueueBatchesState,
     type ProofQueueBatchSummary,
 } from '@nori-zk/nori-bridge-solana-sdk';
-import { BatchTimesService, type BatchLanding } from './batch-times.service.js';
+import { followedStates$ } from '@nori-zk/backstop-client/read';
+import { ConnectionsService } from './connections.service.js';
+import { createBatchLandingsMachine } from '../machines/batchLandings.impl.js';
+import { type BatchLanding } from '../utils/batch-landing.js';
 
 /** How many batches the tab reads, newest first. */
 const BATCH_COUNT = 30;
 
-/** One read of the tab: the newest batches, their NoriSnapshot requests, and when each batch landed. */
+/** The latency tab's reads: the newest batches, their NoriSnapshot requests, and when each batch landed. */
 export interface Latency {
     /** The newest batches, newest first. */
     batches: ProofQueueBatchSummary[];
-    /** The NoriSnapshot requests over the batches' Ethereum blocks, oldest first. */
+    /** The NoriSnapshot requests in the batches, oldest first. */
     requests: EnqueuedProofRequest[];
     /** Each batch's landing by index; `undefined` while they are read. */
     landings: Map<bigint, BatchLanding> | undefined;
 }
 
 /**
- * The newest batch indices, newest first, as `bridge-batches.impl.ts` picks them.
+ * The batches the batches machine's view holds: none before its first read.
  *
- * @param batchCount How many batches the program holds.
- * @returns Up to `BATCH_COUNT` indices.
+ * @param state The batches machine's state.
+ * @returns The batches.
  */
-const newestIndices = (batchCount: bigint): bigint[] =>
-    Array.from(
-        { length: Number(batchCount < BigInt(BATCH_COUNT) ? batchCount : BigInt(BATCH_COUNT)) },
-        (_, i) => batchCount - 1n - BigInt(i),
+const batchesOf = (state: ProofQueueBatchesState): ProofQueueBatchSummary[] =>
+    'view' in state.data ? state.data.view.batches : [];
+
+/**
+ * Whether two runs of batches are the same batches, in the same order.
+ *
+ * @param before The run before.
+ * @param now The run now.
+ * @returns Whether their indices match.
+ */
+const sameBatches = (before: ProofQueueBatchSummary[], now: ProofQueueBatchSummary[]): boolean =>
+    before.length === now.length &&
+    before.every(
+        ({ proofQueueBatchIndex }, i) => proofQueueBatchIndex === now[i]?.proofQueueBatchIndex,
     );
 
 /**
- * The latency tab's read: once when the tab opens, as soon as both chains
- * can serve it, and again on each `readAgain()`, with no timer, as a batch
- * lands every 20–35 min. Each read emits `undefined` first, then the batches
- * and their requests, then the same with the landings; or why reading failed.
+ * The latency tab's reads, each a machine kept current: the newest
+ * `BATCH_COUNT` batches (the sdk's batches machine, from the bridge's state
+ * and Ethereum's blocks), each batch's NoriSnapshot requests (one sdk batch
+ * requests machine per batch, made when the run of batches changes and
+ * closed with it), and when each batch landed on Solana.
  */
-@Injectable([ConnectionsService, BatchTimesService])
+@Injectable([ConnectionsService])
 export class LatencyService {
-    readonly latency$: Observable<Latency | string | undefined>;
-    private readonly refresh = new Subject<void>();
+    /** The batches machine's states. */
+    readonly state$: Observable<ProofQueueBatchesState>;
+    /** The reads, as the machines hold them: the batches and requests read so far, and the landings once read. */
+    readonly latency$: Observable<Latency>;
+    private readonly bridgeState: ReturnType<typeof createBridgeStateMachine>;
+    private readonly ethereumBlocks: ReturnType<typeof createEthereumBlocksMachine>;
+    private readonly batches: ReturnType<typeof createProofQueueBatchesMachine>;
+    private readonly landings: ReturnType<typeof createBatchLandingsMachine>;
 
     /**
-     * @param connections The connections: batches from Solana, requests from Ethereum.
-     * @param batchTimes When each batch landed, kept across reads.
+     * @param connections The connections: batches and landings from Solana, requests from Ethereum.
      */
-    constructor(connections: ConnectionsService, batchTimes: BatchTimesService) {
-        const { ethereum, solana } = connections.connections;
+    constructor(connections: ConnectionsService) {
         const programAddress = NORI_WEB_ENV.solana.programAddress;
-        const read = async (): Promise<Latency> => {
-            const { proofQueueBatchCount } = await getBridgeState(solana, programAddress);
-            const batches = await getProofQueueBatchSummaries(
-                solana,
-                newestIndices(proofQueueBatchCount),
-                programAddress,
-            );
-            const newest = batches[0];
-            const oldest = batches[batches.length - 1];
-            if (newest === undefined || oldest === undefined) {
-                return { batches, requests: [], landings: undefined };
-            }
-            // One read over every batch's blocks; the sdk splits it at 2,000 blocks.
-            const requests = await getEnqueuedProofRequests(
-                ethereum,
-                NORI_WEB_ENV.ethereum.proofQueueAddress,
-                {
-                    fromBlock:
-                        oldest.previousOutputBlockNumber < 0n
-                            ? NORI_WEB_ENV.ethereum.proofQueueDeployBlock
-                            : Number(oldest.previousOutputBlockNumber) + 1,
-                    toBlock: Number(newest.outputBlockNumber),
-                    target: NORI_WEB_ENV.ethereum.snapshotAddress,
-                },
-            );
-            return { batches, requests, landings: undefined };
-        };
-        // Closing the tab stops the landing reads still to come.
-        const landingsOf = (
-            batches: ProofQueueBatchSummary[],
-        ): Observable<Map<bigint, BatchLanding>> =>
-            new Observable((subscriber) => {
-                const abort = new AbortController();
-                batchTimes.landings(batches, abort.signal).then(
-                    (landings) => {
-                        subscriber.next(landings);
-                        subscriber.complete();
-                    },
-                    (error: unknown) => {
-                        subscriber.error(error);
-                    },
-                );
-                return () => {
-                    abort.abort();
-                };
-            });
-        // The rows first, then again once the landings are read.
-        const readWithLandings = (): Observable<Latency> =>
-            defer(read).pipe(
-                switchMap((latency) =>
-                    concat(
-                        of(latency),
-                        landingsOf(latency.batches).pipe(
-                            map((landings) => ({ ...latency, landings })),
-                        ),
-                    ),
-                ),
-            );
-        // The read needs both chains: wait until both can serve it, once.
-        this.latency$ = bothReady$(connections.connections).pipe(
-            switchMap(() => this.refresh.pipe(startWith(undefined))),
-            switchMap(() =>
-                readWithLandings().pipe(
-                    catchError((error: unknown) =>
-                        of(error instanceof Error ? error.message : String(error)),
-                    ),
-                    startWith(undefined),
-                ),
+        const { proofQueueAddress, snapshotAddress, proofQueueDeployBlock } = NORI_WEB_ENV.ethereum;
+        this.bridgeState = createBridgeStateMachine(connections.connections, programAddress);
+        this.ethereumBlocks = createEthereumBlocksMachine(connections.connections);
+        this.batches = createProofQueueBatchesMachine(
+            connections.connections,
+            { proofQueueAddress, programAddress },
+            { fromBlock: proofQueueDeployBlock, count: BATCH_COUNT },
+            { bridgeState: this.bridgeState, ethereumBlocks: this.ethereumBlocks },
+        );
+        this.landings = createBatchLandingsMachine(
+            connections.connections,
+            programAddress,
+            this.batches,
+        );
+        this.state$ = this.batches.state$;
+
+        const batches$ = this.batches.state$.pipe(
+            map(batchesOf),
+            distinctUntilChanged(sameBatches),
+        );
+        // Each batch's NoriSnapshot requests, made for the run of batches in view: those read so far.
+        const requests$: Observable<EnqueuedProofRequest[]> = batches$.pipe(
+            switchMap((batches) =>
+                batches.length === 0
+                    ? of([])
+                    : combineLatest(
+                          batches.map((batch) =>
+                              followedStates$(() =>
+                                  createProofQueueBatchRequestsMachine(
+                                      connections.connections,
+                                      proofQueueAddress,
+                                      batch,
+                                      { target: snapshotAddress, fromBlock: proofQueueDeployBlock },
+                                  ),
+                              ),
+                          ),
+                      ).pipe(
+                          map((states) =>
+                              states
+                                  .flatMap((state) =>
+                                      'requests' in state.data ? state.data.requests : [],
+                                  )
+                                  .sort((a, b) =>
+                                      a.requestId < b.requestId
+                                          ? -1
+                                          : a.requestId > b.requestId
+                                            ? 1
+                                            : 0,
+                                  ),
+                          ),
+                      ),
             ),
-            startWith(undefined),
+        );
+        this.latency$ = combineLatest([batches$, requests$, this.landings.state$]).pipe(
+            map(([batches, requests, landings]) => {
+                switch (landings.node) {
+                    case 'loading':
+                    case 'waitingForConnectionWhileLoading':
+                    case 'failedWhileLoading':
+                    case 'closed':
+                        return { batches, requests, landings: undefined };
+                    case 'current':
+                    case 'refreshing':
+                    case 'waitingForConnectionWhileRefreshing':
+                    case 'failedWhileRefreshing':
+                        return {
+                            batches,
+                            requests,
+                            landings: new Map(
+                                landings.data.landings.map(
+                                    ({ proofQueueBatchIndex, atSecs, signature }) => [
+                                        proofQueueBatchIndex,
+                                        { atSecs, signature },
+                                    ],
+                                ),
+                            ),
+                        };
+                }
+            }),
             shareReplay({ bufferSize: 1, refCount: true }),
         );
     }
 
-    /** Reads the batches, their requests and landings again. */
-    readAgain(): void {
-        this.refresh.next();
+    /**
+     * Closes the reads with the app.
+     * @returns {void}
+     */
+    onDestroy(): void {
+        this.landings.close();
+        this.batches.close();
+        this.ethereumBlocks.close();
+        this.bridgeState.close();
     }
 }

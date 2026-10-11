@@ -4,7 +4,6 @@ import {
     NoriBridgeInfraService,
     PROOF_REQUEST_CONNECTIONS_OPTIONS,
     type ConnectionsOptions,
-    BatchTimesService,
     LatencyService,
 } from '@nori-zk/solana-web-ui';
 import { BridgeDashboardService } from './app-root/services/bridge-dashboard.service.js';
@@ -15,9 +14,7 @@ const connectionsOptions: ConnectionsOptions = {
     ethereum: {
         expectedChainId: BigInt(NORI_WEB_ENV.ethereum.chainId),
         http: { rpcUrl: NORI_WEB_ENV.ethereum.rpcUrl },
-        wallet: true,
-        // TEMPORARY: the wallet first; the public RPC first lets the dashboard read without one.
-        order: { calls: ['wallet', 'http'], logs: ['wallet', 'http'] },
+        order: { calls: ['http'], logs: ['http'] },
     },
     solana: {
         cluster: NORI_WEB_ENV.solana.cluster,
@@ -39,7 +36,6 @@ const connectionsOptions: ConnectionsOptions = {
         ConnectionsService,
         NoriBridgeInfraService,
         BridgeDashboardService,
-        BatchTimesService,
         LatencyService,
     ],
     template: `
@@ -47,7 +43,6 @@ const connectionsOptions: ConnectionsOptions = {
             heading="Bridge dashboard"
             lede="The proof queue from Ethereum to Solana, and how long reads take."
         >
-            <wallet-pair></wallet-pair>
             <dashboard-views></dashboard-views>
         </nori-page>
     `,

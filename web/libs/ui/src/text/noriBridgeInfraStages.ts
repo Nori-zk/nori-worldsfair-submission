@@ -1,7 +1,6 @@
-import type { NoriBridgeInfraTransitionState } from '@nori-zk/nori-bridge-solana-sdk';
+import type { NoriBridgeInfraStage } from '@nori-zk/nori-bridge-solana-sdk';
 
-/** A node of Nori's bridge infra transition graph. */
-export type NoriBridgeInfraStage = NoriBridgeInfraTransitionState['node'];
+export type { NoriBridgeInfraStage };
 
 /**
  * What each node of Nori's bridge infra transition graph is shown as. A

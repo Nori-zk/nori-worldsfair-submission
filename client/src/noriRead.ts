@@ -1,27 +1,18 @@
 import {
     AccountRole,
     address,
-    appendTransactionMessageInstruction,
-    blockhash,
-    compileTransaction,
-    createTransactionMessage,
-    getBase64EncodedWireTransaction,
-    pipe,
-    setTransactionMessageFeePayer,
-    setTransactionMessageLifetimeUsingBlockhash,
     type Address,
     type Instruction,
 } from '@solana/kit';
 import { concat, decodeBase64, getBytes, hexlify } from 'ethers';
+import { map, type Observable } from 'rxjs';
+import { type SolanaRpc } from '@nori-zk/nori-bridge-solana-sdk';
 import {
     discriminator,
     encodeSnapshotResultWitness,
     eventDiscriminator,
 } from './anchor.js';
-import {
-    fetchProvenSnapshot,
-    type ProvenSnapshotRequest,
-} from './fetchProvenSnapshot.js';
+import { simulation$ } from './simulation.js';
 import type { SnapshotResultWitnessArgs } from './snapshotWitness.js';
 
 /** `programs/nori-read-example`: verifies one snapshot result with nori-read and emits it. */
@@ -117,64 +108,38 @@ export function snapshotResultReadFromLogs(
     return undefined;
 }
 
-/** Any blockhash: the simulation replaces it with a recent one. */
-const ANY_LIFETIME = {
-    blockhash: blockhash('11111111111111111111111111111111'),
-    lastValidBlockHeight: 0n,
-};
-
 /**
- * Verifies one result of a snapshot transaction on Solana, once Nori has
- * proven its batch: builds the witness and simulates nori-read-example's
- * `read_snapshot_result` with it. No signature and no fee, but `feePayer`
- * must be an existing account holding SOL.
+ * Verifies one result of a snapshot on Solana, against the proof queue
+ * batch Nori proved it in: simulates nori-read-example's
+ * `read_snapshot_result` with the result's witness. No signature and no
+ * fee, but `feePayer` must be an existing account holding SOL.
  *
- * @throws When Nori has not proven the batch yet, or the result does not verify.
+ * @param rpc The Solana RPC.
+ * @param request The batch, the snapshot, the query, its witness and the fee payer.
+ * @returns What the program verified and what it cost, once; errors when the result does not verify.
  */
-export async function verifySnapshotResult(
-    request: ProvenSnapshotRequest & { queryId: string; feePayer: Address }
-): Promise<{
-    read: SnapshotResultRead;
-    unitsConsumed: bigint;
-    proofQueueBatch: Address;
-}> {
-    const proven = await fetchProvenSnapshot(request);
-    if (!proven.proven)
-        throw new Error(
-            `Nori has not proven the batch of ${request.snapshotTxHash} yet`
-        );
-    const instruction = readSnapshotResultInstruction({
-        proofQueueBatch: proven.proofQueueBatch,
-        noriSnapshot: request.noriSnapshot,
-        queryId: request.queryId,
-        witness: proven.witnessFor(request.queryId),
-    });
-    const transaction = compileTransaction(
-        pipe(
-            createTransactionMessage({ version: 0 }),
-            (m) => setTransactionMessageFeePayer(request.feePayer, m),
-            (m) => setTransactionMessageLifetimeUsingBlockhash(ANY_LIFETIME, m),
-            (m) => appendTransactionMessageInstruction(instruction, m)
-        )
-    );
-    const rpc = await request.connections.solana.http.ready();
-    const { value } = await rpc
-        .simulateTransaction(getBase64EncodedWireTransaction(transaction), {
-            encoding: 'base64',
-            sigVerify: false,
-            replaceRecentBlockhash: true,
-            commitment: 'confirmed',
+export const snapshotResultSimulation$ = (
+    rpc: SolanaRpc,
+    request: {
+        proofQueueBatch: Address;
+        noriSnapshot: string;
+        queryId: string;
+        witness: SnapshotResultWitnessArgs;
+        feePayer: Address;
+    }
+): Observable<{ read: SnapshotResultRead; unitsConsumed: bigint }> =>
+    simulation$(
+        rpc,
+        [readSnapshotResultInstruction(request)],
+        request.feePayer,
+        'Failed to simulate read_snapshot_result.'
+    ).pipe(
+        map(({ err, logs, unitsConsumed }) => {
+            const read = err ? undefined : snapshotResultReadFromLogs(logs);
+            if (!read)
+                throw new Error(
+                    `The result did not verify: ${logs.filter((line) => line.startsWith('Program log: ')).join(' ') || 'simulation failed'}`
+                );
+            return { read, unitsConsumed };
         })
-        .send();
-    const logs = value.logs ?? [];
-    const read = value.err ? undefined : snapshotResultReadFromLogs(logs);
-    if (!read)
-        throw new Error(
-            `The result did not verify: ${logs.filter((line) => line.startsWith('Program log: ')).join(' ') || 'simulation failed'}`
-        );
-    return {
-        read,
-        unitsConsumed: value.unitsConsumed ?? 0n,
-        proofQueueBatch: proven.proofQueueBatch,
-    };
-}
+    );

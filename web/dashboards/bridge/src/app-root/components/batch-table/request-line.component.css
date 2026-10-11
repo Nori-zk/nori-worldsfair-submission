@@ -19,7 +19,20 @@ a {
     opacity: 0.6;
     text-decoration: none;
 }
-a:hover {
-    opacity: 1;
-    text-decoration: underline;
+@media (hover: hover) {
+    a:hover {
+        opacity: 1;
+        text-decoration: underline;
+    }
+}
+@container batch-table (max-width: 46rem) {
+    /* The links go under the contract and cut short. */
+    :host > * {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    :host > .detail,
+    :host > span:last-child {
+        grid-column: 2;
+    }
 }
