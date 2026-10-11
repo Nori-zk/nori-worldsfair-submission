@@ -5,6 +5,7 @@ import {
     LatencyService,
     latencyMinutes,
     rowsOf,
+    ScrollThumb,
     summaryOf,
     type LatencyRowView,
 } from '@nori-zk/solana-web-ui';
@@ -19,7 +20,7 @@ import styles from './latency-table.component.css';
  */
 @Component({
     selector: 'latency-table',
-    directives: [RxFor],
+    directives: [RxFor, ScrollThumb],
     template: `
         <p class="title">READ LATENCY: Ethereum block → landed on Solana</p>
         <p class="explain">
@@ -28,16 +29,18 @@ import styles from './latency-table.component.css';
             30–50 s after its batch lands.
         </p>
         <p class="summary">{{ summary }}</p>
-        <div class="head">
-            <span>REQUEST</span>
-            <span>ETH TIME</span>
-            <span>BATCH</span>
-            <span>LANDED</span>
-            <span class="min">MIN</span>
-            <span>VS MEDIAN</span>
-        </div>
-        <div rx-for="rows by key">
-            <latency-row></latency-row>
+        <div class="table" scroll-thumb="x">
+            <div class="head">
+                <span>REQUEST</span>
+                <span>ETH TIME</span>
+                <span>BATCH</span>
+                <span>LANDED</span>
+                <span class="min">MIN</span>
+                <span>VS MEDIAN</span>
+            </div>
+            <div rx-for="rows by key">
+                <latency-row></latency-row>
+            </div>
         </div>
         <p class="status">{{ status }}</p>
     `,

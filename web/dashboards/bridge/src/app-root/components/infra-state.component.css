@@ -13,23 +13,7 @@
     letter-spacing: 0.1em;
     text-align: center;
 }
-.stage {
+.loop-stage {
     margin: 0 0 0.5rem;
     text-align: center;
-}
-.bar {
-    display: flex;
-    overflow: hidden;
-    white-space: nowrap;
-    letter-spacing: 0.05em;
-}
-.bar .done {
-    flex: none;
-    overflow: hidden;
-    transition: width 0.3s ease-out;
-}
-.bar .rest {
-    flex: 1;
-    overflow: hidden;
-    opacity: 0.5;
 }

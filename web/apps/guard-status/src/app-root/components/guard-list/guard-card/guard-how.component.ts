@@ -1,10 +1,12 @@
 import { Component, RxElement, state } from '@yaw-rx/core';
+import { RxFor } from '@yaw-rx/core/directives/rx-for';
 import { filter, map, type Observable } from 'rxjs';
 import {
+    type CheckpointRow,
     type GuardRead,
     addressUrl,
     amount,
-    checkpointLines,
+    checkpointRows,
     duration,
     shortHex,
     solanaAccountUrl,
@@ -25,6 +27,7 @@ const NO_QUERY = /^0x0*$/;
  */
 @Component({
     selector: 'guard-how',
+    directives: [RxFor],
     template: `
         <p class="settings">
             {{ settingsText }}
@@ -33,7 +36,15 @@ const NO_QUERY = /^0x0*$/;
             >{{ settingsEnd }}
         </p>
         <p class="rule"><span class="label">RULE</span> {{ rule }}</p>
-        <pre class="checkpoints">{{ checkpoints }}</pre>
+        <div class="checkpoints" rx-for="row of checkpoints.rows by key">
+            <div class="checkpoint">
+                <span>{{ row.time }}</span>
+                <span class="supply">{{ row.supply }}</span>
+                <progress-bar [fill]="row.fill" cells="10"></progress-bar>
+                <span>{{ row.marker }}</span>
+            </div>
+        </div>
+        <p class="older">{{ checkpoints.older }}</p>
         <p class="links">
             <a [href]="guardUrl" target="_blank" rel="noopener">Guard account ↗</a>
             <a [href]="adminUrl" target="_blank" rel="noopener">Admin ↗</a>
@@ -72,10 +83,10 @@ export class GuardHow extends RxElement {
         return this.fact$(({ guard, decimals }) => windowOf(guard, decimals).verdict);
     }
 
-    /** The window's checkpoints, newest first, at most 12. */
-    get checkpoints$(): Observable<string> {
+    /** The window's checkpoints, newest first, at most 12, and how many older ones are not listed. */
+    get checkpoints$(): Observable<{ rows: CheckpointRow[]; older: string }> {
         return this.fact$(({ guard, decimals }) =>
-            checkpointLines(windowOf(guard, decimals), decimals).join('\n'),
+            checkpointRows(windowOf(guard, decimals), decimals),
         );
     }
 

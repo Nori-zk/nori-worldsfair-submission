@@ -65,6 +65,11 @@
     color: var(--nori-light-green);
     letter-spacing: 0.05em;
 }
+/* While the fill is not known the bar is `·` throughout. */
+.bar.unknown progress-bar,
+.bar:not(.unknown) .dots {
+    display: none;
+}
 .stages {
     display: grid;
     grid-template-columns: 1fr 1.4fr 1fr;

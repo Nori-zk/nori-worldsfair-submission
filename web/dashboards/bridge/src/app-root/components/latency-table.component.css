@@ -4,9 +4,55 @@
     --latency-gap: 0.75rem;
     display: block;
     margin-top: 2rem;
-    overflow-x: auto;
     font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
     font-size: 0.9rem;
+}
+/* The head and rows scroll across when the columns are wider than the card; the text above stays put. */
+.table {
+    display: flex;
+    flex-direction: column;
+    overflow-x: auto;
+    scrollbar-color: rgb(100 225 142 / 45%) transparent;
+    scrollbar-width: thin;
+}
+.table::-webkit-scrollbar {
+    height: 6px;
+}
+.table::-webkit-scrollbar-track {
+    background: transparent;
+}
+.table::-webkit-scrollbar-thumb {
+    border-radius: 3px;
+    background: rgb(100 225 142 / 45%);
+}
+.table::-webkit-scrollbar-thumb:hover {
+    background: var(--nori-light-green);
+}
+/* The scroll-thumb directive's track: last, along the bottom of the columns in view, taking no space. */
+.table > .scroll-thumb {
+    position: sticky;
+    left: 0;
+    order: 1;
+    height: 0;
+}
+.table > .scroll-thumb > div {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: var(--scroll-thumb-width);
+    height: 4px;
+    border-radius: 2px;
+    background: rgb(100 225 142 / 60%);
+    transform: translateX(var(--scroll-thumb-offset));
+}
+@media (pointer: coarse) {
+    /* On a touch screen the browser's own bar is an overlay that fades: the directive's thumb replaces it. */
+    .table {
+        scrollbar-width: none;
+    }
+    .table::-webkit-scrollbar {
+        display: none;
+    }
 }
 .title {
     margin: 0 0 0.5rem;

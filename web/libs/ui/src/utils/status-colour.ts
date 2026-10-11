@@ -1,4 +1,4 @@
-import { type GuardRead } from '../services/guard-board.service.js';
+import { type GuardRead } from '../machines/guardBoard.js';
 
 /** Each status's colour. */
 export const STATUS_COLOUR: Record<GuardRead['status'], string> = {

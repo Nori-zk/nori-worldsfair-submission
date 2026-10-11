@@ -52,7 +52,7 @@ cargo fmt --all --check
 
 ## Quirks
 
-- One sdk release everywhere: the npm versions in every `package.json` (exact, no ranges) and the cargo `rev` in `nori-read/` and `test-harness/` `Cargo.toml` (npm now 0.2.0, `cbcfcc0`; cargo `4e43865`, whose Rust 0.2.0 left unchanged). Bump them together; `Cargo.lock` then changes only those sources.
+- One sdk release everywhere: the npm versions in every `package.json` (exact, no ranges) and the cargo `rev` in `nori-read/` and `test-harness/` `Cargo.toml` (npm now 0.3.0, `ee4cc78`; cargo `4e43865`, whose Rust 0.2.0 and 0.3.0 left unchanged). Bump them together; `Cargo.lock` then changes only those sources.
 - Node 23 needs `--experimental-wasm-modules` for the hashing wasm (`@nori-zk/ethereum-solana-proof-queue-utils-glam`); the test scripts set it.
 - Toolchain: solana-cli (Agave) 3.1.x with platform-tools v1.54 (SBF rustc 1.89). That's what the tests ran on.
 - `cargo build-sbf` ignores `--locked`: if `Cargo.lock` drifts from `Cargo.toml`, it re-resolves (e.g. to alloy 1.8, which needs rustc 1.91) and fails with "requires rustc 1.91". `cargo metadata --locked` checks the lock; the scripts run it first.

@@ -21,12 +21,13 @@ const shortSlot = (slot: bigint): string => `…${slot.toString().slice(-4)}`;
  */
 const solanaText = (cluster: string, state: HttpConnectionState<SolanaHealth>): string => {
     switch (state.node) {
-        case 'checking':
+        case 'connecting':
             return 'Connecting to Solana';
         case 'ready':
+        case 'overwhelmed':
             return `Solana ${cluster}: ${shortSlot(state.data.health.slot)}`;
         case 'wrongNetwork':
-        case 'unreachable':
+        case 'waitingToRetry':
             return 'Reconnecting to Solana';
         case 'offline':
             return 'Offline';
@@ -57,6 +58,8 @@ export class SolanaButton extends ChainButton {
     }
 
     get ready$(): Observable<boolean> {
-        return this.connections.solanaHttpState$.pipe(map((state) => state.node === 'ready'));
+        return this.connections.solanaHttpState$.pipe(
+            map((state) => state.node === 'ready' || state.node === 'overwhelmed'),
+        );
     }
 }

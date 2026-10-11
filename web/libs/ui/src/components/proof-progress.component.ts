@@ -17,6 +17,7 @@ import {
 } from '@nori-zk/nori-bridge-solana-sdk';
 import { type FollowedProof, ProofProgressService } from '../services/proof-progress.service.js';
 import { anchoredFill, waitedSec } from '../utils/proof-progress.js';
+import './progress-bar.component.js';
 import styles from './proof-progress.component.css';
 
 /**
@@ -132,7 +133,7 @@ const progressDetail = (progress: UnprocessedProofRequestStateNodeUnion): string
             <button class="retry" onclick="retry">Read again</button>
         </div>
         <div rx-if="processing">
-            <div class="bar"><div class="fill" [style]="fill"></div></div>
+            <progress-bar class="bar" [fill]="fill"></progress-bar>
             <ol class="stages">
                 <li [class.current]="atFinality">Ethereum finality</li>
                 <li [class.current]="atPrevious">Previous batch</li>
@@ -195,7 +196,8 @@ export class ProofProgress extends RxElement {
         return this.followed$.pipe(switchMap(({ totalSec$ }) => totalSec$));
     }
 
-    get fill$(): Observable<string> {
+    /** The bar's fill, from 0 to 1. */
+    get fill$(): Observable<number> {
         // Ticks each second, so the bar moves with the clock between the machine's states.
         return combineLatest([
             this.progress$,
@@ -205,8 +207,8 @@ export class ProofProgress extends RxElement {
         ]).pipe(
             map(([progress, enqueuedAtMs, totalSec]) =>
                 progress === undefined
-                    ? ''
-                    : `width: ${(progressFill(progress, enqueuedAtMs, totalSec, Date.now()) * 100).toFixed(1)}%`,
+                    ? 0
+                    : progressFill(progress, enqueuedAtMs, totalSec, Date.now()),
             ),
             distinctUntilChanged(),
         );

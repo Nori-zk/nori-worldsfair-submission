@@ -40,6 +40,7 @@ export const brandStyles = `
     --nori-logo-green: #03ff9f;
     --nori-neon-green: #48ede7;
     --nori-neon-blue: #84f7fc;
+    --nori-neon-yellow: #f9e46b;
     --nori-neon-red: #fb635e;
     --nori-text: #e8f1ec;
     --nori-muted: #9fb3a8;

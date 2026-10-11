@@ -30,7 +30,7 @@
         "@nori-zk/ethereum-snapshot": "*",
         "@nori-zk/ethereum-solana-bridge": "0.0.1",
         "@nori-zk/ethereum-solana-proof-queue-utils-glam": "0.0.1",
-        "@nori-zk/nori-bridge-solana-sdk": "0.2.0",
+        "@nori-zk/nori-bridge-solana-sdk": "0.3.0",
         "@solana/kit": "^8.3.0",
         "@yaw-rx/ystate": "^0.1.0",
         "dotenv": "^17.2.4",

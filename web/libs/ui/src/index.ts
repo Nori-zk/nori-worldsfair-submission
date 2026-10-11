@@ -13,6 +13,7 @@ export {
 } from './services/nori-bridge-infra.service.js';
 export { ConnectionPins } from './components/connection-pins.component.js';
 export { ProofProgress } from './components/proof-progress.component.js';
+export { ProgressBar } from './components/progress-bar.component.js';
 export { NoriBackground } from './components/nori-background.component.js';
 export { NoriCard } from './components/nori-card.component.js';
 export { NoriPage } from './components/nori-page.component.js';
@@ -68,7 +69,7 @@ export {
     duration,
     minutes,
 } from './utils/format.js';
-export { asciiBar, UNKNOWN_BAR, timeLeft } from './utils/ascii.js';
+export { timeLeft } from './utils/ascii.js';
 export {
     depositTransaction,
     verdictText,
@@ -85,7 +86,12 @@ export {
     type FactLabel,
     type VerifyVerdict,
 } from './utils/facts.js';
-export { windowOf, checkpointLines, type GuardWindow } from './utils/guard-rule.js';
+export {
+    windowOf,
+    checkpointRows,
+    type CheckpointRow,
+    type GuardWindow,
+} from './utils/guard-rule.js';
 export {
     ethTimeOf,
     batchOf,

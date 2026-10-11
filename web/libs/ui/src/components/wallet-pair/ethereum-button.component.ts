@@ -38,9 +38,10 @@ const ethereumText = (wallet: EthereumWalletState, expectedChainId: bigint): str
             return 'Install MetaMask';
         case 'choosingWallet':
             return 'Choose a wallet';
-        case 'checking':
+        case 'connecting':
             return `Checking ${wallet.data.wallet.name}`;
         case 'ready':
+        case 'overwhelmed':
             return `${wallet.data.wallet.name} · ${chainName(expectedChainId)}`;
         case 'wrongNetwork':
             return `Switch to ${chainName(wallet.data.expected)}`;
@@ -48,7 +49,7 @@ const ethereumText = (wallet: EthereumWalletState, expectedChainId: bigint): str
             return `Confirm in ${wallet.data.wallet.name}`;
         case 'switchDeclined':
             return `Switch ${wallet.data.wallet.name} to ${chainName(wallet.data.expected)}`;
-        case 'unreachable':
+        case 'waitingToRetry':
             return `${wallet.data.wallet.name} not responding`;
         case 'offline':
             return 'Offline';
@@ -95,7 +96,8 @@ export class EthereumButton extends ChainButton {
     get text$(): Observable<string> {
         return this.states$.pipe(
             map(([wallet, account]) => {
-                if (wallet.node !== 'ready') return ethereumText(wallet, this.expectedChainId);
+                if (wallet.node !== 'ready' && wallet.node !== 'overwhelmed')
+                    return ethereumText(wallet, this.expectedChainId);
                 if (account.node === 'askingToShareAccount')
                     return `Confirm in ${wallet.data.wallet.name}`;
                 if (needsAccount(account)) return `Connect ${wallet.data.wallet.name}`;
@@ -113,7 +115,7 @@ export class EthereumButton extends ChainButton {
         return this.states$.pipe(
             map(
                 ([wallet, account]) =>
-                    wallet.node === 'ready' &&
+                    (wallet.node === 'ready' || wallet.node === 'overwhelmed') &&
                     account.node === 'current' &&
                     account.data.account !== undefined,
             ),

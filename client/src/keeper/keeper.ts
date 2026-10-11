@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { FetchRequest, JsonRpcProvider, Wallet } from 'ethers';
+import { Wallet } from 'ethers';
 import {
     address,
     createKeyPairSignerFromBytes,
@@ -94,7 +94,6 @@ import {
     createSnapshotSubmissionMachine,
     type GuardRead,
 } from './snapshotSubmission.impl.js';
-import { RPC_TIMEOUT_MS } from './solana.js';
 
 /** How long `snapshot` waits for its transaction to be mined. */
 const SNAPSHOT_WAIT_MS = 3 * 60_000;
@@ -192,8 +191,7 @@ export class Keeper {
     private constructor(
         private readonly config: KeeperConfig,
         private readonly connections: Connections,
-        private readonly solanaSigner: KeyPairSigner,
-        private readonly ethereumProvider: JsonRpcProvider
+        private readonly solanaSigner: KeyPairSigner
     ) {}
 
     /** The keeper signs through its own signers and reads and sends through the sdk's connections. */
@@ -208,9 +206,6 @@ export class Keeper {
             )
         ).pipe(
             map((signer) => {
-                // ethers' default is 5 min per request; a hung one would stall a send
-                const request = new FetchRequest(config.ethereum.rpcUrl);
-                request.timeout = RPC_TIMEOUT_MS;
                 const connections = createConnections({
                     ethereum: {
                         expectedChainId: BigInt(config.ethereum.chainId),
@@ -221,12 +216,7 @@ export class Keeper {
                         http: { rpcUrls: [config.solana.rpcUrl] },
                     },
                 });
-                return new Keeper(
-                    config,
-                    connections,
-                    signer,
-                    new JsonRpcProvider(request)
-                );
+                return new Keeper(config, connections, signer);
             })
         );
     }
@@ -377,11 +367,11 @@ export class Keeper {
         );
     }
 
-    /** The Ethereum signer of snapshots, from ETH_PRIVATE_KEY. */
+    /** The Ethereum signer of snapshots, from ETH_PRIVATE_KEY; its sends go through the connections. */
     private ethereumSigner(): Wallet {
         const key = process.env.ETH_PRIVATE_KEY;
         if (!key) throw new Error('Missing env: ETH_PRIVATE_KEY');
-        return new Wallet(key, this.ethereumProvider);
+        return new Wallet(key);
     }
 
     /** Every configured query once. */

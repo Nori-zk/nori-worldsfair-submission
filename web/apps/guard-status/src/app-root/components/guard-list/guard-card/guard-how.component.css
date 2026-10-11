@@ -35,15 +35,30 @@ a {
     font-size: 0.75rem;
     letter-spacing: 0.1em;
 }
-.checkpoints {
-    margin: 0.3rem 0 0;
+/* One row per checkpoint, its cells lined up across rows: time, supply (right-aligned), bar, marker. */
+.checkpoints,
+.older {
     color: var(--nori-muted);
     font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
     font-size: 0.8rem;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
 }
-.checkpoints:has(> span:empty) {
+.checkpoints {
+    display: grid;
+    grid-template-columns: repeat(3, max-content) 1fr;
+    column-gap: 2ch;
+    margin: 0.3rem 0 0;
+    white-space: nowrap;
+}
+.checkpoint {
+    display: contents;
+}
+.checkpoint .supply {
+    text-align: right;
+}
+.older {
+    margin: 0;
+}
+.older:has(> span:empty) {
     display: none;
 }
 .links {

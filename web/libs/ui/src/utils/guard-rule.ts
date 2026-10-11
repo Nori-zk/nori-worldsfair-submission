@@ -1,5 +1,4 @@
 import { CHECKPOINTS, type Checkpoint, type GuardState } from '@nori-zk/backstop-client/guard';
-import { asciiBar } from './ascii.js';
 import { amount, clock } from './format.js';
 
 /** How many checkpoints the pane lists, newest first. */
@@ -69,28 +68,42 @@ export function windowOf(guard: GuardState, decimals: number): GuardWindow {
     return { ...base, lowest, verdict, ...(deficit === undefined ? {} : { deficit }) };
 }
 
+/** One checkpoint as the pane lists it. */
+export interface CheckpointRow {
+    /** Its place in the list, which `rx-for` keys it by. */
+    key: string;
+    /** Its time, `21:36:12`. */
+    time: string;
+    /** Its supply, in mint units. */
+    supply: string;
+    /** Its supply against the window's highest, from 0 to 1. */
+    fill: number;
+    /** `◂ lowest` on the lowest, else `''`. */
+    marker: string;
+}
+
 /**
- * The window's checkpoints as lines, newest first and at most `LISTED`:
- * the time, the supply and a bar against the window's highest, with the
- * lowest marked.
+ * The window's checkpoints as rows, newest first and at most `LISTED`: the
+ * time, the supply and its fill against the window's highest, with the
+ * lowest marked; and how many older ones are not listed.
  *
  * @param window The window, from `windowOf`.
  * @param decimals The mint's decimals.
- * @returns `21:36:12  116,700  ▓▓▓▓▓▓▓▓▓▓  ◂ lowest`, one per line.
+ * @returns The rows, and `… 10 older` when some are not listed, else `''`.
  */
-export function checkpointLines({ inWindow, lowest }: GuardWindow, decimals: number): string[] {
+export function checkpointRows(
+    { inWindow, lowest }: GuardWindow,
+    decimals: number,
+): { rows: CheckpointRow[]; older: string } {
     const max = inWindow.reduce((high, c) => (c.supply > high ? c.supply : high), 0n);
     const shown = inWindow.slice(-LISTED).reverse();
-    const supplies = shown.map((c) => amount(c.supply, decimals));
-    const width = Math.max(0, ...supplies.map((s) => s.length));
-    const lines = shown.map((c, i) =>
-        [
-            clock(Number(c.time)),
-            (supplies[i] ?? '').padStart(width),
-            asciiBar(max === 0n ? 0 : Number(c.supply) / Number(max)),
-            ...(c === lowest ? ['◂ lowest'] : []),
-        ].join('  '),
-    );
+    const rows = shown.map((c, i) => ({
+        key: i.toString(),
+        time: clock(Number(c.time)),
+        supply: amount(c.supply, decimals),
+        fill: max === 0n ? 0 : Number(c.supply) / Number(max),
+        marker: c === lowest ? '◂ lowest' : '',
+    }));
     const more = inWindow.length - shown.length;
-    return more > 0 ? [...lines, `… ${more.toString()} older`] : lines;
+    return { rows, older: more > 0 ? `… ${more.toString()} older` : '' };
 }

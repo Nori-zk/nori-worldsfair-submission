@@ -11,7 +11,7 @@ import {
     switchMap,
 } from 'rxjs';
 import { type ShownProofQueueBatch as Batch } from '@nori-zk/nori-bridge-solana-sdk';
-import { asciiBar, blockText, cursorRange } from '@nori-zk/solana-web-ui';
+import { blockText, cursorRange } from '@nori-zk/solana-web-ui';
 import { BridgeDashboardService } from '../../services/bridge-dashboard.service.js';
 import { type Line, lineOf } from '../../utils/request-line.js';
 import './request-line.component.js';
@@ -36,7 +36,7 @@ interface Opened {
             <span class="batch">{{ marker }} #{{ index }}</span>
             <span class="requests">{{ requests }}</span>
             <span class="block">{{ block }}</span>
-            <span class="bar">{{ bar }}</span>
+            <span class="bar"><progress-bar fill="1" cells="10"></progress-bar></span>
             <span class="status">Proven</span>
         </button>
         <div rx-if="open">
@@ -80,10 +80,6 @@ export class BatchRow extends RxElement {
 
     get block$(): Observable<string> {
         return this.present$.pipe(map((batch) => blockText(batch.outputBlockNumber)));
-    }
-
-    get bar$(): Observable<string> {
-        return of(asciiBar(1));
     }
 
     /**

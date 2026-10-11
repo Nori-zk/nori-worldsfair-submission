@@ -17,10 +17,10 @@
 | [web/README.md](../web/README.md)                                               | Browser apps: prove a balance, bridge dashboard                                   |
 | [test-vectors/nori-snapshot/README.md](../test-vectors/nori-snapshot/README.md) | Test data shared by the TS and Rust tests                                         |
 
-Upstream: the Nori SDK at the pinned release (npm 0.2.0, git `cbcfcc0`)
-[README](https://github.com/Nori-zk/nori-solana-sdk/blob/cbcfcc0d95be60d8214f1ccba82aebe057f9cc4d/README.md),
-[TypeScript SDK](https://github.com/Nori-zk/nori-solana-sdk/blob/cbcfcc0d95be60d8214f1ccba82aebe057f9cc4d/sdk/README.md) and
-[deployment runbook](https://github.com/Nori-zk/nori-solana-sdk/blob/cbcfcc0d95be60d8214f1ccba82aebe057f9cc4d/DEPLOYMENT.md),
+Upstream: the Nori SDK at the pinned release (npm 0.3.0, git `ee4cc78`)
+[README](https://github.com/Nori-zk/nori-solana-sdk/blob/ee4cc78d96054d8e0238d2c44f4495a021ab7ffb/README.md),
+[TypeScript SDK](https://github.com/Nori-zk/nori-solana-sdk/blob/ee4cc78d96054d8e0238d2c44f4495a021ab7ffb/sdk/README.md) and
+[deployment runbook](https://github.com/Nori-zk/nori-solana-sdk/blob/ee4cc78d96054d8e0238d2c44f4495a021ab7ffb/DEPLOYMENT.md),
 and the [bridge-head (prover) README](https://github.com/Nori-zk/nori-bridge-head/blob/FEAT/solana-bridge-sepolia-glamsterdam/README.md).
 
 ## Diagrams

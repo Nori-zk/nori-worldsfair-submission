@@ -11,7 +11,7 @@ const EMPTY_ROW: WaitingRow = {
     key: 'finality',
     requests: '',
     block: '',
-    bar: '',
+    fill: undefined,
     status: '',
     lines: [],
     shown: false,
@@ -31,7 +31,10 @@ const EMPTY_ROW: WaitingRow = {
                 <span class="batch">{{ marker }} now</span>
                 <span class="requests">{{ row.requests }}</span>
                 <span class="block">{{ row.block }}</span>
-                <span class="bar">{{ row.bar }}</span>
+                <span class="bar" [class.unknown]="unknown">
+                    <progress-bar [fill]="row.fill" cells="10"></progress-bar>
+                    <span class="dots">··········</span>
+                </span>
                 <span class="status">{{ row.status }}</span>
             </button>
             <div rx-if="open">
@@ -49,6 +52,11 @@ export class NowRow extends RxElement {
 
     get marker$(): Observable<string> {
         return this.open$.pipe(map((open) => (open ? '▾' : '▸')));
+    }
+
+    /** Whether the row's fill is not known yet: its bar shows `·` instead. */
+    get unknown$(): Observable<boolean> {
+        return this.row$.pipe(map((row) => row.fill === undefined));
     }
 
     toggle(): void {

@@ -40,7 +40,7 @@ export class NoriBridgeInfraService {
      */
     constructor(connections: ConnectionsService) {
         const { nori } = connections.connections;
-        this.open$ = nori.websocket.connection.state$.pipe(map((state) => state.node === 'open'));
+        this.open$ = nori.websocket.connection.state$.pipe(map((state) => state.node === 'ready'));
         this.state$ = nori.bridgeState$;
         this.finality$ = nori.finality$;
         this.stage$ = getNoriBridgeInfraTransitions(nori).stage$.pipe(map(({ stage }) => stage));

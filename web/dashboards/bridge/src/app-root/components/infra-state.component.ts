@@ -9,9 +9,6 @@ import {
 } from '@nori-zk/solana-web-ui';
 import styles from './infra-state.component.css';
 
-/** How many blocks Nori's loop bar holds: more than the card's width shows. */
-const LOOP_CELLS = 300;
-
 /**
  * Nori's loop: the stage it is in, over a bar filled with the time since its
  * job was created, out of the epoch until the next one. Recomputed each
@@ -23,11 +20,8 @@ const LOOP_CELLS = 300;
     template: `
         <div rx-if="open">
             <p class="title">INFRA BRIDGE STATE</p>
-            <p class="stage">{{ loop.text }}</p>
-            <div class="bar">
-                <span class="done" [style]="loop.done">${'▓'.repeat(LOOP_CELLS)}</span>
-                <span class="rest">${'░'.repeat(LOOP_CELLS)}</span>
-            </div>
+            <p class="loop-stage">{{ loop.text }}</p>
+            <progress-bar [fill]="loop.fill"></progress-bar>
         </div>
     `,
     styles,
@@ -39,16 +33,16 @@ export class InfraState extends RxElement {
         return this.noriBridgeInfra.open$;
     }
 
-    /** Nori's stage with the time to its next job, and the bar's fill. */
-    get loop$(): Observable<{ text: string; done: string }> {
+    /** Nori's stage with the time to its next job, and the bar's fill, from 0 to 1. */
+    get loop$(): Observable<{ text: string; fill: number }> {
         const { state$, stage$, timings$ } = this.noriBridgeInfra;
         return combineLatest([
-            state$.pipe(map((state) => ({ state, atMs: Date.now() }))),
+            state$,
             stage$,
             timings$.pipe(startWith(undefined)),
             interval(1000).pipe(startWith(0)),
         ]).pipe(
-            map(([{ state, atMs }, stage, timings]) => {
+            map(([{ value: state, atMs }, stage, timings]) => {
                 const elapsed_sec = state.elapsed_sec + (Date.now() - atMs) / 1000;
                 const { nextJobSec, jobSec } = getCommitTimes(
                     { stage_name: state.stage_name, elapsed_sec },
@@ -58,7 +52,7 @@ export class InfraState extends RxElement {
                 const fill = Math.min(1, Math.max(0, 1 - untilNextJob / ETHEREUM_EPOCH_SEC));
                 return {
                     text: `${NORI_BRIDGE_INFRA_STAGE_TEXT[stage]} · next job ${timeLeft(untilNextJob)}`,
-                    done: `width: ${(fill * 100).toFixed(1)}%`,
+                    fill,
                 };
             }),
         );

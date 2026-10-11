@@ -15,9 +15,7 @@ import {
     type NoriBridgeInfraFinality,
     type NoriBridgeInfraStage,
     type NoriBridgeInfraState,
-    asciiBar,
     timeLeft,
-    UNKNOWN_BAR,
     blockText,
     idRange,
 } from '@nori-zk/solana-web-ui';
@@ -36,8 +34,8 @@ export interface WaitingRow {
     requests: string;
     /** The Ethereum block the row is about. */
     block: string;
-    /** How far its oldest request is from its Ethereum block to its commit on Solana. */
-    bar: string;
+    /** How far its oldest request is from its Ethereum block to its commit on Solana, from 0 to 1; `undefined` while not known. */
+    fill: number | undefined;
     /** What the row waits for, the time left, and the commit it lands in. */
     status: string;
     /** Its requests, oldest first. */
@@ -141,7 +139,7 @@ export function waitingRows({
             key: 'finality',
             requests: idRange(sorted.waitingForFinality.map(({ requestId }) => requestId)),
             block: oldest ? blockText(oldest.blockNumber) : '',
-            bar: finalityRow ? asciiBar(finalityRow.fill) : UNKNOWN_BAR,
+            fill: finalityRow?.fill,
             status:
                 finalityLeft === undefined
                     ? 'Waiting for Ethereum finality'
@@ -155,7 +153,7 @@ export function waitingRows({
         key: 'scheduled',
         requests: idRange(sorted.scheduled.map(({ requestId }) => requestId)),
         block: '',
-        bar: scheduledRow ? asciiBar(scheduledRow.fill) : UNKNOWN_BAR,
+        fill: scheduledRow?.fill,
         status: scheduledRow
             ? `Scheduled for processing · ${leftText(scheduledRow.remainingSec)}`
             : `Scheduled for processing · within ~${Math.round((ETHEREUM_EPOCH_SEC + jobSec) / 60).toString()}m`,
@@ -175,9 +173,9 @@ export function waitingRows({
         key: 'processing',
         requests: idRange(sorted.processing.map(({ requestId }) => requestId)),
         block: running ? blockText(stage.output_block_number) : '',
-        bar: running
-            ? asciiBar(processingEstimate(ageOf(sorted.processing[0]), currentJobSec).fill)
-            : UNKNOWN_BAR,
+        fill: running
+            ? processingEstimate(ageOf(sorted.processing[0]), currentJobSec).fill
+            : undefined,
         status: running
             ? ['Processing', stageText, leftText(currentJobSec)]
                   .filter((part) => part !== '')

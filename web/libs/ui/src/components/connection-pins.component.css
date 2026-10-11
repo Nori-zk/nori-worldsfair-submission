@@ -54,6 +54,9 @@ a.item .link {
 .green {
     background: var(--nori-light-green);
 }
+.yellow {
+    background: var(--nori-neon-yellow);
+}
 .red {
     background: var(--nori-neon-red);
 }

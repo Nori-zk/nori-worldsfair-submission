@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { address } from '@solana/kit';
 import { type Checkpoint, type GuardState } from '@nori-zk/backstop-client/guard';
-import { checkpointLines, windowOf } from './guard-rule.js';
+import { checkpointRows, windowOf } from './guard-rule.js';
 
 // The demo guard's numbers: a 9-decimal mint, backing 223.52, supply
 // 116,700, tolerance 1, a 10 min window and 1 min skew.
@@ -137,25 +137,29 @@ void test('no backing proven gives no window', () => {
     assert.equal(rule.verdict, 'No backing proven yet');
 });
 
-void test('the checkpoint lines run newest first, barred against the highest, the lowest marked', () => {
+void test('the checkpoint rows run newest first, filled against the highest, the lowest marked', () => {
     const rule = windowOf(
         guardWith([at(-300, 100n * UNIT), at(-180, 50n * UNIT), at(-60, 50n * UNIT)]),
         DECIMALS,
     );
-    assert.deepEqual(checkpointLines(rule, DECIMALS), [
-        '18:58:48   50  ▓▓▓▓▓░░░░░',
-        '18:56:48   50  ▓▓▓▓▓░░░░░  ◂ lowest',
-        '18:54:48  100  ▓▓▓▓▓▓▓▓▓▓',
-    ]);
+    assert.deepEqual(checkpointRows(rule, DECIMALS), {
+        rows: [
+            { key: '0', time: '18:58:48', supply: '50', fill: 0.5, marker: '' },
+            { key: '1', time: '18:56:48', supply: '50', fill: 0.5, marker: '◂ lowest' },
+            { key: '2', time: '18:54:48', supply: '100', fill: 1, marker: '' },
+        ],
+        older: '',
+    });
 });
 
-void test('the checkpoint lines stop at 12 and count the rest', () => {
+void test('the checkpoint rows stop at 12 and count the rest', () => {
     const rule = windowOf(guardWith(every2Min(-600, 600)), DECIMALS);
-    const lines = checkpointLines(rule, DECIMALS);
+    const { rows, older } = checkpointRows(rule, DECIMALS);
     assert.equal(rule.inWindow.length, 11);
-    assert.equal(lines.length, 11);
+    assert.equal(rows.length, 11);
+    assert.equal(older, '');
     const many = windowOf(guardWith(every2Min(-600, 600).flatMap((c) => [c, c])), DECIMALS);
-    const capped = checkpointLines(many, DECIMALS);
-    assert.equal(capped.length, 13);
-    assert.equal(capped[12], '… 10 older');
+    const capped = checkpointRows(many, DECIMALS);
+    assert.equal(capped.rows.length, 12);
+    assert.equal(capped.older, '… 10 older');
 });

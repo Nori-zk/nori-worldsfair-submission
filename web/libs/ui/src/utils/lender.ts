@@ -9,7 +9,6 @@ import {
     setTransactionMessageLifetimeUsingBlockhash,
     type Address,
     type Base64EncodedWireTransaction,
-    type TransactionError,
 } from '@solana/kit';
 import {
     assertHealthyInstruction,

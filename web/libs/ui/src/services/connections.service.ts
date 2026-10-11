@@ -1,7 +1,6 @@
 import { Injectable } from '@yaw-rx/core';
 import { combineLatest, distinctUntilChanged, EMPTY, map, Observable } from 'rxjs';
 import {
-    type ConnectionStatusState,
     createConnections,
     DEFAULT_NORI_WEBSOCKET_URL,
     type Connections,
@@ -11,7 +10,6 @@ import {
     type ProofRequestHistoryAddresses,
     type SolanaHealth,
     type WalletAccountState,
-    walletStatus,
 } from '@nori-zk/nori-bridge-solana-sdk';
 
 /** The options `ConnectionsService` starts the connections with. */
@@ -26,41 +24,59 @@ export const PROOF_REQUEST_CONNECTIONS_OPTIONS = Symbol('PROOF_REQUEST_CONNECTIO
 /** A pin along the bottom of the page: a connection, the colour of its status, and its page if it has one. */
 export interface ConnectionPin {
     label: string;
-    colour: 'green' | 'red' | 'blue';
+    colour: 'green' | 'yellow' | 'red' | 'blue';
     /** The connection's page, for a pin that links to one; `''` otherwise. */
     href: string;
 }
 
 /**
  * How often each connection is checked, and how long a check may take, unless
- * the app sets its own: a connection that stops answering turns its pin blue
+ * the app sets its own: a connection that stops answering turns its pin red
  * within 5 seconds (2s to the next check, 3s for the check that gets no answer).
  */
 const PIN_HEALTH_CHECKS = { intervalMs: 2000, timeoutMs: 3000 };
 
-/** The colour of each node of a connection's status machine. */
-const COLOUR: Record<ConnectionStatusState['node'], ConnectionPin['colour']> = {
-    connected: 'green',
-    unsure: 'blue',
-    down: 'red',
-    closed: 'red',
+/**
+ * The colour of a connection machine's node: green while it serves, yellow
+ * while it serves at the rate the endpoint takes (`overwhelmed`), blue while
+ * it finds out (connecting, checking, looking for wallets, asking to switch
+ * chain), red otherwise.
+ *
+ * @param node The node the connection's machine is at.
+ * @returns The pin's colour.
+ */
+const colourOf = (node: string): ConnectionPin['colour'] => {
+    switch (node) {
+        case 'ready':
+        case 'online':
+            return 'green';
+        case 'overwhelmed':
+            return 'yellow';
+        case 'connecting':
+        case 'checking':
+        case 'lookingForWallets':
+        case 'askingToSwitchChain':
+            return 'blue';
+        default:
+            return 'red';
+    }
 };
 
 /**
- * A connection's pin, from its status.
+ * A connection's pin, from its machine's states.
  *
  * @param label What the pin names.
- * @param status$ The connection's status.
+ * @param state$ The connection machine's states.
  * @param href The connection's page, or `''`.
  * @returns The pin, each time its colour changes.
  */
 const pin$ = (
     label: string,
-    status$: Observable<{ node: ConnectionStatusState['node'] }>,
+    state$: Observable<{ node: string }>,
     href = '',
 ): Observable<ConnectionPin> =>
-    status$.pipe(
-        map(({ node }) => ({ label, colour: COLOUR[node], href })),
+    state$.pipe(
+        map(({ node }) => ({ label, colour: colourOf(node), href })),
         distinctUntilChanged((a, b) => a.colour === b.colour),
     );
 
@@ -111,37 +127,43 @@ export class ConnectionsService {
         return this.connections.solana.http.connection.state$;
     }
 
-    /** Whether reads can run on both chains: both are connected. */
+    /** Whether both chains serve: the Ethereum and Solana pins are green or yellow. */
     get ready$(): Observable<boolean> {
-        return combineLatest([
-            this.connections.ethereum.status.connection.state$,
-            this.connections.solana.status.connection.state$,
-        ]).pipe(
-            map(
-                ([ethereum, solana]) =>
-                    ethereum.node === 'connected' && solana.node === 'connected',
+        return this.pins$.pipe(
+            map((pins) =>
+                ['Ethereum', 'Solana'].every((label) =>
+                    pins.some(
+                        (pin) =>
+                            pin.label === label &&
+                            (pin.colour === 'green' || pin.colour === 'yellow'),
+                    ),
+                ),
             ),
             distinctUntilChanged(),
         );
     }
 
     /**
-     * The connection pins, in order, each from its connection's status: the
-     * network, Ethereum, Solana, Nori's websocket (linked to its page), and
-     * the wallet when the app configures one.
+     * The connection pins, in order, each from its connection machine's
+     * states: the network, Ethereum, Solana's RPC, Nori's websocket (linked
+     * to its page), and the wallet when the app configures one.
      */
     get pins$(): Observable<ConnectionPin[]> {
         const { network, ethereum, solana, nori } = this.connections;
         const { connection: wallet } = ethereum.wallet;
+        // Each app gives Ethereum one transport: its RPC, or (prove-balance) the wallet.
+        const ethereumReads = ethereum.http.connection ?? wallet;
         return combineLatest([
-            pin$('Network', network.status.connection.state$),
-            pin$('Ethereum', ethereum.status.connection.state$),
-            pin$('Solana', solana.status.connection.state$),
+            pin$('Network', network.connection.state$),
+            ...(ethereumReads === undefined ? [] : [pin$('Ethereum', ethereumReads.state$)]),
+            pin$('Solana', solana.http.connection.state$),
             // Nori's websocket page: its `wss://` URL over `https://`.
-            pin$('Nori', nori.status.connection.state$, this.noriUrl.replace(/^ws/, 'http')),
-            ...(wallet === undefined
-                ? []
-                : [pin$('Wallet', wallet.state$.pipe(walletStatus('ethereum.wallet')))]),
+            pin$(
+                'Nori',
+                nori.websocket.connection.state$,
+                this.noriUrl.replace(/^ws/, 'http'),
+            ),
+            ...(wallet === undefined ? [] : [pin$('Wallet', wallet.state$)]),
         ]);
     }
 

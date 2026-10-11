@@ -1,22 +1,3 @@
-/** How many blocks a bar is wide. */
-const BAR_CELLS = 10;
-
-/**
- * A bar drawn in blocks: `▓` for the part done, `░` for the rest.
- *
- * @param fraction The part done, from 0 to 1.
- * @returns The bar.
- */
-export function asciiBar(fraction: number): string {
-    const done = Number.isFinite(fraction)
-        ? Math.round(Math.min(1, Math.max(0, fraction)) * BAR_CELLS)
-        : 0;
-    return '▓'.repeat(done) + '░'.repeat(BAR_CELLS - done);
-}
-
-/** A bar with nothing to show: the stage is not known. */
-export const UNKNOWN_BAR = '·'.repeat(BAR_CELLS);
-
 /**
  * The time left in a stage, as a few words.
  *
