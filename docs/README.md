@@ -60,8 +60,9 @@ Measured on real proofs (Sepolia → devnet):
 - **17.8-hour soak (11–12 Oct, four guards, `keeper.soak-all.json`):** 69 snapshots sent, 68 proven
   and applied by the stop (the last was in flight); Ethereum block → read applied min 15.0,
   median 18.3, p90 21.1, max 25.3 min; one keeper failure line (a transition without an error edge,
-  the snapshot was retried). Stopped 12 Oct 17:05 UTC to restart the keeper with the memo on its
-  reads; the soak continues from its state file. Reports: [docs/evidence](evidence/README.md).
+  the snapshot was retried). Stopped 12 Oct 17:05 UTC to restart the keeper (a memo on its reads,
+  tried for the proven-facts links, cost ~57k CU per read on devnet and was dropped the same day,
+  with a second restart); the soak continues from its state file. Reports: [docs/evidence](evidence/README.md).
 - **Scripted campaign (8–9 Oct, 272 min, `campaign.sh` on three guards):** 21 scenario steps and
   17 claims from the spec, each with its Sepolia and devnet transactions in the
   [report](evidence/campaign-2026-10-08.md): nothing changes → HEALTHY; no proof → STALE; pause →

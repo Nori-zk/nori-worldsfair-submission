@@ -119,7 +119,7 @@ Below it, the 25 newest snapshots, newest first. Each says when and at which Eth
 view calls ran, whether Nori has proven it on Solana yet, and what they returned, one line per
 mint, named as Guard status names it: `Demo lockbox · held 116,723.52 · not paused · verified on
 Solana ↗ ↗`, the links being the keeper's newest two `submit_read`s by a guard reading that
-lockbox, found with no memo as the successful transactions on both the snapshot's batch account
+lockbox, found as the successful transactions on both the snapshot's batch account
 (one read per proven snapshot shown) and the guard (its newest 500). A query no guard names
 reads as `Query 0x1234…abcd returned 42`. The list shows the newest 8; `[ Show older ]` adds 8 more at a
 time, and once all 25 show, a line links to NoriSnapshot's events on the explorer for the rest.

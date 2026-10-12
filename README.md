@@ -13,7 +13,8 @@ a bridged token's proven backing on Ethereum falls below its supply on Solana.
 
 - **Live on real Nori proofs**, Ethereum Sepolia → Solana devnet: the prover since 7 Oct;
   the Backstop keeper, paused on 11 Oct, has run on its own server since 12 Oct, in a 7-day soak
-  (restarted once, 12 Oct 17:05 UTC, to put a memo on its reads).
+  (restarted on 12 Oct for keeper changes; a memo on its reads, tried for the proven-facts
+  links, was dropped the same day for its compute cost).
 - **Soaks:** 7–8 Oct, 10 h, 39 of 39 snapshots proven and applied; 11–12 Oct, 17.8 h, four guards,
   68 of 69 (the last in flight). A read reaches Solana a median 18 min after its Ethereum block
   (15–25), almost all of it Ethereum finality. Untouched guards stayed HEALTHY throughout.
