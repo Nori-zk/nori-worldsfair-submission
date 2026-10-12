@@ -12,7 +12,7 @@ A circuit breaker for one bridged asset: a guard compares its Ethereum backing, 
 | `status` / `assert_healthy`  | lenders, via CPI          | Return the status, or fail unless it is HEALTHY                                            |
 | `unlatch`                    | admin                     | Clears a trip. Testing and demos only (one key; production needs a timelock or governance) |
 
-`submit_read` costs ~17.6k compute units on surfpool (541-byte transaction) and 17.1k (backing) / 13.7k (pause) on devnet with real proofs; `assert_healthy` ~3.9k (the Kelp replay test keeps it under 30k). Live results: [docs/README.md](../../docs/README.md).
+`submit_read` costs ~17.6k compute units on surfpool (541-byte transaction) and 18.2k (backing) / 14.1k (pause) on devnet with real proofs (12 Oct); `checkpoint` ~11.6k; `assert_healthy` 3,956 when allowed and 5,378 when it refuses (the Kelp replay test keeps it under 30k). Live results: [docs/README.md](../../docs/README.md).
 
 A guard lives at `[b"guard", mint, admin]` and its config is fixed at creation, so one admin
 has one guard per mint; a new config needs another admin key. Lenders should check the

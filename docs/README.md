@@ -76,7 +76,9 @@ Measured on real proofs (Sepolia → devnet):
   branch, not in `develop`.
 - **Drain demo:** the lockbox drained to 223.52 tripped the guard (deficit 116,475.48); a
   refill to 40,300 plus a pause kept it tripped; `unlatch` plus a full refill → HEALTHY.
-- **Costs:** Nori `update` with requests ~110k CU; `submit_read` ~17k CU (backing),
-  ~14k (pause); a 4-query snapshot 753,817 gas on Sepolia (see `ethereum/README.md`).
+- **Costs** (devnet transactions, 12 Oct): Nori `update` ~104k CU with an empty batch, 110–115k
+  with requests; `submit_read` ~18k CU (backing), ~14k (pause); `checkpoint` ~11.6k;
+  `assert_healthy` 3,956 CU allowed, 5,378 refused (simulated); `nori-read-example` 2,942–2,949
+  (surfpool 3,184–3,205); a 4-query snapshot 753,817 gas on Sepolia (see `ethereum/README.md`).
 
 `npm run keeper -w keeper -- status` shows how far Nori has proven the queue, and each guard.
