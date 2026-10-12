@@ -18,6 +18,13 @@ a bridged token's proven backing on Ethereum falls below its supply on Solana.
   68 of 69 (the last in flight). A read reaches Solana a median 18 min after its Ethereum block
   (15–25), almost all of it Ethereum finality. Untouched guards stayed HEALTHY throughout.
   Reports in [docs/evidence](docs/evidence/README.md).
+- **Scripted campaign (8–9 Oct, 272 min, three guards):** every claim the guard makes, exercised
+  on real proofs: pause and unpause, an inbound transfer within the proof lag (WARN, never a trip),
+  burn then unlock, a forged Solana mint (TRIPPED once the window passes), the Kelp drain
+  (TRIPPED with the deficit), refill stays latched, unlatch under-backed trips again, unlatch
+  after a full refill heals; 264 old or forged reads refused, 66 non-admin unlatches refused,
+  `assert_healthy` refused unless HEALTHY. 17 of 17 claims, 21 of 21 steps
+  ([report](docs/evidence/campaign-2026-10-08.md)).
 - **Every guard state, on purpose:** test B tripped, test A paused at source, a fifth guard stale,
   demo and shadow healthy ([`scripts/demo-states.sh`](scripts/demo-states.sh)).
 - **Drain demo:** draining the lockbox trips the guard; a refill doesn't reset it; the

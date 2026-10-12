@@ -62,6 +62,17 @@ Measured on real proofs (Sepolia → devnet):
   median 18.3, p90 21.1, max 25.3 min; one keeper failure line (a transition without an error edge,
   the snapshot was retried). Stopped 12 Oct 17:05 UTC to restart the keeper with the memo on its
   reads; the soak continues from its state file. Reports: [docs/evidence](evidence/README.md).
+- **Scripted campaign (8–9 Oct, 272 min, `campaign.sh` on three guards):** 21 scenario steps and
+  17 claims from the spec, each with its Sepolia and devnet transactions in the
+  [report](evidence/campaign-2026-10-08.md): nothing changes → HEALTHY; no proof → STALE; pause →
+  PAUSED_AT_SOURCE; a transfer within the proof lag → WARN at most; burn then unlock → no trip; a
+  forged mint → TRIPPED once the window is past; the Kelp drain → TRIPPED with the deficit; a
+  refill stays latched; unlatch while under-backed trips again; unlatch after a full refill →
+  HEALTHY. After every applied read: 264 of 264 replayed or forged reads refused, 66 of 66
+  non-admin unlatches refused, `assert_healthy` refused unless HEALTHY; `submit_read` 17.7–18.5k
+  CU, `assert_healthy` under 6k CU; latency median 17.7 min (n=26). The runner lives on the
+  [`FEAT/campaign`](https://github.com/Nori-zk/nori-worldsfair-submission/tree/FEAT/campaign)
+  branch, not in `develop`.
 - **Drain demo:** the lockbox drained to 223.52 tripped the guard (deficit 116,475.48); a
   refill to 40,300 plus a pause kept it tripped; `unlatch` plus a full refill → HEALTHY.
 - **Costs:** Nori `update` with requests ~110k CU; `submit_read` ~17k CU (backing),

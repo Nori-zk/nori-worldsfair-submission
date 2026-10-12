@@ -14,5 +14,17 @@ read transactions; it continues from its state file as a second log. From 12 Oct
 test B and test A guards are tripped and paused by `scripts/demo-states.sh`, so later status
 changes on those two are deliberate.
 
-The campaign ran on a branch whose runner is not in `develop`; its report names the keeper's old
-directory, `client/`.
+## The campaign
+
+`campaign.sh` drove three guards through 21 scripted steps and checked 17 claims from the spec,
+each row of the report linking the Sepolia `set` or mint and the devnet read that proves it: an
+untouched guard never warns; no proof reads STALE; pause and unpause; an inbound transfer within
+the proof lag stays WARN; burn then unlock, fast or slow, never trips; a forged Solana mint trips
+once the window is past it; the Kelp drain trips with the deficit; a refill stays latched; an
+unlatch while under-backed trips again; an unlatch after a full refill heals. After every applied
+read it also simulated the attacks: a replayed or forged read (264 refused), a non-admin unlatch
+(66 refused) and `assert_healthy` on a guard that is not HEALTHY (refused), and recorded compute
+units. The runner (`scripts/campaign.sh`, the scenarios and the keeper's event hooks) is on the
+[`FEAT/campaign`](https://github.com/Nori-zk/nori-worldsfair-submission/tree/FEAT/campaign)
+branch, which was not merged: it predates the keeper's own `assert` and `verify` subcommands and
+conflicts with them. The report names the keeper's old directory, `client/`.
