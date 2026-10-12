@@ -124,6 +124,8 @@ time, and once all 25 show, a line links to NoriSnapshot's events on the explore
 On a proven snapshot, `[ Verify on Solana ]` checks one result (the backing, else the first)
 by simulating `nori-read-example` against the proven batch, as Prove balance does: no wallet,
 no fee, one simulation per click. `[ Read again ]` reads the line and the snapshots again.
+Under it, `Verified on Solana by the keeper:` links the keeper's `submit_read` transactions for
+that snapshot (up to 8, newest first), found by their memo among each guard's newest 500; older snapshots show none.
 
 ## Bridge dashboard
 

@@ -69,6 +69,23 @@ button:disabled {
     cursor: default;
     opacity: 0.6;
 }
+.keeper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.75rem;
+    align-items: baseline;
+    margin-top: 0.6rem;
+    color: var(--nori-muted);
+    font-size: 0.9rem;
+}
+.keeper.hidden {
+    display: none;
+}
+.txs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.75rem;
+}
 .verdict {
     overflow-wrap: anywhere;
 }

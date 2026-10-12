@@ -6,9 +6,20 @@ import {
     blockUrl,
     clock,
     labelOf,
+    shortHex,
+    solanaTransactionUrl,
     valueOf,
 } from '@nori-zk/solana-web-ui';
+import { snapshotReadSignatures } from '@nori-zk/backstop-keeper/read';
 import { mintOf, sentencesOf, verifyTargetOf, type LabelledLine } from './sentences.js';
+
+/** A keeper transaction that verified the snapshot on Solana, as a link. */
+export interface KeeperTx {
+    signature: string;
+    url: string;
+    /** `5E4ixN…uzgn ↗`. */
+    text: string;
+}
 
 /** One snapshot as its block on the page shows it. */
 export interface SnapshotView {
@@ -30,6 +41,8 @@ export interface SnapshotView {
     verifyQueryId: string;
     /** That result as the `Snapshot` event recorded it, 0x-hex. */
     verifyWord: string;
+    /** The keeper's transactions that verified it on Solana, newest first; none for older snapshots. */
+    keeperTxs: KeeperTx[];
 }
 
 /**
@@ -52,13 +65,13 @@ export const linesOf = (snapshot: SnapshotFact, guards: Facts['guards']): Labell
  * A snapshot as its block shows it.
  *
  * @param snapshot The snapshot, from its event.
- * @param facts The read it came in, for the queue cursor and the guards.
+ * @param facts The read it came in, for the queue cursor, the guards and the keeper's reads.
  * @param nowSecs The time of the read, unix seconds, for the snapshot's age.
  * @returns The block's text and link.
  */
 export function snapshotViewOf(
     snapshot: SnapshotFact,
-    { queueCursor, guards }: Facts,
+    { queueCursor, guards, keeperReads }: Facts,
     nowSecs: number,
 ): SnapshotView {
     const proven = snapshot.requestId < queueCursor;
@@ -76,5 +89,10 @@ export function snapshotViewOf(
         txHash: snapshot.txHash,
         verifyQueryId: target?.queryId ?? '',
         verifyWord: target?.word ?? '',
+        keeperTxs: snapshotReadSignatures(keeperReads, snapshot.txHash).map((signature) => ({
+            signature,
+            url: solanaTransactionUrl(signature),
+            text: `${shortHex(signature)} ↗`,
+        })),
     };
 }

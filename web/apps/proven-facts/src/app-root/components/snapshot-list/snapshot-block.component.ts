@@ -1,4 +1,5 @@
 import { Component, Inject, RxElement, state } from '@yaw-rx/core';
+import { RxFor } from '@yaw-rx/core/directives/rx-for';
 import { combineLatest, filter, map, type Observable, type Subscription, take } from 'rxjs';
 import { createProofRequestStateMachine } from '@nori-zk/nori-bridge-solana-sdk';
 import { ConnectionsService, verifiedText, verifyFailedText } from '@nori-zk/solana-web-ui';
@@ -8,6 +9,7 @@ import {
     followedStates$,
     type SnapshotVerificationState,
 } from '@nori-zk/backstop-keeper/read';
+import { type KeeperTx } from '../../utils/snapshots.js';
 import { verdictSentence } from '../../utils/verdict.js';
 import styles from './snapshot-block.component.css';
 
@@ -20,10 +22,13 @@ type Outcome = 'verified' | 'readFailed';
  * `[ Verify on Solana ]` builds one result's witness and simulates
  * nori-read-example with it, as the dashboard's fact line does: no wallet,
  * no fee. One click, one verify: the verdict is set from that one
- * verification's first outcome, and its machines close with it.
+ * verification's first outcome, and its machines close with it. Under it,
+ * the keeper's own transactions that verified the snapshot on Solana, when
+ * there are any.
  */
 @Component({
     selector: 'snapshot-block',
+    directives: [RxFor],
     template: `
         <div class="top">
             <span class="where">
@@ -40,6 +45,12 @@ type Outcome = 'verified' | 'readFailed';
             </button>
             <span class="verdict" [style]="verdictStyle">{{ verdict }}</span>
         </div>
+        <div class="keeper" [class.hidden]="unrecorded">
+            <span>Verified on Solana by the keeper:</span>
+            <span class="txs" rx-for="tx of keeperTxs by signature">
+                <a [href]="tx.url" target="_blank" rel="noopener">{{ tx.text }}</a>
+            </span>
+        </div>
     `,
     styles,
 })
@@ -54,6 +65,7 @@ export class SnapshotBlock extends RxElement {
     @state txHash = '';
     @state verifyQueryId = '';
     @state verifyWord = '';
+    @state keeperTxs: KeeperTx[] = [];
     /** The block's own state: not fields of the list's view, so a read again keeps them. */
     @state verdict = '';
     @state verdictStyle = '';
@@ -66,6 +78,11 @@ export class SnapshotBlock extends RxElement {
         return combineLatest([this.proven$, this.verifyQueryId$]).pipe(
             map(([proven, queryId]) => !proven || queryId === ''),
         );
+    }
+
+    /** Hides the keeper's line when no keeper transaction names the snapshot. */
+    get unrecorded$(): Observable<boolean> {
+        return this.keeperTxs$.pipe(map((txs) => txs.length === 0));
     }
 
     /** Verifies the snapshot's backing, or its first result, on Solana once and says how it went. */

@@ -39,6 +39,8 @@ export {
 export { GuardBoardService } from './services/guard-board.service.js';
 export { GuardBoardGraph, type GuardBoardState, type GuardRead } from './machines/guardBoard.js';
 export { createGuardBoardMachine } from './machines/guardBoard.impl.js';
+export { KeeperReadsGraph, type KeeperReadsState } from './machines/keeperReads.js';
+export { createKeeperReadsMachine } from './machines/keeperReads.impl.js';
 export { SnapshotFactsGraph, type SnapshotFactsState } from './machines/snapshotFacts.js';
 export {
     createSnapshotFactsMachine,
