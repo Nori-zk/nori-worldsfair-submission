@@ -17,8 +17,10 @@ npm run keeper -- create-guards        # the keeper key is each guard's admin
 npm run keeper -- run                  # or one step: snapshot | checkpoint | submit | status
 npm run keeper -- unlatch              # admin, testing and demos only: clear a trip once a read shows the backing restored
 npm run keeper -- assert               # each guard's assert_healthy, as a lender calls it: allowed, or blocked: <error> (--send lands it)
-npm run keeper -- verify <snapshot tx> # nori-read-example verifies each result in a real transaction; prints the signature
+npm run keeper -- verify <snapshot tx> # nori-read-example verifies each result in a real transaction (memo kind example); prints the signature
 ```
+
+Each `submit_read` and `verify` transaction carries an SPL Memo, `nori snapshot <snapshot tx> query <query id> <backing|pause|example>` (`snapshotReadMemo` and `parseSnapshotReadMemo` in `@nori-zk/backstop-keeper/read`), so Proven facts links each snapshot to the keeper's transactions.
 
 The default config, `keeper.demo.json`, takes its `${VARS}` from the repo's `.env`
 and the deploy outputs (see the root README, "Deploy"); an empty value counts as unset.

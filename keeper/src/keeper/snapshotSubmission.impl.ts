@@ -20,8 +20,9 @@ import {
     stateOf$,
     type StartedMachine,
 } from '@nori-zk/nori-bridge-solana-sdk/utils';
-import { type ReadKind, submitReadInstruction } from '../backstop.js';
+import { ReadKind, submitReadInstruction } from '../backstop.js';
 import { followedStates$, heldAcrossMoves } from '../followedStates.js';
+import { memoInstruction, snapshotReadMemo } from '../memo.js';
 import { type ProvenRequestState } from '../provenRequest.js';
 import { createProvenRequestMachine } from '../provenRequest.impl.js';
 import { type SnapshotEventState } from '../snapshotEvent.js';
@@ -211,39 +212,58 @@ export function createSnapshotSubmissionMachine(
         readsSubmitted: {
             $: () =>
                 dataOnEntry$(state$, 'submitting').pipe(
-                    switchMap(({ proofQueueBatchAddress, witness, event }) =>
-                        request.reads.length === 0
-                            ? of([])
-                            : combineLatest(
-                                  request.reads.map((guardRead) =>
-                                      signerSend$(
-                                          connections,
-                                          signer,
-                                          [
-                                              submitReadInstruction({
-                                                  guard: guardRead.guard,
-                                                  mint: guardRead.mint,
-                                                  proofQueueBatch: address(
-                                                      proofQueueBatchAddress
-                                                  ),
-                                                  kind: guardRead.kind,
-                                                  witness:
-                                                      snapshotResultWitness(
-                                                          request.noriSnapshot,
-                                                          event,
-                                                          guardRead.queryId,
-                                                          witness
+                    switchMap(
+                        ({
+                            snapshotTxHash: held,
+                            proofQueueBatchAddress,
+                            witness,
+                            event,
+                        }) =>
+                            request.reads.length === 0
+                                ? of([])
+                                : combineLatest(
+                                      request.reads.map((guardRead) =>
+                                          signerSend$(
+                                              connections,
+                                              signer,
+                                              [
+                                                  submitReadInstruction({
+                                                      guard: guardRead.guard,
+                                                      mint: guardRead.mint,
+                                                      proofQueueBatch: address(
+                                                          proofQueueBatchAddress
                                                       ),
-                                              }),
-                                          ],
-                                          {
-                                              errorNames: BACKSTOP_ERROR_NAMES,
-                                              commitment: 'confirmed',
-                                          },
-                                          resendAfterMs
+                                                      kind: guardRead.kind,
+                                                      witness:
+                                                          snapshotResultWitness(
+                                                              request.noriSnapshot,
+                                                              event,
+                                                              guardRead.queryId,
+                                                              witness
+                                                          ),
+                                                  }),
+                                                  memoInstruction(
+                                                      snapshotReadMemo({
+                                                          snapshotTxHash: held,
+                                                          queryId:
+                                                              guardRead.queryId,
+                                                          kind:
+                                                              guardRead.kind ===
+                                                              ReadKind.Pause
+                                                                  ? 'pause'
+                                                                  : 'backing',
+                                                      })
+                                                  ),
+                                              ],
+                                              {
+                                                  errorNames:
+                                                      BACKSTOP_ERROR_NAMES,
+                                                  commitment: 'confirmed',
+                                              },
+                                              resendAfterMs
+                                          )
                                       )
                                   )
-                              )
                     ),
                     filter((states) => states.every(sendOver)),
                     take(1),
@@ -272,11 +292,9 @@ export function createSnapshotSubmissionMachine(
         },
     });
 
-    const running = machine
-        .close()
-        .start('findingRequest', undefined, {
-            findingRequest: { snapshotTxHash },
-        });
+    const running = machine.close().start('findingRequest', undefined, {
+        findingRequest: { snapshotTxHash },
+    });
     started$.next(running);
     return Object.assign(running, { close: () => close$.next() });
 }
