@@ -5,7 +5,7 @@ import {
     memoInstruction,
     parseSnapshotReadMemo,
     snapshotReadMemo,
-    snapshotReadSignatures,
+    snapshotReadsOf,
     snapshotReadTransactionsOf,
 } from './memo.js';
 
@@ -61,7 +61,7 @@ test('the memo instruction is SPL Memo v2 with the text and no signers', () => {
     assert.equal(new TextDecoder().decode(instruction.data), memo);
 });
 
-test("a snapshot's transactions: successful, its own, newest first, each once, at most 8", () => {
+test("a snapshot's transactions: successful, its own, newest first, with their query and read", () => {
     const older = '0x' + 'cd'.repeat(32);
     const read = (
         signature: string,
@@ -76,37 +76,33 @@ test("a snapshot's transactions: successful, its own, newest first, each once, a
         });
         return { signature, slot, err, memo: `[${text.length}] ${text}` };
     };
-    // Two guards' signatures, each newest first; both name one transaction
+    // Two guards' signatures, each newest first
     const transactions = [
         ...snapshotReadTransactionsOf([
             { signature: 'checkpoint', slot: 30n, err: null, memo: null },
             read('reverted', 28n, snapshotTxHash, {
                 InstructionError: [0, { Custom: 6005 }],
             }),
-            read('both-guards', 20n),
+            read('guard-1', 20n),
             read('older-snapshot', 10n, older),
         ]),
-        ...snapshotReadTransactionsOf([
-            read('guard-2', 25n),
-            read('both-guards', 20n),
-        ]),
+        ...snapshotReadTransactionsOf([read('guard-2', 25n)]),
     ];
+    const reads = snapshotReadsOf(transactions, '0x' + 'AB'.repeat(32));
     assert.deepEqual(
-        snapshotReadSignatures(transactions, '0x' + 'AB'.repeat(32)),
-        ['guard-2', 'both-guards']
+        reads.map(({ signature }) => signature),
+        ['guard-2', 'guard-1']
     );
-    assert.deepEqual(snapshotReadSignatures(transactions, older), [
-        'older-snapshot',
-    ]);
+    assert.deepEqual(reads[0], {
+        signature: 'guard-2',
+        slot: 25n,
+        snapshotTxHash,
+        queryId,
+        kind: 'pause',
+    });
     assert.deepEqual(
-        snapshotReadSignatures(transactions, '0x' + '00'.repeat(32)),
-        []
+        snapshotReadsOf(transactions, older).map(({ signature }) => signature),
+        ['older-snapshot']
     );
-    const ten = snapshotReadTransactionsOf(
-        Array.from({ length: 10 }, (_, i) => read(`read-${i}`, BigInt(i)))
-    );
-    assert.deepEqual(
-        snapshotReadSignatures(ten, snapshotTxHash),
-        [9, 8, 7, 6, 5, 4, 3, 2].map((i) => `read-${i}`)
-    );
+    assert.deepEqual(snapshotReadsOf(transactions, '0x' + '00'.repeat(32)), []);
 });

@@ -6,19 +6,18 @@ import {
     blockUrl,
     clock,
     labelOf,
-    shortHex,
     solanaTransactionUrl,
     valueOf,
 } from '@nori-zk/solana-web-ui';
-import { snapshotReadSignatures } from '@nori-zk/backstop-keeper/read';
-import { mintOf, sentencesOf, verifyTargetOf, type LabelledLine } from './sentences.js';
+import { snapshotReadsOf } from '@nori-zk/backstop-keeper/read';
+import { factLinesOf, mintOf, verifyTargetOf, type LabelledLine } from './sentences.js';
 
-/** A keeper transaction that verified the snapshot on Solana, as a link. */
-export interface KeeperTx {
-    signature: string;
-    url: string;
-    /** `5E4ixN…uzgn ↗`. */
+/** One line of a snapshot's block, with the keeper's transactions that verified it on Solana. */
+export interface FactLineView {
+    /** `Demo lockbox · held 116,723.52 · not paused`. */
     text: string;
+    /** `backing ↗` and `pause ↗`, each to its transaction on the explorer; none for older snapshots. */
+    links: { kind: string; url: string; text: string }[];
 }
 
 /** One snapshot as its block on the page shows it. */
@@ -33,16 +32,14 @@ export interface SnapshotView {
     proven: boolean;
     /** `Proven on Solana` or `Waiting for proof`. */
     status: string;
-    /** What the snapshot recorded, in sentences. */
-    sentence: string;
+    /** What the snapshot recorded, one line per mint, then one per other query. */
+    lines: FactLineView[];
     /** The snapshot transaction, for building a result's witness. */
     txHash: string;
     /** The result `[ Verify on Solana ]` checks (`verifyTargetOf`): its query id, `''` when none. */
     verifyQueryId: string;
     /** That result as the `Snapshot` event recorded it, 0x-hex. */
     verifyWord: string;
-    /** The keeper's transactions that verified it on Solana, newest first; none for older snapshots. */
-    keeperTxs: KeeperTx[];
 }
 
 /**
@@ -85,14 +82,18 @@ export function snapshotViewOf(
         blockUrl: blockUrl(snapshot.blockNumber),
         proven,
         status: proven ? 'Proven on Solana' : 'Waiting for proof',
-        sentence: sentencesOf(lines).join(' '),
+        lines: factLinesOf(lines, snapshotReadsOf(keeperReads, snapshot.txHash)).map(
+            ({ text, reads }) => ({
+                text,
+                links: reads.map(({ kind, signature }) => ({
+                    kind,
+                    url: solanaTransactionUrl(signature),
+                    text: `${kind} ↗`,
+                })),
+            }),
+        ),
         txHash: snapshot.txHash,
         verifyQueryId: target?.queryId ?? '',
         verifyWord: target?.word ?? '',
-        keeperTxs: snapshotReadSignatures(keeperReads, snapshot.txHash).map((signature) => ({
-            signature,
-            url: solanaTransactionUrl(signature),
-            text: `${shortHex(signature)} ↗`,
-        })),
     };
 }

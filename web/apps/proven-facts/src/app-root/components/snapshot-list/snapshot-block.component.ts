@@ -9,7 +9,7 @@ import {
     followedStates$,
     type SnapshotVerificationState,
 } from '@nori-zk/backstop-keeper/read';
-import { type KeeperTx } from '../../utils/snapshots.js';
+import { type FactLineView } from '../../utils/snapshots.js';
 import { verdictSentence } from '../../utils/verdict.js';
 import styles from './snapshot-block.component.css';
 
@@ -17,14 +17,13 @@ import styles from './snapshot-block.component.css';
 type Outcome = 'verified' | 'readFailed';
 
 /**
- * One snapshot, in sentences: its Ethereum time and block, whether Nori has
- * proven it on Solana, and what its view calls returned. Once proven,
+ * One snapshot: its Ethereum time and block, whether Nori has proven it on
+ * Solana, and what its view calls returned, one line per mint, each with the
+ * keeper's transactions that verified it on Solana when there are any. Once proven,
  * `[ Verify on Solana ]` builds one result's witness and simulates
  * nori-read-example with it, as the dashboard's fact line does: no wallet,
  * no fee. One click, one verify: the verdict is set from that one
- * verification's first outcome, and its machines close with it. Under it,
- * the keeper's own transactions that verified the snapshot on Solana, when
- * there are any.
+ * verification's first outcome, and its machines close with it.
  */
 @Component({
     selector: 'snapshot-block',
@@ -38,18 +37,22 @@ type Outcome = 'verified' | 'readFailed';
             </span>
             <span class="status" [class.proven]="proven">{{ status }}</span>
         </div>
-        <p class="sentence">{{ sentence }}</p>
+        <ul class="lines" rx-for="line of lines">
+            <li>
+                <span>{{ line.text }}</span>
+                <span class="keeper">
+                    · verified on Solana:
+                    <span class="links" rx-for="link of line.links by kind">
+                        <a [href]="link.url" target="_blank" rel="noopener">{{ link.text }}</a>
+                    </span>
+                </span>
+            </li>
+        </ul>
         <div class="verify" [class.hidden]="unverifiable">
             <button type="button" [disabled]="verifying" onclick="verify">
                 [ Verify on Solana ]
             </button>
             <span class="verdict" [style]="verdictStyle">{{ verdict }}</span>
-        </div>
-        <div class="keeper" [class.hidden]="unrecorded">
-            <span>Verified on Solana by the keeper:</span>
-            <span class="txs" rx-for="tx of keeperTxs by signature">
-                <a [href]="tx.url" target="_blank" rel="noopener">{{ tx.text }}</a>
-            </span>
         </div>
     `,
     styles,
@@ -61,11 +64,10 @@ export class SnapshotBlock extends RxElement {
     @state blockUrl = '';
     @state proven = false;
     @state status = '';
-    @state sentence = '';
+    @state lines: FactLineView[] = [];
     @state txHash = '';
     @state verifyQueryId = '';
     @state verifyWord = '';
-    @state keeperTxs: KeeperTx[] = [];
     /** The block's own state: not fields of the list's view, so a read again keeps them. */
     @state verdict = '';
     @state verdictStyle = '';
@@ -78,11 +80,6 @@ export class SnapshotBlock extends RxElement {
         return combineLatest([this.proven$, this.verifyQueryId$]).pipe(
             map(([proven, queryId]) => !proven || queryId === ''),
         );
-    }
-
-    /** Hides the keeper's line when no keeper transaction names the snapshot. */
-    get unrecorded$(): Observable<boolean> {
-        return this.keeperTxs$.pipe(map((txs) => txs.length === 0));
     }
 
     /** Verifies the snapshot's backing, or its first result, on Solana once and says how it went. */

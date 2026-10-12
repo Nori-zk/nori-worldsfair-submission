@@ -6,7 +6,8 @@
     "license": "MIT",
     "type": "module",
     "exports": {
-        ".": "./src/index.ts"
+        ".": "./src/index.ts",
+        "./mints": "./src/utils/mints.ts"
     },
     "scripts": {
         "prepare": "ts-patch install",

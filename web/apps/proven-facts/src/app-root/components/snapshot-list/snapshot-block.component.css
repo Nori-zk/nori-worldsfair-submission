@@ -32,8 +32,10 @@ a {
 .status.proven {
     color: var(--nori-light-green);
 }
-.sentence {
+.lines {
     margin: 0.4rem 0 0;
+    padding: 0;
+    list-style: none;
     color: var(--nori-text);
     font-size: 1.05rem;
     line-height: 1.5;
@@ -69,22 +71,18 @@ button:disabled {
     cursor: default;
     opacity: 0.6;
 }
+/* Wraps to its own line as one piece when the line is full. */
 .keeper {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem 0.75rem;
-    align-items: baseline;
-    margin-top: 0.6rem;
+    display: inline-block;
     color: var(--nori-muted);
     font-size: 0.9rem;
 }
-.keeper.hidden {
+/* No keeper read of the line yet (older snapshots). */
+.keeper:not(:has(a)) {
     display: none;
 }
-.txs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem 0.75rem;
+.links a + a {
+    margin-left: 0.5rem;
 }
 .verdict {
     overflow-wrap: anywhere;

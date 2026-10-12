@@ -72,12 +72,10 @@ export interface MemoSignature {
     memo: string | null;
 }
 
-/** A successful transaction whose memo names a snapshot it verified. */
-export interface SnapshotReadTransaction {
+/** A successful transaction whose memo names a snapshot it verified, with the query and read (lowercase). */
+export interface SnapshotReadTransaction extends SnapshotReadMemo {
     signature: string;
     slot: bigint;
-    /** The snapshot transaction, lowercase 0x-hex. */
-    snapshotTxHash: string;
 }
 
 /**
@@ -95,29 +93,23 @@ export const snapshotReadTransactionsOf = (
 ): SnapshotReadTransaction[] =>
     signatures.flatMap(({ signature, slot, err, memo }) => {
         const read = err === null ? parseSnapshotReadMemo(memo) : undefined;
-        return read
-            ? [{ signature, slot, snapshotTxHash: read.snapshotTxHash }]
-            : [];
+        return read ? [{ signature, slot, ...read }] : [];
     });
 
-/** The most transactions a snapshot shows: four guards' backing and pause reads. */
-export const SNAPSHOT_READ_TRANSACTIONS_SHOWN = 8;
-
 /**
- * The transactions that verified one snapshot, newest first, each once.
+ * The transactions that verified one snapshot, newest first, so the first
+ * of a query and read is its newest.
  *
  * @param transactions The transactions found, from any accounts, in any order.
  * @param snapshotTxHash The snapshot transaction.
- * @returns Their signatures, at most `SNAPSHOT_READ_TRANSACTIONS_SHOWN`.
+ * @returns Those that name it.
  */
-export const snapshotReadSignatures = (
+export const snapshotReadsOf = (
     transactions: readonly SnapshotReadTransaction[],
     snapshotTxHash: string
-): string[] => {
+): SnapshotReadTransaction[] => {
     const hash = snapshotTxHash.toLowerCase();
-    const newestFirst = transactions
+    return transactions
         .filter((transaction) => transaction.snapshotTxHash === hash)
-        .sort((a, b) => (a.slot < b.slot ? 1 : a.slot > b.slot ? -1 : 0))
-        .map(({ signature }) => signature);
-    return [...new Set(newestFirst)].slice(0, SNAPSHOT_READ_TRANSACTIONS_SHOWN);
+        .sort((a, b) => (a.slot < b.slot ? 1 : a.slot > b.slot ? -1 : 0));
 };

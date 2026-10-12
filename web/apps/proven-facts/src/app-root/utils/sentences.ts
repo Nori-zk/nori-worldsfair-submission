@@ -1,19 +1,10 @@
 import type { FactLabel, GuardQueries } from '@nori-zk/solana-web-ui';
+import type { SnapshotReadTransaction } from '@nori-zk/backstop-keeper/read';
+// Its own entry, not the lib's index, which loads components `node --test` cannot run.
+import { LOCKBOXES } from '@nori-zk/solana-web-ui/mints';
 
-/**
- * The devnet guards' mints, by the name the demo gives them.
- *
- * shortcut: a fixed list for the two devnet guards; a mint not in it reads
- * as `mint <short address>`. A mainnet build would name mints from the
- * token list instead.
- */
-const MINT_NAMES: Record<string, string> = {
-    Fhw5m3W34LuGNNuTWxHu8wVbre7wUE445hxir3Xwcbhi: 'demo',
-    Dnt2Mjnvj38E59bnUBkw8EEoW1sy6HzMavbDSQkXTuoX: 'shadow',
-};
-
-/** How many sentences a snapshot shows before `… and N more`. */
-const MAX_SENTENCES = 4;
+/** How many lines a snapshot shows before `… and N more`: the five devnet mints and a few more. */
+const MAX_LINES = 8;
 
 /** One result of a snapshot, named by the guard that reads it. */
 export interface LabelledLine {
@@ -29,13 +20,13 @@ export interface LabelledLine {
 }
 
 /**
- * A mint's name in a sentence.
+ * A mint's lockbox, as guard status names it.
  *
  * @param mint The mint's address.
- * @returns `demo`, `shadow`, or `mint Fhw5…cbhi`.
+ * @returns `Demo lockbox`, or `Mint Fhw5…cbhi` when it has no name.
  */
-export const mintName = (mint: string): string =>
-    MINT_NAMES[mint] ?? `mint ${mint.slice(0, 4)}…${mint.slice(-4)}`;
+export const lockboxName = (mint: string): string =>
+    LOCKBOXES[mint]?.name ?? `Mint ${mint.slice(0, 4)}…${mint.slice(-4)}`;
 
 /**
  * The mint of the guard that reads a query, matched as `labelOf` matches it.
@@ -52,44 +43,66 @@ export function mintOf(queryId: string, guards: readonly GuardQueries[]): string
     )?.mint;
 }
 
-/** What one mint's lines say, in the order they came. */
+/** One line of a snapshot: a mint's lockbox, or another query. */
+export interface FactLine {
+    /** `Demo lockbox · held 116,723.52 · not paused`. */
+    text: string;
+    /** The keeper's newest transaction of each read on Solana that verified it, backing first. */
+    reads: SnapshotReadTransaction[];
+}
+
+/** One mint's results, the first of each. */
 interface MintFacts {
     mint: string;
-    backing?: string;
-    paused?: string;
+    backing?: LabelledLine;
+    paused?: LabelledLine;
 }
 
 /**
- * What a mint's lockbox held and whether it was paused, as one sentence.
+ * A mint's line: its lockbox, what it held, whether it was paused, and the
+ * keeper's newest read of each on Solana.
  *
  * @param facts The mint's backing and pause results.
- * @returns The sentence.
+ * @param reads The keeper's reads of the snapshot, newest first (`snapshotReadsOf`).
+ * @returns The line.
  */
-function mintSentence({ mint, backing, paused }: MintFacts): string {
-    const name = mintName(mint);
-    const pause = paused === 'true' ? 'paused' : 'not paused';
-    if (backing !== undefined && paused !== undefined) {
-        return `The ${name} lockbox held ${backing} and was ${pause}.`;
-    }
-    if (backing !== undefined) return `The ${name} backing was ${backing}.`;
-    return `The ${name} lockbox was ${pause}.`;
+function mintLine(
+    { mint, backing, paused }: MintFacts,
+    reads: readonly SnapshotReadTransaction[],
+): FactLine {
+    const parts = [lockboxName(mint)];
+    if (backing) parts.push(`held ${backing.value}`);
+    if (paused) parts.push(paused.value === 'true' ? 'paused' : 'not paused');
+    return {
+        text: parts.join(' · '),
+        reads: [backing, paused].flatMap((line) => {
+            if (line === undefined) return [];
+            const id = line.queryId.toLowerCase();
+            const read = reads.find((r) => r.queryId === id && r.kind === line.label.kind);
+            return read ? [read] : [];
+        }),
+    };
 }
 
 /**
- * What a snapshot recorded, in sentences: one per guard mint (its backing
- * and pause together), then one per other query, in the order they first
- * appear. After `MAX_SENTENCES`, the rest are counted.
+ * What a snapshot recorded, one line per guard mint (its backing and pause
+ * together), then one per other query, in the order they first appear.
+ * After `MAX_LINES`, the rest are counted.
  *
  * @param lines The snapshot's results, labelled.
- * @returns The sentences, the last one `… and N more` when some are left out.
+ * @param reads The keeper's reads of the snapshot, newest first (`snapshotReadsOf`).
+ * @returns The lines, the last one `… and N more` when some are left out.
  */
-export function sentencesOf(lines: readonly LabelledLine[]): string[] {
+export function factLinesOf(
+    lines: readonly LabelledLine[],
+    reads: readonly SnapshotReadTransaction[],
+): FactLine[] {
     const parts: (MintFacts | string)[] = [];
     const byMint = new Map<string, MintFacts>();
     for (const line of lines) {
         const { kind } = line.label;
         if (kind === 'unknown' || line.mint === undefined) {
-            parts.push(`Query ${line.label.text} returned ${line.value}.`);
+            parts.push(`Query ${line.label.text} returned ${line.value}`);
             continue;
         }
         let facts = byMint.get(line.mint);
@@ -99,14 +112,16 @@ export function sentencesOf(lines: readonly LabelledLine[]): string[] {
             parts.push(facts);
         }
         // A query repeated in one snapshot: its first result is the one told.
-        if (kind === 'backing') facts.backing ??= line.value;
-        else facts.paused ??= line.value;
+        if (kind === 'backing') facts.backing ??= line;
+        else facts.paused ??= line;
     }
-    const sentences = parts.map((part) => (typeof part === 'string' ? part : mintSentence(part)));
-    if (sentences.length === 0) return ['It recorded no results.'];
-    if (sentences.length <= MAX_SENTENCES) return sentences;
-    const more = sentences.length - MAX_SENTENCES;
-    return [...sentences.slice(0, MAX_SENTENCES), `… and ${more.toString()} more`];
+    const all = parts.map((part): FactLine =>
+        typeof part === 'string' ? { text: part, reads: [] } : mintLine(part, reads),
+    );
+    if (all.length === 0) return [{ text: 'It recorded no results.', reads: [] }];
+    if (all.length <= MAX_LINES) return all;
+    const more = all.length - MAX_LINES;
+    return [...all.slice(0, MAX_LINES), { text: `… and ${more.toString()} more`, reads: [] }];
 }
 
 /**
