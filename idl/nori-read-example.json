@@ -1,0 +1,277 @@
+{
+    "address": "5tA2aWbrP7JaKtcP2sJTp676TbFc6MEF7hcWCo9KqhS7",
+    "metadata": {
+        "name": "nori_read_example",
+        "version": "0.1.0",
+        "spec": "0.1.0",
+        "description": "Minimal Solana program that reads a NoriSnapshot result with nori-read"
+    },
+    "instructions": [
+        {
+            "name": "read_snapshot_result",
+            "docs": [
+                "Verify `witness` proves `query_id`'s result in a snapshot taken by",
+                "`nori_snapshot`, against `proof_queue_batch`, and emit the result."
+            ],
+            "discriminator": [30, 233, 6, 59, 18, 1, 246, 109],
+            "accounts": [
+                {
+                    "name": "proof_queue_batch",
+                    "docs": ["`nori_read::load_proof_queue_batch`."]
+                }
+            ],
+            "args": [
+                {
+                    "name": "nori_snapshot",
+                    "type": {
+                        "array": ["u8", 20]
+                    }
+                },
+                {
+                    "name": "query_id",
+                    "type": {
+                        "array": ["u8", 32]
+                    }
+                },
+                {
+                    "name": "witness",
+                    "type": {
+                        "defined": {
+                            "name": "SnapshotResultWitness"
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "events": [
+        {
+            "name": "SnapshotResultRead",
+            "discriminator": [157, 33, 237, 196, 185, 186, 219, 106]
+        }
+    ],
+    "errors": [
+        {
+            "code": 6000,
+            "name": "InvalidProofQueueBatch",
+            "msg": "Not a proof queue batch of the trusted Nori program"
+        },
+        {
+            "code": 6001,
+            "name": "InvalidSnapshotResult",
+            "msg": "The snapshot result does not verify"
+        }
+    ],
+    "types": [
+        {
+            "name": "Bytes32",
+            "docs": ["32 bytes; Borsh-encoded exactly as alloy's `B256`."],
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "array": ["u8", 32]
+                    }
+                ]
+            }
+        },
+        {
+            "name": "EthAddress",
+            "docs": [
+                "A 20-byte Ethereum address; Borsh-encoded exactly as alloy's `Address`."
+            ],
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "array": ["u8", 20]
+                    }
+                ]
+            }
+        },
+        {
+            "name": "SnapshotResultRead",
+            "docs": [
+                "A result proven against Ethereum state; see `nori_read::ProvenResult`."
+            ],
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "query_id",
+                        "type": {
+                            "array": ["u8", 32]
+                        }
+                    },
+                    {
+                        "name": "result",
+                        "type": {
+                            "array": ["u8", 32]
+                        }
+                    },
+                    {
+                        "name": "snapshot_index",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "request_id",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "eth_block_number",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "eth_timestamp",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "proven_block_number",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "SnapshotResultWitness",
+            "docs": [
+                "Everything needed to check one snapshot result, besides the query id the",
+                "consumer pins."
+            ],
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "request",
+                        "docs": [
+                            "The snapshot's proof request leaf, its index in the proof queue batch",
+                            "and its path to the batch root."
+                        ],
+                        "type": {
+                            "defined": {
+                                "name": "VerifiedRequestWitnessInput"
+                            }
+                        }
+                    },
+                    {
+                        "name": "result",
+                        "docs": [
+                            "The query's 32-byte result, as the view call returned it."
+                        ],
+                        "type": {
+                            "defined": {
+                                "name": "Bytes32"
+                            }
+                        }
+                    },
+                    {
+                        "name": "result_index",
+                        "docs": [
+                            "The result's index among the snapshot's queries."
+                        ],
+                        "type": "u16"
+                    },
+                    {
+                        "name": "result_path",
+                        "docs": [
+                            "Sibling hashes from the result leaf up to the results root, bottom-up."
+                        ],
+                        "type": {
+                            "vec": {
+                                "defined": {
+                                    "name": "Bytes32"
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "U256Le",
+            "docs": [
+                "A 256-bit unsigned integer as 32 little-endian bytes; Borsh-encoded",
+                "exactly as alloy's `U256`."
+            ],
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "array": ["u8", 32]
+                    }
+                ]
+            }
+        },
+        {
+            "name": "VerifiedRequest",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "target",
+                        "type": {
+                            "defined": {
+                                "name": "EthAddress"
+                            }
+                        }
+                    },
+                    {
+                        "name": "collection_keys_count",
+                        "type": "u8"
+                    },
+                    {
+                        "name": "collection_keys",
+                        "type": {
+                            "array": [
+                                {
+                                    "defined": {
+                                        "name": "Bytes32"
+                                    }
+                                },
+                                2
+                            ]
+                        }
+                    },
+                    {
+                        "name": "value",
+                        "type": {
+                            "defined": {
+                                "name": "U256Le"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "VerifiedRequestWitnessInput",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "path",
+                        "type": {
+                            "vec": {
+                                "defined": {
+                                    "name": "Bytes32"
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "name": "index",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "value",
+                        "type": {
+                            "defined": {
+                                "name": "VerifiedRequest"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

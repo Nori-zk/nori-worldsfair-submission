@@ -1,0 +1,741 @@
+{
+    "address": "JAZNGzLyN1TKhjnDDKrSsaQveAhUZUjiG8usM9Du5UD9",
+    "metadata": {
+        "name": "backstop",
+        "version": "0.1.0",
+        "spec": "0.1.0",
+        "description": "Circuit breakers for bridged assets: proven Ethereum backing vs Solana supply"
+    },
+    "instructions": [
+        {
+            "name": "assert_healthy",
+            "docs": [
+                "Fails unless the guard is HEALTHY. Read-only, so consumers CPI it on",
+                "every deposit without write-locking the guard."
+            ],
+            "discriminator": [237, 28, 73, 110, 58, 17, 139, 47],
+            "accounts": [
+                {
+                    "name": "guard"
+                },
+                {
+                    "name": "mint",
+                    "relations": ["guard"]
+                }
+            ],
+            "args": []
+        },
+        {
+            "name": "checkpoint",
+            "docs": [
+                "Records the mint's supply, at most once per `checkpoint_interval_secs`."
+            ],
+            "discriminator": [213, 200, 19, 204, 240, 143, 184, 252],
+            "accounts": [
+                {
+                    "name": "guard",
+                    "writable": true
+                },
+                {
+                    "name": "mint",
+                    "relations": ["guard"]
+                }
+            ],
+            "args": []
+        },
+        {
+            "name": "create_guard",
+            "docs": [
+                "Creates a guard for `mint`, owned by `admin`. Reads the Ethereum queue",
+                "the Nori program proves, so anyone can check it is NoriSnapshot's."
+            ],
+            "discriminator": [251, 254, 17, 198, 219, 218, 154, 99],
+            "accounts": [
+                {
+                    "name": "admin",
+                    "writable": true,
+                    "signer": true
+                },
+                {
+                    "name": "mint"
+                },
+                {
+                    "name": "nori_state",
+                    "docs": ["`nori_read::load_nori_proof_queue`."]
+                },
+                {
+                    "name": "guard",
+                    "writable": true,
+                    "pda": {
+                        "seeds": [
+                            {
+                                "kind": "const",
+                                "value": [103, 117, 97, 114, 100]
+                            },
+                            {
+                                "kind": "account",
+                                "path": "mint"
+                            },
+                            {
+                                "kind": "account",
+                                "path": "admin"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "system_program",
+                    "address": "11111111111111111111111111111111"
+                }
+            ],
+            "args": [
+                {
+                    "name": "config",
+                    "type": {
+                        "defined": {
+                            "name": "GuardConfig"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "status",
+            "docs": ["The guard's status (also in return data)."],
+            "discriminator": [218, 160, 35, 24, 130, 107, 205, 125],
+            "accounts": [
+                {
+                    "name": "guard"
+                },
+                {
+                    "name": "mint",
+                    "relations": ["guard"]
+                }
+            ],
+            "args": [],
+            "returns": {
+                "defined": {
+                    "name": "Status"
+                }
+            }
+        },
+        {
+            "name": "submit_read",
+            "docs": [
+                "Applies a proven NoriSnapshot result: the backing or the pause flag.",
+                "Each must be from a newer Ethereum block than the last one applied."
+            ],
+            "discriminator": [60, 114, 38, 179, 10, 0, 92, 204],
+            "accounts": [
+                {
+                    "name": "guard",
+                    "writable": true
+                },
+                {
+                    "name": "mint",
+                    "relations": ["guard"]
+                },
+                {
+                    "name": "proof_queue_batch",
+                    "docs": ["`nori_read::load_proof_queue_batch`."]
+                }
+            ],
+            "args": [
+                {
+                    "name": "kind",
+                    "type": {
+                        "defined": {
+                            "name": "ReadKind"
+                        }
+                    }
+                },
+                {
+                    "name": "witness",
+                    "type": {
+                        "defined": {
+                            "name": "SnapshotResultWitness"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "unlatch",
+            "docs": [
+                "Clears a trip. Admin only; for testing and demos (production: a timelock or governance)."
+            ],
+            "discriminator": [210, 164, 95, 81, 158, 19, 225, 32],
+            "accounts": [
+                {
+                    "name": "admin",
+                    "signer": true,
+                    "relations": ["guard"]
+                },
+                {
+                    "name": "guard",
+                    "writable": true
+                }
+            ],
+            "args": []
+        }
+    ],
+    "accounts": [
+        {
+            "name": "Guard",
+            "discriminator": [54, 187, 84, 137, 192, 15, 74, 248]
+        }
+    ],
+    "events": [
+        {
+            "name": "BackingRead",
+            "discriminator": [96, 222, 12, 135, 207, 53, 100, 35]
+        },
+        {
+            "name": "GuardCreated",
+            "discriminator": [137, 249, 125, 83, 3, 164, 81, 198]
+        },
+        {
+            "name": "PauseRead",
+            "discriminator": [170, 166, 187, 61, 28, 105, 102, 108]
+        },
+        {
+            "name": "Unlatched",
+            "discriminator": [25, 164, 161, 140, 26, 250, 74, 63]
+        }
+    ],
+    "errors": [
+        {
+            "code": 6000,
+            "name": "InvalidConfig",
+            "msg": "Invalid guard config"
+        },
+        {
+            "code": 6001,
+            "name": "InvalidNoriState",
+            "msg": "Not the state of the configured Nori program"
+        },
+        {
+            "code": 6002,
+            "name": "InvalidProofQueueBatch",
+            "msg": "Not a proof queue batch of the configured Nori program"
+        },
+        {
+            "code": 6003,
+            "name": "InvalidSnapshotResult",
+            "msg": "The snapshot result does not verify"
+        },
+        {
+            "code": 6004,
+            "name": "NoPauseQuery",
+            "msg": "This guard has no pause query"
+        },
+        {
+            "code": 6005,
+            "name": "ReadNotNewer",
+            "msg": "A newer result was already applied"
+        },
+        {
+            "code": 6006,
+            "name": "CheckpointTooSoon",
+            "msg": "Too soon for another checkpoint"
+        },
+        {
+            "code": 6007,
+            "name": "SupplyAboveBacking",
+            "msg": "Supply is above proven backing"
+        },
+        {
+            "code": 6008,
+            "name": "Stale",
+            "msg": "No recent proven backing"
+        },
+        {
+            "code": 6009,
+            "name": "PausedAtSource",
+            "msg": "Paused on Ethereum"
+        },
+        {
+            "code": 6010,
+            "name": "Tripped",
+            "msg": "Tripped: supply exceeded proven backing"
+        },
+        {
+            "code": 6011,
+            "name": "PauseResultNotBool",
+            "msg": "The pause query's result is not a bool"
+        }
+    ],
+    "types": [
+        {
+            "name": "BackingRead",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "guard",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "backing",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "eth_block",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "eth_time",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "deficit",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "tripped",
+                        "type": "bool"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Bytes32",
+            "docs": ["32 bytes; Borsh-encoded exactly as alloy's `B256`."],
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "array": ["u8", 32]
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Checkpoint",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "time",
+                        "type": "i64"
+                    },
+                    {
+                        "name": "supply",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "EthAddress",
+            "docs": [
+                "A 20-byte Ethereum address; Borsh-encoded exactly as alloy's `Address`."
+            ],
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "array": ["u8", 20]
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Guard",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "admin",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "mint",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "config",
+                        "type": {
+                            "defined": {
+                                "name": "GuardConfig"
+                            }
+                        }
+                    },
+                    {
+                        "name": "eth_proof_queue",
+                        "docs": [
+                            "The Ethereum queue the Nori program proves, read at creation."
+                        ],
+                        "type": {
+                            "array": ["u8", 20]
+                        }
+                    },
+                    {
+                        "name": "backing",
+                        "docs": ["Latest proven backing, in mint units."],
+                        "type": "u64"
+                    },
+                    {
+                        "name": "backing_eth_block",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "backing_eth_time",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "paused",
+                        "type": "bool"
+                    },
+                    {
+                        "name": "pause_eth_block",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "tripped",
+                        "docs": ["Latched until the admin unlatches."],
+                        "type": "bool"
+                    },
+                    {
+                        "name": "trip_eth_block",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "trip_deficit",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "checkpoints",
+                        "type": {
+                            "array": [
+                                {
+                                    "defined": {
+                                        "name": "Checkpoint"
+                                    }
+                                },
+                                64
+                            ]
+                        }
+                    },
+                    {
+                        "name": "checkpoint_count",
+                        "docs": [
+                            "Checkpoints written so far; the next goes at `count % CHECKPOINTS`."
+                        ],
+                        "type": "u64"
+                    },
+                    {
+                        "name": "bump",
+                        "type": "u8"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "GuardConfig",
+            "docs": ["A guard's settings, fixed at creation."],
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "nori_program",
+                        "docs": [
+                            "The Nori program that owns the proof queue batches."
+                        ],
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "nori_snapshot",
+                        "docs": ["The NoriSnapshot contract on Ethereum."],
+                        "type": {
+                            "array": ["u8", 20]
+                        }
+                    },
+                    {
+                        "name": "backing_query",
+                        "docs": [
+                            "Query whose result is the backing, e.g. `balanceOf(lockbox)`."
+                        ],
+                        "type": {
+                            "array": ["u8", 32]
+                        }
+                    },
+                    {
+                        "name": "pause_query",
+                        "docs": [
+                            "Query whose result is the source pause flag; zero for none."
+                        ],
+                        "type": {
+                            "array": ["u8", 32]
+                        }
+                    },
+                    {
+                        "name": "backing_decimals",
+                        "docs": ["Decimals of the backing result."],
+                        "type": "u8"
+                    },
+                    {
+                        "name": "tolerance",
+                        "docs": [
+                            "Supply allowed above backing, in mint units."
+                        ],
+                        "type": "u64"
+                    },
+                    {
+                        "name": "window_secs",
+                        "docs": [
+                            "A backing read at Ethereum time T is compared with the lowest supply",
+                            "checkpoint in [T - window, T + window], given one in [T - window, T - skew]."
+                        ],
+                        "type": "u32"
+                    },
+                    {
+                        "name": "skew_secs",
+                        "type": "u32"
+                    },
+                    {
+                        "name": "checkpoint_interval_secs",
+                        "type": "u32"
+                    },
+                    {
+                        "name": "max_staleness_secs",
+                        "docs": ["Backing older than this is STALE."],
+                        "type": "u32"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "GuardCreated",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "guard",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "mint",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "eth_proof_queue",
+                        "type": {
+                            "array": ["u8", 20]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "PauseRead",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "guard",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "paused",
+                        "type": "bool"
+                    },
+                    {
+                        "name": "eth_block",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "ReadKind",
+            "type": {
+                "kind": "enum",
+                "variants": [
+                    {
+                        "name": "Backing"
+                    },
+                    {
+                        "name": "Pause"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "SnapshotResultWitness",
+            "docs": [
+                "Everything needed to check one snapshot result, besides the query id the",
+                "consumer pins."
+            ],
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "request",
+                        "docs": [
+                            "The snapshot's proof request leaf, its index in the proof queue batch",
+                            "and its path to the batch root."
+                        ],
+                        "type": {
+                            "defined": {
+                                "name": "VerifiedRequestWitnessInput"
+                            }
+                        }
+                    },
+                    {
+                        "name": "result",
+                        "docs": [
+                            "The query's 32-byte result, as the view call returned it."
+                        ],
+                        "type": {
+                            "defined": {
+                                "name": "Bytes32"
+                            }
+                        }
+                    },
+                    {
+                        "name": "result_index",
+                        "docs": [
+                            "The result's index among the snapshot's queries."
+                        ],
+                        "type": "u16"
+                    },
+                    {
+                        "name": "result_path",
+                        "docs": [
+                            "Sibling hashes from the result leaf up to the results root, bottom-up."
+                        ],
+                        "type": {
+                            "vec": {
+                                "defined": {
+                                    "name": "Bytes32"
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Status",
+            "type": {
+                "kind": "enum",
+                "variants": [
+                    {
+                        "name": "Healthy"
+                    },
+                    {
+                        "name": "Warn"
+                    },
+                    {
+                        "name": "Stale"
+                    },
+                    {
+                        "name": "PausedAtSource"
+                    },
+                    {
+                        "name": "Tripped"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "U256Le",
+            "docs": [
+                "A 256-bit unsigned integer as 32 little-endian bytes; Borsh-encoded",
+                "exactly as alloy's `U256`."
+            ],
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "array": ["u8", 32]
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Unlatched",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "guard",
+                        "type": "pubkey"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "VerifiedRequest",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "target",
+                        "type": {
+                            "defined": {
+                                "name": "EthAddress"
+                            }
+                        }
+                    },
+                    {
+                        "name": "collection_keys_count",
+                        "type": "u8"
+                    },
+                    {
+                        "name": "collection_keys",
+                        "type": {
+                            "array": [
+                                {
+                                    "defined": {
+                                        "name": "Bytes32"
+                                    }
+                                },
+                                2
+                            ]
+                        }
+                    },
+                    {
+                        "name": "value",
+                        "type": {
+                            "defined": {
+                                "name": "U256Le"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "VerifiedRequestWitnessInput",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "path",
+                        "type": {
+                            "vec": {
+                                "defined": {
+                                    "name": "Bytes32"
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "name": "index",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "value",
+                        "type": {
+                            "defined": {
+                                "name": "VerifiedRequest"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
