@@ -60,7 +60,6 @@ import {
 import { createAssertHealthyMachine } from '../assertHealthy.impl.js';
 import { followedStates$, valueOnce$ } from '../followedStates.js';
 import { customErrorOf, transactionErrorText } from '../guard.js';
-import { memoInstruction, snapshotReadMemo } from '../memo.js';
 import { readSnapshotResultInstruction } from '../noriRead.js';
 import { type ProvenRequestState } from '../provenRequest.js';
 import { createProvenRequestMachine } from '../provenRequest.impl.js';
@@ -829,13 +828,6 @@ export class Keeper {
                                             witness
                                         ),
                                     }),
-                                    memoInstruction(
-                                        snapshotReadMemo({
-                                            snapshotTxHash,
-                                            queryId,
-                                            kind: 'example',
-                                        })
-                                    ),
                                 ]).pipe(
                                     map((end) =>
                                         this.log(

@@ -8,7 +8,6 @@ export * from './assertHealthy.js';
 export * from './assertHealthy.impl.js';
 export * from './snapshotWitness.js';
 export * from './noriRead.js';
-export * from './memo.js';
 export * from './provenRequest.js';
 export * from './provenRequest.impl.js';
 export * from './snapshotEvent.js';
