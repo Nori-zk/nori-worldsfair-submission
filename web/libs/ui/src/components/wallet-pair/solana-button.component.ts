@@ -5,14 +5,6 @@ import { solanaLogo } from '../../brand/brand.js';
 import { ChainButton } from './chain-button.component.js';
 
 /**
- * A slot shortened for display: its last four digits.
- *
- * @param slot The slot.
- * @returns The shortened slot.
- */
-const shortSlot = (slot: bigint): string => `…${slot.toString().slice(-4)}`;
-
-/**
  * The button's text for each node of Solana's http connection machine.
  *
  * @param cluster The cluster the apps read.
@@ -25,7 +17,7 @@ const solanaText = (cluster: string, state: HttpConnectionState<SolanaHealth>): 
             return 'Connecting to Solana';
         case 'ready':
         case 'overwhelmed':
-            return `Solana ${cluster}: ${shortSlot(state.data.health.slot)}`;
+            return `Solana ${cluster}`;
         case 'wrongNetwork':
         case 'waitingToRetry':
             return 'Reconnecting to Solana';
@@ -37,9 +29,9 @@ const solanaText = (cluster: string, state: HttpConnectionState<SolanaHealth>): 
 };
 
 /**
- * The Solana side of the wallet pair: the cluster its connection reads and
- * the latest finalized slot. Solana reads need no wallet, so it shows the
- * connection only.
+ * The Solana side of the wallet pair: the cluster its connection reads.
+ * Solana reads need no wallet, so it shows the connection only; the pin's
+ * colour is its health.
  */
 @Component({
     selector: 'solana-button',
