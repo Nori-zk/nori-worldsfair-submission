@@ -86,7 +86,8 @@ void test('coverage is the backing over the supply, rounded down, or the shortfa
 void test('mints are named from the devnet deployment, else Mint', () => {
     assert.equal(mintName('Fhw5m3W34LuGNNuTWxHu8wVbre7wUE445hxir3Xwcbhi'), 'Demo mint');
     assert.equal(mintName('Dnt2Mjnvj38E59bnUBkw8EEoW1sy6HzMavbDSQkXTuoX'), 'Shadow mint');
-    assert.equal(mintName('3Q9xNZr7iSkUZBEbLHkvap8Ece6aBSVskPCUPLWhtkTo'), 'Mint');
+    assert.equal(mintName('3Q9xNZr7iSkUZBEbLHkvap8Ece6aBSVskPCUPLWhtkTo'), 'Test mint B');
+    assert.equal(mintName('JAZNGzLyN1TKhjnDDKrSsaQveAhUZUjiG8usM9Du5UD9'), 'Mint');
     assert.equal(shortAddress('Fhw5m3W34LuGNNuTWxHu8wVbre7wUE445hxir3Xwcbhi'), 'Fhw5…cbhi');
 });
 

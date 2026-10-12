@@ -93,7 +93,7 @@ CPI, no wallet, no fee, one request. It reads `Your deposit would be allowed (N 
 `▸ How this is checked` opens the guard's settings in a sentence (its backing and pause queries,
 window, tolerance, staleness and checkpoints), the trip rule re-run on the checkpoints it keeps,
 and links to the guard, its admin, NoriSnapshot and the Nori program. `?guard=<address>` opens
-it on load. The Demo and Shadow mints are named from the devnet deployment in
+it on load. The Demo, Shadow and Test A and B mints are named from the devnet deployment in
 [docs/README.md](../docs/README.md); other mints read `Mint <address>`.
 
 ```sh
