@@ -228,27 +228,28 @@ export function createProveBalanceMachine(
             );
             // The snapshot's transaction, made and sent on entry into `awaitingSignature`
             // and followed through `proving`; leaving both closes it.
-            const transaction$: Observable<WalletTransactionState> = dataOnEntry$(
-                state$,
-                'awaitingSignature',
-            ).pipe(
-                switchMap((data) =>
-                    concat(
-                        followedStates$(() => {
-                            const transaction = createWalletTransactionMachine(
-                                connections,
-                                snapshotCall(addresses.snapshotAddress, data),
-                                { errors: noriSnapshotInterface },
-                            );
-                            transaction.send();
-                            return transaction;
-                        }),
-                        // Its states end at `confirmed`; the edges still following it wait instead.
-                        NEVER,
+            const transaction$: Observable<WalletTransactionState> = concat(
+                dataOnEntry$(state$, 'awaitingSignature').pipe(
+                    switchMap((data) =>
+                        concat(
+                            followedStates$(() => {
+                                const transaction = createWalletTransactionMachine(
+                                    connections,
+                                    snapshotCall(addresses.snapshotAddress, data),
+                                    { errors: noriSnapshotInterface },
+                                );
+                                transaction.send();
+                                return transaction;
+                            }),
+                            // Its states end at `confirmed`; the edges still following it wait instead.
+                            NEVER,
+                        ),
                     ),
                 ),
-                heldAcrossMoves(),
-            );
+                // Resumed from `?tx=`, `proving` is entered with no transaction of this page's own:
+                // `dataOnEntry$` then completes empty, and the edges following it wait instead.
+                NEVER,
+            ).pipe(heldAcrossMoves());
             /** The proof request machine reaching `node` while `proving`, once. */
             const proofRequestAt$ = <TNode extends ProofRequestStateNodeUnion['node']>(
                 node: TNode,
