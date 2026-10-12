@@ -1,3 +1,5 @@
+import { type Observable, of, switchMap, timer } from 'rxjs';
+
 /**
  * How long a proof request has waited: from its enqueue block's time when it
  * is known, else the unprocessed machine's own count, which starts at zero
@@ -66,4 +68,58 @@ export function anchoredFill(elapsedSec: number, totalSec: number | undefined): 
 export function storedTotal(stored: string | null): number | undefined {
     const totalSec = stored === null ? Number.NaN : Number(stored);
     return Number.isFinite(totalSec) && totalSec > 0 ? totalSec : undefined;
+}
+
+/** A proof request machine as `createProofRequestStateMachine` returns it, as far as a follow uses it. */
+export interface FollowedMachine<TState> {
+    state$: Observable<TState>;
+    retry(): void;
+    close(): void;
+}
+
+/** Ethereum's block time. */
+export const ETHEREUM_BLOCK_MS = 12_000;
+
+/** How many times a follow that ended `transactionReplaced` is made again before that stands. */
+export const REFOLLOWS = 2;
+
+/**
+ * Follows a proof request, and follows it again, from a new machine, when
+ * the follow ends `transactionReplaced` within `times` tries, a block later.
+ *
+ * shortcut: a wallet's RPC can report the sender's nonce past a transaction
+ * it still returns, so the sdk's follow can end `transactionReplaced` a
+ * block before the receipt lands; drop this once the sdk's rule needs the
+ * node to forget the transaction first.
+ *
+ * @param create A new machine following the request.
+ * @param times How many follows again are allowed.
+ * @param blockMs How long to wait before following again.
+ * @returns The states of the current follow, `retry()` and `close()` for it.
+ */
+export function followAgainOnReplaced<TState extends { node: string }>(
+    create: () => FollowedMachine<TState>,
+    times = REFOLLOWS,
+    blockMs = ETHEREUM_BLOCK_MS,
+): FollowedMachine<TState> {
+    // Every machine made, the current one last; a replaced one is terminal and reads no more.
+    const machines: FollowedMachine<TState>[] = [];
+    const states$ = (attempt: number): Observable<TState> => {
+        const machine = create();
+        machines.push(machine);
+        return machine.state$.pipe(
+            switchMap((state) =>
+                state.node === 'transactionReplaced' && attempt < times
+                    ? timer(blockMs).pipe(switchMap(() => states$(attempt + 1)))
+                    : of(state),
+            ),
+        );
+    };
+    return {
+        state$: states$(0),
+        retry: () => machines.at(-1)?.retry(),
+        close: () => {
+            for (const machine of machines) machine.close();
+        },
+    };
 }

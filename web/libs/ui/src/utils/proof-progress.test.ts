@@ -100,3 +100,41 @@ void test('a stored total is a positive number, else none', () => {
     assert.equal(storedTotal('Infinity'), undefined);
     assert.equal(storedTotal('abc'), undefined);
 });
+
+void test('a follow that ends replaced is made again a block later, until the tries are spent', async () => {
+    const { Subject } = await import('rxjs');
+    const { followAgainOnReplaced } = await import('./proof-progress.js');
+    const made: { state$: InstanceType<typeof Subject<{ node: string }>>; closed: boolean }[] = [];
+    const follow = followAgainOnReplaced(
+        () => {
+            const machine = { state$: new Subject<{ node: string }>(), closed: false };
+            made.push(machine);
+            return {
+                state$: machine.state$,
+                retry: () => {},
+                close: () => void (machine.closed = true),
+            };
+        },
+        1,
+        5,
+    );
+    const seen: string[] = [];
+    follow.state$.subscribe(({ node }) => seen.push(node));
+    made[0]!.state$.next({ node: 'loading' });
+    made[0]!.state$.next({ node: 'transactionReplaced' });
+    assert.deepEqual(seen, ['loading'], 'replaced is held back while a follow again is allowed');
+    assert.equal(made.length, 1);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    assert.equal(made.length, 2, 'followed again after a block');
+    made[1]!.state$.next({ node: 'proofAvailable' });
+    assert.deepEqual(seen, ['loading', 'proofAvailable']);
+    made[1]!.state$.next({ node: 'transactionReplaced' });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    assert.equal(made.length, 2, 'no follow again once the tries are spent');
+    assert.deepEqual(seen, ['loading', 'proofAvailable', 'transactionReplaced']);
+    follow.close();
+    assert.deepEqual(
+        made.map(({ closed }) => closed),
+        [true, true],
+    );
+});

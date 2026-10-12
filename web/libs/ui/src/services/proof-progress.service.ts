@@ -22,7 +22,12 @@ import {
 import { followedStates$ } from '@nori-zk/backstop-keeper/read';
 import { ConnectionsService } from './connections.service.js';
 import { NoriBridgeInfraService } from './nori-bridge-infra.service.js';
-import { anchoredTotal, storedTotal, waitedSec } from '../utils/proof-progress.js';
+import {
+    anchoredTotal,
+    followAgainOnReplaced,
+    storedTotal,
+    waitedSec,
+} from '../utils/proof-progress.js';
 
 /**
  * The block an unprocessed request was enqueued in: while the proof request
@@ -130,12 +135,14 @@ export class ProofProgressService {
         if (existing) return existing;
 
         const { connections, options } = this.connections;
-        const proofRequest = createProofRequestStateMachine(
-            connections,
-            { ...options.proofRequests, proofRequestTxHash: txHash },
-            undefined,
-            15_000,
-            this.noriBridgeInfra.state$,
+        const proofRequest = followAgainOnReplaced(() =>
+            createProofRequestStateMachine(
+                connections,
+                { ...options.proofRequests, proofRequestTxHash: txHash },
+                undefined,
+                15_000,
+                this.noriBridgeInfra.state$,
+            ),
         );
         const request$ = proofRequest.state$.pipe(shareReplay({ bufferSize: 1, refCount: false }));
         const progress$ = request$.pipe(
