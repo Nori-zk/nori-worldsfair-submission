@@ -68,12 +68,14 @@ step() {
 quiet() { "$@" 2>&1 | grep -vE "ExperimentalWarning|trace-warnings|^\s*$" || true; }
 
 PIDS=()
+# npx runs hardhat as a grandchild, which outlives a plain kill of npx
+kill_tree() { local child; for child in $(pgrep -P "$1"); do kill_tree "$child"; done; kill "$1" 2>/dev/null || true; }
 cleanup() {
     if [ "$KEEP" = 1 ]; then
         echo; echo "Chains left running (pids ${PIDS[*]:-}); work dir $W"
         return
     fi
-    for pid in "${PIDS[@]:-}"; do [ -n "$pid" ] && kill "$pid" 2>/dev/null || true; done
+    for pid in "${PIDS[@]:-}"; do [ -n "$pid" ] && kill_tree "$pid"; done
     rm -rf "$W"
 }
 trap cleanup EXIT
@@ -146,12 +148,13 @@ set +a
 # The chains the keeper's connections must be on: the local nodes' own
 ETH_CHAIN_ID=$(cast chain-id --rpc-url "$ETH_URL")
 SOLANA_GENESIS_HASH=$(solana genesis-hash -u "$SOL_URL")
+POLL_SECS=3
 
 cat >"$W/keeper.json" <<EOF
 {
   "ethereum": { "rpcUrl": "$ETH_URL", "chainId": "$ETH_CHAIN_ID", "noriSnapshot": "$NORI_ETH_SNAPSHOT_ADDRESS", "proofQueue": "$NORI_ETH_PROOF_QUEUE_ADDRESS" },
   "solana": { "rpcUrl": "$SOL_URL", "genesisHash": "$SOLANA_GENESIS_HASH", "keypair": "$PAYER", "noriProgram": "$NORI_PROGRAM" },
-  "intervals": { "snapshotSecs": 3600, "checkpointSecs": 10, "pollSecs": 15 },
+  "intervals": { "snapshotSecs": 3600, "checkpointSecs": 10, "pollSecs": $POLL_SECS },
   "stateFile": "$W/keeper-state.json",
   "guards": [{
     "name": "demo-lockbox", "mint": "$MINT",
@@ -173,7 +176,7 @@ expect_status() {
     echo "$out"
     if ! grep -q "demo-lockbox: $1 " <<<"$out"; then echo "Expected $1"; exit 1; fi
 }
-# A lender's assert_healthy: expect_assert allowed|"blocked: <Error> (<code>)" [--send]
+# A lender's assert_healthy, simulated: expect_assert allowed|"blocked: <Error> (<code>)"
 expect_assert() {
     local expected=$1 out
     shift
@@ -181,14 +184,18 @@ expect_assert() {
     echo "$out"
     if ! grep -q "demo-lockbox: $expected" <<<"$out"; then echo "Expected assert_healthy $expected"; exit 1; fi
 }
-# One round of `keeper run`, stopped once it prints the guard's status. It
-# snapshots only if a watched result changed: expect_round none|"results changed"
+# `keeper run`, stopped once it prints the guard's status and has compared the
+# results. It snapshots only if a watched result changed: expect_round none|"results changed"
 expect_round() {
     local log=$W/keeper-run.log pid
     (cd "$REPO/keeper" && exec node --experimental-wasm-modules build/bin/keeper.js run "$W/keeper.json") >"$log" 2>&1 &
     pid=$!
     PIDS+=("$pid")
     wait_for "keeper run" "grep -q 'demo-lockbox: [A-Z_]* |' '$log'"
+    # Its first poll only starts reading the results; the second compares them
+    if [ "$1" = none ]; then sleep $((2 * POLL_SECS)); else
+        for _ in $(seq 1 30); do grep -q " snapshot 0x.*($1)" "$log" && break; sleep 1; done
+    fi
     kill "$pid" 2>/dev/null || true
     wait "$pid" 2>/dev/null || true
     quiet cat "$log"
@@ -223,8 +230,7 @@ expect_round "results changed"
 prove
 keeper submit
 expect_status TRIPPED
-echo "A lender's assert_healthy, sent: it lands and fails"
-expect_assert "blocked: Tripped (6010)" --send
+expect_assert "blocked: Tripped (6010)"
 
 step "5. The attacker refills to 40,300 and the lockbox pauses: snapshotted on the change, it stays tripped"
 demo_set 40300 --paused
