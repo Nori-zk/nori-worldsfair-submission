@@ -98,7 +98,7 @@ export const demoSet = task(
             const tx = await lockbox.set(ethers.parseEther(locked), paused);
             const receipt = await tx.wait();
             logger.log(
-                `DemoLockbox: locked ${locked}, paused ${paused} (block ${receipt?.blockNumber})`
+                `DemoLockbox: locked ${locked}, paused ${paused} (block ${receipt?.blockNumber}, tx ${tx.hash})`
             );
         },
     }))

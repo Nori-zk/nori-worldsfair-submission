@@ -41,6 +41,14 @@ Edit the `.drawio` files in [draw.io](https://app.diagrams.net); the `.drawio.pn
 | nori-read-example (devnet)   | [`5tA2aWbrP7JaKtcP2sJTp676TbFc6MEF7hcWCo9KqhS7`](https://explorer.solana.com/address/5tA2aWbrP7JaKtcP2sJTp676TbFc6MEF7hcWCo9KqhS7?cluster=devnet)                                                                                                                                                     |
 | Demo mint / guard (devnet)   | [`Fhw5m3W34LuGNNuTWxHu8wVbre7wUE445hxir3Xwcbhi`](https://explorer.solana.com/address/Fhw5m3W34LuGNNuTWxHu8wVbre7wUE445hxir3Xwcbhi?cluster=devnet) / [`E8M7dU4Dp3j6AE3FnFv6fNJXp5tBg3xEUw1xg4eF7PYD`](https://explorer.solana.com/address/E8M7dU4Dp3j6AE3FnFv6fNJXp5tBg3xEUw1xg4eF7PYD?cluster=devnet) |
 | Shadow mint / guard (devnet) | [`Dnt2Mjnvj38E59bnUBkw8EEoW1sy6HzMavbDSQkXTuoX`](https://explorer.solana.com/address/Dnt2Mjnvj38E59bnUBkw8EEoW1sy6HzMavbDSQkXTuoX?cluster=devnet) / [`3YPpzexzi6MyTnbqHesq63Jchir5gnaBgKk7PmNq9vgN`](https://explorer.solana.com/address/3YPpzexzi6MyTnbqHesq63Jchir5gnaBgKk7PmNq9vgN?cluster=devnet) |
+| Test lockbox A / B (Sepolia) | [`0x61c2f92a1E158e8bffC03e68bA4125F296B55442`](https://sepolia.etherscan.io/address/0x61c2f92a1E158e8bffC03e68bA4125F296B55442) / [`0x3317556e295319B9F2828fadDaCAc93352F9dbB0`](https://sepolia.etherscan.io/address/0x3317556e295319B9F2828fadDaCAc93352F9dbB0)                                     |
+| Test A mint / guard (devnet) | [`CXXcBPT6xCKZjooV8UpqPc1vHGQwPGkzkisNYxZXCFX3`](https://explorer.solana.com/address/CXXcBPT6xCKZjooV8UpqPc1vHGQwPGkzkisNYxZXCFX3?cluster=devnet) / [`DUxFyC8pyfPFCSpMuuR3728Uydad1hbgEioL6iyzjhWG`](https://explorer.solana.com/address/DUxFyC8pyfPFCSpMuuR3728Uydad1hbgEioL6iyzjhWG?cluster=devnet) |
+| Test B mint / guard (devnet) | [`3Q9xNZr7iSkUZBEbLHkvap8Ece6aBSVskPCUPLWhtkTo`](https://explorer.solana.com/address/3Q9xNZr7iSkUZBEbLHkvap8Ece6aBSVskPCUPLWhtkTo?cluster=devnet) / [`3sEXwB7brVAubrB5JirkxLq2EEaP3FQaJTSWZ6gh8Bky`](https://explorer.solana.com/address/3sEXwB7brVAubrB5JirkxLq2EEaP3FQaJTSWZ6gh8Bky?cluster=devnet) |
+| Stale mint / guard (devnet)  | created by `scripts/demo-states.sh stale`                                                                                                                                                                                                                                                             |
+
+Every steady guard state, on purpose: `scripts/demo-states.sh` trips test B (its lockbox
+at 223.52), pauses test A at source and creates a stale guard nothing is proven for; demo and
+shadow stay HEALTHY. Its header is the runbook: which step runs where, how long, how to undo.
 
 Measured on real proofs (Sepolia → devnet):
 

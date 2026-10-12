@@ -36,6 +36,10 @@ run deploys the shadow lockbox and mint and creates the guards. It logs to
 `OUT/keeper.log` and writes `OUT/report.md` at the end (also when stopped early):
 snapshots, Ethereum block → reads applied, failures, checkpoint gaps, status changes.
 
+`scripts/demo-states.sh` (its header is the runbook) trips test-b and pauses test-a, two more
+guards the VM soak serves, and creates a fifth from `keeper.stale.json` that no keeper serves,
+so it stays STALE.
+
 ## Wormhole 2022 replay (showcase)
 
 `scripts/replay-wormhole.sh` replays the 2022 forgery on Sepolia + devnet with real proofs, on
