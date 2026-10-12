@@ -254,7 +254,8 @@ export function createProveBalanceMachine(
                 node: TNode,
             ) =>
                 dataOnEntry$(state$, 'proving').pipe(
-                    switchMap(({ txHash }) => followProof(txHash)),
+                    // The follow ends with the proof; the edges still waiting for another outcome wait instead.
+                    switchMap(({ txHash }) => concat(followProof(txHash), NEVER)),
                     filter(
                         (state): state is Extract<ProofRequestStateNodeUnion, { node: TNode }> =>
                             state.node === node,
