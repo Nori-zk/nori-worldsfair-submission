@@ -1,10 +1,12 @@
-import type { FactLabel, GuardQueries } from '@nori-zk/solana-web-ui';
-import type { SnapshotReadTransaction } from '@nori-zk/backstop-keeper/read';
+import type { FactLabel, GuardQueries, KeeperRead } from '@nori-zk/solana-web-ui';
 // Its own entry, not the lib's index, which loads components `node --test` cannot run.
 import { LOCKBOXES } from '@nori-zk/solana-web-ui/mints';
 
 /** How many lines a snapshot shows before `… and N more`: the five devnet mints and a few more. */
 const MAX_LINES = 8;
+
+/** How many of the keeper's reads a mint's line links: its backing and its pause read. */
+const MAX_READS = 2;
 
 /** One result of a snapshot, named by the guard that reads it. */
 export interface LabelledLine {
@@ -47,8 +49,8 @@ export function mintOf(queryId: string, guards: readonly GuardQueries[]): string
 export interface FactLine {
     /** `Demo lockbox · held 116,723.52 · not paused`. */
     text: string;
-    /** The keeper's newest transaction of each read on Solana that verified it, backing first. */
-    reads: SnapshotReadTransaction[];
+    /** The keeper's newest transactions on Solana that verified it, newest first, at most two. */
+    reads: string[];
 }
 
 /** One mint's results, the first of each. */
@@ -60,27 +62,25 @@ interface MintFacts {
 
 /**
  * A mint's line: its lockbox, what it held, whether it was paused, and the
- * keeper's newest read of each on Solana.
+ * keeper's newest reads on Solana by a guard reading its queries. A guard's
+ * backing and pause reads both name the guard and the batch, so they are not
+ * told apart.
  *
  * @param facts The mint's backing and pause results.
- * @param reads The keeper's reads of the snapshot, newest first (`snapshotReadsOf`).
+ * @param reads The keeper's reads of the snapshot's batch, newest first (`keeperReadsOf`).
  * @returns The line.
  */
-function mintLine(
-    { mint, backing, paused }: MintFacts,
-    reads: readonly SnapshotReadTransaction[],
-): FactLine {
+function mintLine({ mint, backing, paused }: MintFacts, reads: readonly KeeperRead[]): FactLine {
     const parts = [lockboxName(mint)];
     if (backing) parts.push(`held ${backing.value}`);
     if (paused) parts.push(paused.value === 'true' ? 'paused' : 'not paused');
+    const ids = [backing, paused].flatMap((line) => (line ? [line.queryId.toLowerCase()] : []));
     return {
         text: parts.join(' · '),
-        reads: [backing, paused].flatMap((line) => {
-            if (line === undefined) return [];
-            const id = line.queryId.toLowerCase();
-            const read = reads.find((r) => r.queryId === id && r.kind === line.label.kind);
-            return read ? [read] : [];
-        }),
+        reads: reads
+            .filter((read) => read.queryIds.some((id) => ids.includes(id)))
+            .slice(0, MAX_READS)
+            .map(({ signature }) => signature),
     };
 }
 
@@ -90,12 +90,12 @@ function mintLine(
  * After `MAX_LINES`, the rest are counted.
  *
  * @param lines The snapshot's results, labelled.
- * @param reads The keeper's reads of the snapshot, newest first (`snapshotReadsOf`).
+ * @param reads The keeper's reads of the snapshot's batch, newest first (`keeperReadsOf`).
  * @returns The lines, the last one `… and N more` when some are left out.
  */
 export function factLinesOf(
     lines: readonly LabelledLine[],
-    reads: readonly SnapshotReadTransaction[],
+    reads: readonly KeeperRead[],
 ): FactLine[] {
     const parts: (MintFacts | string)[] = [];
     const byMint = new Map<string, MintFacts>();

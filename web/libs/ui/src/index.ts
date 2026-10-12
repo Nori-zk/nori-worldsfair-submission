@@ -105,4 +105,5 @@ export {
     type LatencyRowView,
 } from './utils/latency.js';
 export { landingOf, type BatchLanding, type SignatureEntry } from './utils/batch-landing.js';
+export { type KeeperRead } from './utils/keeper-reads.js';
 export { STATUS_COLOUR } from './utils/status-colour.js';

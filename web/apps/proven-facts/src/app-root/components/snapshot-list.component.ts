@@ -118,8 +118,14 @@ export class SnapshotList extends RxElement {
         );
     }
 
+    /** Reads the keeper's reads of the snapshots shown. */
+    override onInit(): void {
+        this.facts.show(this.shown);
+    }
+
     /** Shows the next 8 older snapshots; `visibleOf` stops at every one read. */
     showOlder(): void {
         this.shown = moreShown(this.shown);
+        this.facts.show(this.shown);
     }
 }

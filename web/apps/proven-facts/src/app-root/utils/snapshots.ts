@@ -2,6 +2,7 @@ import {
     type Facts,
     type SnapshotFact,
     ago,
+    batchOf,
     blockText,
     blockUrl,
     clock,
@@ -9,15 +10,14 @@ import {
     solanaTransactionUrl,
     valueOf,
 } from '@nori-zk/solana-web-ui';
-import { snapshotReadsOf } from '@nori-zk/backstop-keeper/read';
 import { factLinesOf, mintOf, verifyTargetOf, type LabelledLine } from './sentences.js';
 
 /** One line of a snapshot's block, with the keeper's transactions that verified it on Solana. */
 export interface FactLineView {
     /** `Demo lockbox · held 116,723.52 · not paused`. */
     text: string;
-    /** `backing ↗` and `pause ↗`, each to its transaction on the explorer; none for older snapshots. */
-    links: { kind: string; url: string; text: string }[];
+    /** `↗` to each of the keeper's transactions that verified it on the explorer; none when none is found. */
+    links: { url: string; text: string }[];
 }
 
 /** One snapshot as its block on the page shows it. */
@@ -62,19 +62,22 @@ export const linesOf = (snapshot: SnapshotFact, guards: Facts['guards']): Labell
  * A snapshot as its block shows it.
  *
  * @param snapshot The snapshot, from its event.
- * @param facts The read it came in, for the queue cursor, the guards and the keeper's reads.
+ * @param facts The read it came in, for the queue cursor, the guards, the batches and the keeper's reads.
  * @param nowSecs The time of the read, unix seconds, for the snapshot's age.
  * @returns The block's text and link.
  */
 export function snapshotViewOf(
     snapshot: SnapshotFact,
-    { queueCursor, guards, keeperReads }: Facts,
+    { queueCursor, guards, batches, keeperReads }: Facts,
     nowSecs: number,
 ): SnapshotView {
     const proven = snapshot.requestId < queueCursor;
     const secs = Number(snapshot.timestamp);
     const lines = linesOf(snapshot, guards);
     const target = verifyTargetOf(lines);
+    // The reads found on the snapshot's batch account. Two snapshots in one batch share them.
+    const batch = batchOf(snapshot.requestId, batches)?.proofQueueBatchAddress;
+    const reads = keeperReads.filter((read) => read.batch === batch);
     return {
         key: snapshot.index.toString(),
         when: `${clock(secs)} UTC · ${ago(Math.max(0, nowSecs - secs))}`,
@@ -82,16 +85,13 @@ export function snapshotViewOf(
         blockUrl: blockUrl(snapshot.blockNumber),
         proven,
         status: proven ? 'Proven on Solana' : 'Waiting for proof',
-        lines: factLinesOf(lines, snapshotReadsOf(keeperReads, snapshot.txHash)).map(
-            ({ text, reads }) => ({
-                text,
-                links: reads.map(({ kind, signature }) => ({
-                    kind,
-                    url: solanaTransactionUrl(signature),
-                    text: `${kind} ↗`,
-                })),
-            }),
-        ),
+        lines: factLinesOf(lines, reads).map((line) => ({
+            text: line.text,
+            links: line.reads.map((signature) => ({
+                url: solanaTransactionUrl(signature),
+                text: '↗',
+            })),
+        })),
         txHash: snapshot.txHash,
         verifyQueryId: target?.queryId ?? '',
         verifyWord: target?.word ?? '',

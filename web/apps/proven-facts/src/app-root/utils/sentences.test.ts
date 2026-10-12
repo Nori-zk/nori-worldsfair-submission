@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { address } from '@solana/kit';
-import type { SnapshotReadTransaction } from '@nori-zk/backstop-keeper/read';
+import type { KeeperRead } from '@nori-zk/solana-web-ui';
 import {
     factLinesOf,
     lockboxName,
@@ -99,36 +99,35 @@ void test('a snapshot with no results says so', () => {
     assert.deepEqual(texts([]), ['It recorded no results.']);
 });
 
-void test("each mint's line carries the keeper's newest backing and pause read of its own queries", () => {
-    const read = (
-        signature: string,
-        queryId: string,
-        kind: SnapshotReadTransaction['kind'],
-    ): SnapshotReadTransaction => ({
+void test("each mint's line links the keeper's newest two reads by a guard reading its queries", () => {
+    const read = (signature: string, queryIds: string[]): KeeperRead => ({
+        batch: 'batch',
+        queryIds,
         signature,
-        slot: 0n,
-        snapshotTxHash: `0x${'11'.repeat(32)}`,
-        queryId,
-        kind,
     });
+    const demo = [`0x${'ab'.repeat(32)}`, `0x${'cd'.repeat(32)}`];
     const shadowBacking = { ...backing(SHADOW, '1'), queryId: `0x${'AA'.repeat(32)}` };
-    // Newest first, as snapshotReadsOf gives them.
+    // Newest first, as keeperReadsOf gives them.
     const reads = [
-        read('pause-new', `0x${'cd'.repeat(32)}`, 'pause'),
-        read('backing-new', `0x${'ab'.repeat(32)}`, 'backing'),
-        read('backing-old', `0x${'ab'.repeat(32)}`, 'backing'),
-        read('example', `0x${'ab'.repeat(32)}`, 'example'),
-        read('shadow', `0x${'aa'.repeat(32)}`, 'backing'),
+        read('demo-new', demo),
+        read('shadow', [`0x${'aa'.repeat(32)}`, `0x${'cc'.repeat(32)}`]),
+        read('demo-mid', demo),
+        read('demo-old', demo),
     ];
     const lines = factLinesOf(
         [backing(DEMO, '9'), paused(DEMO, 'false'), shadowBacking, unknown('0x1', '1')],
         reads,
     );
     assert.deepEqual(
-        lines.map((line) => line.reads.map(({ signature, kind }) => `${kind} ${signature}`)),
-        [['backing backing-new', 'pause pause-new'], ['backing shadow'], []],
+        lines.map((line) => line.reads),
+        [['demo-new', 'demo-mid'], ['shadow'], []],
     );
-    assert.deepEqual(factLinesOf([backing(DEMO, '9')], [])[0]?.reads, []);
+    // A pause alone matches too; a line whose queries no read names gets none.
+    assert.deepEqual(factLinesOf([paused(DEMO, 'true')], reads)[0]?.reads, [
+        'demo-new',
+        'demo-mid',
+    ]);
+    assert.deepEqual(factLinesOf([shadowBacking], [read('demo', demo)])[0]?.reads, []);
 });
 
 void test('verify checks the backing when there is one, else the first result', () => {

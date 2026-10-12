@@ -41,8 +41,8 @@ type Outcome = 'verified' | 'readFailed';
             <li>
                 <span>{{ line.text }}</span>
                 <span class="keeper">
-                    · verified on Solana:
-                    <span class="links" rx-for="link of line.links by kind">
+                    · verified on Solana
+                    <span class="links" rx-for="link of line.links by url">
                         <a [href]="link.url" target="_blank" rel="noopener">{{ link.text }}</a>
                     </span>
                 </span>
