@@ -127,7 +127,7 @@
         <mxCell id="tapp1" value="&lt;b&gt;Backstop&lt;/b&gt;: circuit breakers (ported)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=2;" vertex="1" parent="tapps">
           <mxGeometry x="20" y="45" width="230" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="tapp2" value="Token migration: ERC-20 to TIP-20&lt;br&gt;(in progress)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;dashed=1;" vertex="1" parent="tapps">
+        <mxCell id="tapp2" value="Token migration: ERC-20 to TIP-20&lt;br&gt;(runs locally, not deployed)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=2;" vertex="1" parent="tapps">
           <mxGeometry x="20" y="110" width="230" height="50" as="geometry" />
         </mxCell>
         <mxCell id="e3t" value="Groth16 proof" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endSize=8;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#ffffff;jumpStyle=arc;jumpSize=10;" edge="1" parent="1" source="prover" target="tlc">
