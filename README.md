@@ -12,10 +12,14 @@ a bridged token's proven backing on Ethereum falls below its supply on Solana.
 ## Where it stands (12 Oct)
 
 - **Live on real Nori proofs**, Ethereum Sepolia → Solana devnet: the prover since 7 Oct;
-  the Backstop keeper, paused on 11 Oct, has run on its own server since 12 Oct, in a 7-day soak.
-- **10-hour soak (7–8 Oct):** 39 of 39 snapshots proven and applied; a read reaches Solana a median
-  18 min after its Ethereum block (15–22), almost all of it Ethereum finality. An untouched
-  guard stayed HEALTHY all night.
+  the Backstop keeper, paused on 11 Oct, has run on its own server since 12 Oct, in a 7-day soak
+  (restarted once, 12 Oct 17:05 UTC, to put a memo on its reads).
+- **Soaks:** 7–8 Oct, 10 h, 39 of 39 snapshots proven and applied; 11–12 Oct, 17.8 h, four guards,
+  68 of 69 (the last in flight). A read reaches Solana a median 18 min after its Ethereum block
+  (15–25), almost all of it Ethereum finality. Untouched guards stayed HEALTHY throughout.
+  Reports in [docs/evidence](docs/evidence/README.md).
+- **Every guard state, on purpose:** test B tripped, test A paused at source, a fifth guard stale,
+  demo and shadow healthy ([`scripts/demo-states.sh`](scripts/demo-states.sh)).
 - **Drain demo:** draining the lockbox trips the guard; a refill doesn't reset it; the
   admin's `unlatch` does, once the backing is back (a testing and demo shortcut: one key;
   production needs a timelock or governance, on the roadmap).
