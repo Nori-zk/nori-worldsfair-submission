@@ -132,7 +132,9 @@ ports `NoriRead` and Backstop to Solidity on Tempo. Each reader chain has its ow
 queue and its own Groth16 proof from the same Helios-in-SP1 program, so a similar proof feeds
 Tempo. The contracts pass local dry runs (a Sepolia fork and a local Tempo node, with a fake
 prover); there is no live Tempo infrastructure for the hackathon, as the team had limited time
-and resources to run a second one. The token-migration app is still being worked on.
+and resources to run a second one. The token-migration app (an ERC-20 moves to the issuer's
+own TIP-20; the issuer keeps admin) runs end to end locally with a fake prover: lock, proof,
+claim, reconciled ([PR #4](https://github.com/Nori-zk/nori-worldsfair-submission-tempo/pull/4)).
 
 ## What was built during the hackathon
 
