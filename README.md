@@ -33,6 +33,9 @@ a bridged token's proven backing on Ethereum falls below its supply on Solana.
   production needs a timelock or governance, on the roadmap).
 - **Apps:** in the browser ([web/](web/README.md)): guard status for lenders, proven facts for anyone, a prove-balance app, and the bridge dashboard for operators.
 - **Next:** Ethereum + Solana mainnet, once Nori proves mainnet.
+- **Also on Tempo:** the same Backstop guard in Solidity, and ERC-20 → TIP-20 migration with
+  the token's pause carried by proof (Tempo's bridge adapter path), built and tested on local
+  chains in [nori-worldsfair-submission-tempo](https://github.com/Nori-zk/nori-worldsfair-submission-tempo).
 
 Addresses and numbers: [docs/README.md](docs/README.md).
 
