@@ -29,9 +29,20 @@ if [ -z "${SOAK_CONFIG:-}" ]; then
 fi
 
 echo "Soak: $MINUTES min, config $CONFIG, output $OUT"
-# perl's alarm ends the keeper after MINUTES (portable; no coreutils timeout on macOS)
-(cd keeper && exec perl -e 'alarm shift; exec @ARGV' $((MINUTES * 60)) \
-    node --experimental-wasm-modules build/bin/keeper.js run "$CONFIG") >"$OUT/keeper.log" 2>&1 &
+# perl's alarm ends the keeper after MINUTES (portable; no coreutils timeout on macOS).
+# A keeper that dies is started again 10 s later: its pending snapshots live in
+# the config's stateFile, so the restart resumes them, and the log line counts
+# as a failure in the report.
+# shortcut: the restart hides the crash (std::bad_alloc after some hours, 12-13 Oct), find the leak after the soak.
+(cd keeper && exec perl -e 'alarm shift; exec @ARGV' $((MINUTES * 60)) bash -c '
+    trap "kill \$CHILD 2>/dev/null; exit 0" ALRM INT TERM
+    while :; do
+        node --experimental-wasm-modules build/bin/keeper.js run "$0" & CHILD=$!
+        wait "$CHILD" && exit 0
+        code=$?
+        echo "$(date -u +%Y-%m-%dT%H:%M:%S.000Z) keeper process failed (exit $code): restarting in 10 s"
+        sleep 10
+    done' "$CONFIG") >"$OUT/keeper.log" 2>&1 &
 KEEPER=$!
 trap 'kill "$KEEPER" 2>/dev/null || true' INT TERM
 wait "$KEEPER" 2>/dev/null || true
